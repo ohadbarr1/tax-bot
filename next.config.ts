@@ -4,19 +4,13 @@ const nextConfig: NextConfig = {
   // Keep heavy native/worker packages out of the Next.js bundle.
   // pdfjs-dist ships a pdf.worker.mjs that must run in Node directly;
   // tesseract.js relies on WASM + native bindings that break when bundled.
+  // Because these are external, their optional "canvas" peer-dep is never
+  // resolved by the bundler — no alias stub needed.
   serverExternalPackages: ["pdfjs-dist", "tesseract.js", "tesseract.js-core"],
 
-  webpack(config) {
-    // pdf-lib / pdfjs-dist reference "canvas" for Node environments.
-    // We don't need it (server runs headless) — alias to false prevents
-    // "Module not found: Can't resolve 'canvas'" build errors.
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      canvas: false,
-      encoding: false,
-    };
-    return config;
-  },
+  // Next.js 16 uses Turbopack by default.
+  // Empty config silences the "webpack config present but no turbopack config" error.
+  turbopack: {},
 };
 
 export default nextConfig;
