@@ -194,6 +194,30 @@ export interface FinancialData {
   ibkrData?: NonNullable<import("@/types").IbkrParseResponse["data"]>;
 }
 
+// ─── Document Vault ───────────────────────────────────────────────────────────
+
+export type VaultDocType =
+  | "form106"
+  | "form135"
+  | "ibkr"
+  | "pension"
+  | "receipt"
+  | "bank_statement"
+  | "rsu_grant"
+  | "other";
+
+/**
+ * Persisted document metadata (no objectUrl — blob URLs are session-only
+ * and cannot survive IndexedDB round-trips).
+ */
+export interface VaultDocMeta {
+  id: string;
+  name: string;
+  type: VaultDocType;
+  size: number;
+  uploadedAt: string;
+}
+
 // ─── App State ────────────────────────────────────────────────────────────────
 
 export interface AdvisorMessage {
@@ -211,6 +235,9 @@ export interface AppState {
   };
   taxpayer: TaxPayer;
   financials: FinancialData;
+  // ── Document vault ────────────────────────────────────────────────────────
+  /** Persisted metadata for all uploaded documents (no blob URLs). */
+  documents: VaultDocMeta[];
   // ── Multi-draft (P2) ──────────────────────────────────────────────────────
   currentDraftId: string;
   drafts: Record<string, TaxYearDraft>;

@@ -58,6 +58,9 @@ export const INITIAL_STATE: AppState = {
     },
   },
 
+  // ─── Document vault ───────────────────────────────────────────────────────
+  documents: [],
+
   // ─── AI Advisor (P5) ───────────────────────────────────────────────────────
   advisorHistory: {},
 };

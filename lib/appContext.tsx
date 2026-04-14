@@ -8,7 +8,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import type { AppState, TaxPayer, FinancialData, TaxYearDraft, FilingType, FilingGoal, AdvisorMessage } from "@/types";
+import type { AppState, TaxPayer, FinancialData, TaxYearDraft, FilingType, FilingGoal, AdvisorMessage, VaultDocMeta, VaultDocType } from "@/types";
 import { INITIAL_STATE } from "./initialState";
 import { calculateFullRefund, buildInsightsFromResult } from "./calculateTax";
 import { saveState, loadState } from "./db";
@@ -36,6 +36,10 @@ interface AppContextValue {
   createDraft: (taxYear: number, filingType?: FilingType, filingGoal?: FilingGoal) => string;
   switchDraft: (draftId: string) => void;
   allDrafts: TaxYearDraft[];
+  // ── Document vault ────────────────────────────────────────────────────────
+  addDocument: (meta: VaultDocMeta) => void;
+  removeDocument: (id: string) => void;
+  updateDocumentType: (id: string, type: VaultDocType) => void;
   // ── AI Advisor (P5) ───────────────────────────────────────────────────────
   saveAdvisorMessage: (msg: AdvisorMessage) => void;
   advisorMessages: AdvisorMessage[];
@@ -84,9 +88,8 @@ function migrateLegacyState(stored: unknown): AppState {
     } as AppState;
   }
   const migrated = s as unknown as AppState;
-  if (!migrated.advisorHistory) {
-    migrated.advisorHistory = {};
-  }
+  if (!migrated.advisorHistory) migrated.advisorHistory = {};
+  if (!migrated.documents) migrated.documents = [];
   return migrated;
 }
 
@@ -249,6 +252,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const allDrafts = Object.values(state.drafts ?? {}).sort((a, b) => b.taxYear - a.taxYear);
 
+  // ── Document vault ────────────────────────────────────────────────────────
+
+  const addDocument = (meta: VaultDocMeta) =>
+    setState((s) => ({
+      ...s,
+      documents: [...(s.documents ?? []), meta],
+    }));
+
+  const removeDocument = (id: string) =>
+    setState((s) => ({
+      ...s,
+      documents: (s.documents ?? []).filter((d) => d.id !== id),
+    }));
+
+  const updateDocumentType = (id: string, type: VaultDocType) =>
+    setState((s) => ({
+      ...s,
+      documents: (s.documents ?? []).map((d) => d.id === id ? { ...d, type } : d),
+    }));
+
   // ── Advisor history ────────────────────────────────────────────────────────
   const saveAdvisorMessage = (msg: AdvisorMessage) =>
     setState((s) => ({
@@ -278,6 +301,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         createDraft,
         switchDraft,
         allDrafts,
+        addDocument,
+        removeDocument,
+        updateDocumentType,
         saveAdvisorMessage,
         advisorMessages,
       }}
