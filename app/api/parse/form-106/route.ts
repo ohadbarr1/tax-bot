@@ -3,11 +3,12 @@
  *
  * Accepts a multipart/form-data upload of a Form 106 (Israeli employer annual
  * salary summary) as PDF or image. For PDFs, extracts embedded text via
- * pdfjs-dist (no OCR needed for digital PDFs). For images (JPG/PNG/TIFF),
- * runs Tesseract.js Hebrew + English OCR.
+ * pdf-parse (Node-compatible wrapper around pdfjs-dist legacy build — the
+ * stock pdfjs-dist v5+ ESM entry crashes in Node with "DOMMatrix is not
+ * defined"). For images (JPG/PNG/TIFF), runs Tesseract.js Hebrew + English OCR.
  *
  * Supported inputs:
- *   • PDF  — text extracted via pdfjs-dist (all pages)
+ *   • PDF  — text extracted via pdf-parse (all pages)
  *   • Image — JPG, PNG, TIFF (Tesseract OCR)
  *
  * Field extraction strategy:
@@ -95,37 +96,18 @@ function extractFields(text: string): ExtractedFields {
 // ─── PDF text extraction ──────────────────────────────────────────────────────
 
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  // Dynamic import to avoid bundling issues with Next.js edge runtimes
-  const pdfjsLib = await import("pdfjs-dist");
+  // pdf-parse v2 bundles pdfjs-dist's legacy Node-compatible build under the
+  // hood, sidestepping the "DOMMatrix is not defined" crash the ESM entry
+  // throws on modern pdfjs-dist v5+ in a Node runtime.
+  const { PDFParse } = await import("pdf-parse");
 
-  // In Node.js, pdfjs-dist auto-disables workers; still set workerSrc to
-  // satisfy the internal check before it flips to fake-worker mode.
-  const workerPath = path.join(
-    process.cwd(),
-    "node_modules",
-    "pdfjs-dist",
-    "build",
-    "pdf.worker.mjs"
-  );
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `file://${workerPath}`;
-
-  const uint8 = new Uint8Array(buffer);
-  const loadingTask = pdfjsLib.getDocument({ data: uint8 });
-  const pdfDoc = await loadingTask.promise;
-
-  const textParts: string[] = [];
-
-  for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-    const page = await pdfDoc.getPage(pageNum);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((item: any) => ("str" in item ? item.str : ""))
-      .join(" ");
-    textParts.push(pageText);
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  try {
+    const result = await parser.getText();
+    return result.text;
+  } finally {
+    await parser.destroy();
   }
-
-  return textParts.join("\n");
 }
 
 // ─── Image OCR ───────────────────────────────────────────────────────────────

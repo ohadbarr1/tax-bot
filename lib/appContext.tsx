@@ -9,7 +9,7 @@ import React, {
   useCallback,
 } from "react";
 import type { AppState, TaxPayer, FinancialData, TaxYearDraft, FilingType, FilingGoal, AdvisorMessage } from "@/types";
-import { INITIAL_STATE } from "./mockData";
+import { INITIAL_STATE } from "./initialState";
 import { calculateFullRefund, buildInsightsFromResult } from "./calculateTax";
 import { saveState, loadState } from "./db";
 

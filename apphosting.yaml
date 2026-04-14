@@ -1,6 +1,11 @@
 runConfig:
-  concurrency: 80
-  cpu: 1
-  memoryMiB: 1024
+  # Tesseract OCR (Hebrew+English lang data) + pdf-lib + pdfjs can spike RAM
+  # on a single request. Cap instances low but give each one enough headroom.
+  cpu: 2
+  memoryMiB: 2048
+  concurrency: 40
   minInstances: 0
   maxInstances: 10
+  # PDF generation (pdf-lib draws + subset:false font embed) can take >30s
+  # on cold-start; OCR on multi-page 106 scans can also exceed 60s.
+  timeoutSeconds: 300

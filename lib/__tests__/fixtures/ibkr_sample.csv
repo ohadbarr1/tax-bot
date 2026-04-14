@@ -1,0 +1,12 @@
+Statement,Data,Header
+Trades,Data,OrderType,Asset Category,Symbol,Date/Time,Quantity,T. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Trade,Equity,SPY,2024-01-15,10,480.00,-4800.00,-1.00,4801.00,0,0,O
+Trades,Data,Trade,Equity,SPY,2024-12-10,-10,550.00,5500.00,-1.00,4801.00,698.00,0,C
+Trades,Data,Trade,Equity,TSLA,2024-03-20,5,180.00,-900.00,-1.00,901.00,0,0,O
+Trades,Data,Trade,Equity,TSLA,2024-08-15,-5,150.00,750.00,-1.00,901.00,-152.00,0,C
+Dividends,Data,Currency,Date,Description,Amount
+Dividends,Data,USD,2024-03-15,SPY (US78462F1030) Cash Dividend,15.50
+Dividends,Data,USD,2024-06-15,SPY (US78462F1030) Cash Dividend,16.20
+Withholding Tax,Data,Currency,Date,Description,Amount
+Withholding Tax,Data,USD,2024-03-15,SPY (US78462F1030) Cash Dividend - US Tax,-3.87
+Withholding Tax,Data,USD,2024-06-15,SPY (US78462F1030) Cash Dividend - US Tax,-4.05
