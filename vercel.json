@@ -1,0 +1,20 @@
+{
+  "functions": {
+    "app/api/generate/form-135/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/parse/form-106/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/parse/ibkr/route.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "app/api/advisor/route.ts": {
+      "maxDuration": 60,
+      "memory": 512
+    }
+  }
+}

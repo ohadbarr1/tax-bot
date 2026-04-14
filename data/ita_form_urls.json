@@ -1,0 +1,58 @@
+{
+  "description": "Official ITA (רשות המסים) form URLs and metadata",
+  "base_url": "https://www.gov.il/he/departments/israel_tax_authority",
+  "forms": {
+    "135": {
+      "name_he": "טופס 135 — בקשה להחזר מס",
+      "name_en": "Form 135 — Tax Refund Request",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form135/he/form135.pdf",
+      "instructions_url": "https://www.gov.il/BlobFolder/generalpage/form135/he/form135_instructions.pdf",
+      "year": "all",
+      "description": "בקשה להחזר מס הכנסה לשכירים"
+    },
+    "1301": {
+      "name_he": "טופס 1301 — דוח שנתי מלא",
+      "name_en": "Form 1301 — Annual Tax Return",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form1301/he/form1301.pdf",
+      "instructions_url": "https://www.gov.il/BlobFolder/generalpage/form1301/he/form1301_instructions.pdf",
+      "year": "2024",
+      "description": "דוח שנתי מלא לכל ההכנסות — טופס 1301"
+    },
+    "161": {
+      "name_he": "טופס 161 — הודעה על סיום עבודה",
+      "name_en": "Form 161 — Termination of Employment Notice",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form161/he/form161.pdf",
+      "instructions_url": "https://www.gov.il/BlobFolder/generalpage/form161/he/form161_instructions.pdf",
+      "year": "all",
+      "description": "הודעה על סיום עבודה ותשלום פיצויים"
+    },
+    "867": {
+      "name_he": "טופס 867 — נתוני ניכוי והפרשות",
+      "name_en": "Form 867 — Deductions and Provisions Certificate",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form867/he/form867.pdf",
+      "year": "all",
+      "description": "אישור ניכויים מקרן פנסיה / קופת גמל"
+    },
+    "1214": {
+      "name_he": "טופס 1214 — בקשה לפטור ממס",
+      "name_en": "Form 1214 — Exemption Request",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form1214/he/form1214.pdf",
+      "year": "all",
+      "description": "בקשה לפטור ממס הכנסה"
+    },
+    "1322": {
+      "name_he": "טופס 1322 — דוח רווחי הון",
+      "name_en": "Form 1322 — Capital Gains Report",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form1322/he/form1322.pdf",
+      "year": "2024",
+      "description": "דוח על רווחי הון ממכירת ניירות ערך"
+    },
+    "106": {
+      "name_he": "טופס 106 — אישור שנתי ממעסיק",
+      "name_en": "Form 106 — Annual Employer Certificate",
+      "url": "https://www.gov.il/BlobFolder/generalpage/form106/he/form106.pdf",
+      "year": "all",
+      "description": "אישור שנתי על הכנסות וניכויים ממעסיק"
+    }
+  }
+}

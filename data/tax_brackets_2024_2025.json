@@ -1,0 +1,100 @@
+{
+    "2024": {
+        "tax_year": 2024,
+        "credit_point_monthly_value": 242,
+        "credit_point_annual_value": 2904,
+        "tax_brackets": [
+            {
+                "bracket": 1,
+                "rate": 0.10,
+                "min": 0,
+                "max": 84120
+            },
+            {
+                "bracket": 2,
+                "rate": 0.14,
+                "min": 84121,
+                "max": 120720
+            },
+            {
+                "bracket": 3,
+                "rate": 0.20,
+                "min": 120721,
+                "max": 193800
+            },
+            {
+                "bracket": 4,
+                "rate": 0.31,
+                "min": 193801,
+                "max": 269280
+            },
+            {
+                "bracket": 5,
+                "rate": 0.35,
+                "min": 269281,
+                "max": 560520
+            },
+            {
+                "bracket": 6,
+                "rate": 0.47,
+                "min": 560521,
+                "max": 721560
+            },
+            {
+                "bracket": 7,
+                "rate": 0.50,
+                "min": 721561,
+                "max": 9999999
+            }
+        ]
+    },
+    "2025": {
+        "tax_year": 2025,
+        "credit_point_monthly_value": 250,
+        "credit_point_annual_value": 3000,
+        "tax_brackets": [
+            {
+                "bracket": 1,
+                "rate": 0.10,
+                "min": 0,
+                "max": 88440
+            },
+            {
+                "bracket": 2,
+                "rate": 0.14,
+                "min": 88441,
+                "max": 126840
+            },
+            {
+                "bracket": 3,
+                "rate": 0.20,
+                "min": 126841,
+                "max": 203520
+            },
+            {
+                "bracket": 4,
+                "rate": 0.31,
+                "min": 203521,
+                "max": 282960
+            },
+            {
+                "bracket": 5,
+                "rate": 0.35,
+                "min": 282961,
+                "max": 589080
+            },
+            {
+                "bracket": 6,
+                "rate": 0.47,
+                "min": 589081,
+                "max": 758160
+            },
+            {
+                "bracket": 7,
+                "rate": 0.50,
+                "min": 758161,
+                "max": 9999999
+            }
+        ]
+    }
+}
