@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import type { Variants } from "framer-motion";
 import { LineChart, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
 import type { InsightPillar, TaxInsight } from "@/types";
@@ -35,6 +36,7 @@ const PILLAR_ORDER: InsightPillar[] = [
 export default function Dashboard() {
   const { state, setView, updateFinancials } = useApp();
   const { financials, taxpayer } = state;
+  const router = useRouter();
 
   const insightsByPillar = PILLAR_ORDER.reduce<Record<InsightPillar, TaxInsight[]>>(
     (acc, p) => {
@@ -66,11 +68,11 @@ export default function Dashboard() {
         totalActions={totalActions}
         pendingActions={pendingActions}
         onUpload={() => setView("upload")}
-        onQuestionnaire={() => setView("questionnaire")}
+        onQuestionnaire={() => router.push("/questionnaire")}
       />
 
       {/* IBKR Advanced Analysis Card */}
-      {financials.hasForeignBroker && (
+      {(financials.hasForeignBroker || !!financials.ibkrData) && (
         <motion.div variants={fadeUp}>
           <button
             onClick={() => setView("ibkr")}

@@ -73,7 +73,7 @@ export function Sidebar() {
 
       {/* Mobile bottom tab bar */}
       <nav className="fixed bottom-0 start-0 end-0 z-50 md:hidden bg-sidebar border-t border-sidebar-border flex justify-around py-1 safe-area-pb">
-        {NAV_ITEMS.slice(0, 5).map((item) => {
+        {NAV_ITEMS.slice(0, 6).map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           return (

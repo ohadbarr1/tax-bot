@@ -121,7 +121,7 @@ export default function Step6LifeEvents({
       <div className="rounded-xl border border-border bg-slate-50 p-4 space-y-2">
         <p className="text-xs font-semibold text-[#0F172A]">סיכום השאלון</p>
         {[
-          { label: "מצב משפחתי", value: maritalStatus === "married" ? "נשוי/אה" : maritalStatus === "divorced" ? "גרוש/ה" : "רווק/ה" },
+          { label: "מצב משפחתי", value: maritalStatus === "married" ? "נשוי/אה" : maritalStatus === "divorced" ? "גרוש/ה" : maritalStatus === "widowed" ? "אלמן/ה" : "רווק/ה" },
           { label: "ילדים", value: `${childrenCount}` },
           { label: "תארים", value: hasDegree ? `${degreesCount}` : "ללא" },
           { label: "ברוקר", value: investsCapital && portfolioLocation === "foreign_broker" ? selectedBroker || "זר" : "לא רלוונטי" },

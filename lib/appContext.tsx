@@ -27,8 +27,9 @@ interface AppContextValue {
    * Merge a patch into taxpayer AND immediately re-run the full tax calculation
    * in one atomic setState call. Used by the Data Ingestion Engine (FileDropzone)
    * so uploading a Form 106 or IBKR statement instantly re-renders the Dashboard.
+   * Optional financialsPatch is merged atomically to avoid the double-setState race.
    */
-  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>) => void;
+  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) => void;
   /** Whether the initial IndexedDB hydration is complete (avoids FOUC) */
   hydrated: boolean;
   // ── Multi-draft (P2) ──────────────────────────────────────────────────────
@@ -172,20 +173,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }));
 
-  const updateTaxpayerAndRecalculate = (patch: Partial<TaxPayer>) =>
-    setState((s) => {
-      const updatedTaxpayer: TaxPayer = { ...s.taxpayer, ...patch };
-      const year = s.financials.taxYears[0] ?? 2024;
-      const result = calculateFullRefund(updatedTaxpayer, year);
-      const insights = buildInsightsFromResult(result, updatedTaxpayer, year);
+  const updateTaxpayerAndRecalculate = (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) =>
+    setState((prev) => {
+      const newTaxpayer: TaxPayer = { ...prev.taxpayer, ...patch };
+      const year = prev.financials.taxYears[0] ?? 2024;
+      const result = calculateFullRefund(newTaxpayer, year);
+      const insights = buildInsightsFromResult(result, newTaxpayer, year);
+      const newFinancials: FinancialData = {
+        ...prev.financials,
+        ...financialsPatch,
+        estimatedRefund: result.netRefund,
+        insights,
+        calculationResult: result,
+      };
       return {
-        ...s,
-        taxpayer: updatedTaxpayer,
-        financials: {
-          ...s.financials,
-          estimatedRefund: result.netRefund,
-          insights,
-          calculationResult: result,
+        ...prev,
+        taxpayer: newTaxpayer,
+        financials: newFinancials,
+        drafts: {
+          ...prev.drafts,
+          [prev.currentDraftId]: {
+            ...prev.drafts[prev.currentDraftId],
+            taxpayer: newTaxpayer,
+            financials: newFinancials,
+            updatedAt: new Date().toISOString(),
+          },
         },
       };
     });

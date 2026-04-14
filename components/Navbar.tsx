@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -9,6 +10,7 @@ import { DraftSwitcher } from "@/components/DraftSwitcher";
 export function Navbar() {
   const { state, setView } = useApp();
   const { taxpayer } = state;
+  const router = useRouter();
   const initials = taxpayer.fullName
     .split(" ")
     .filter((w) => /[\u0590-\u05FF]/.test(w) || /[A-Z]/.test(w[0]))
@@ -31,13 +33,13 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-1">
           <DraftSwitcher />
           {[
-            { label: "שאלון", view: "questionnaire" as const },
-            { label: "מסמכים", view: "upload" as const },
-            { label: "לוח בקרה", view: "dashboard" as const },
+            { label: "שאלון", view: "questionnaire" as const, href: "/questionnaire" },
+            { label: "מסמכים", view: "upload" as const, href: null },
+            { label: "לוח בקרה", view: "dashboard" as const, href: null },
           ].map((item) => (
             <button
               key={item.view}
-              onClick={() => setView(item.view)}
+              onClick={() => item.href ? router.push(item.href) : setView(item.view)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 state.currentView === item.view
                   ? "bg-brand-900 text-white"

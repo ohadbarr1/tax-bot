@@ -200,7 +200,13 @@ export async function POST(
 
     if (fileName.endsWith(".pdf")) {
       // Digital PDF → extract embedded text (much more reliable than OCR on PDF)
-      ocrText = await extractTextFromPdf(buffer);
+      const pdfText = await extractTextFromPdf(buffer);
+      if (pdfText.replace(/\s+/g, "").length < 100) {
+        // Image-only PDF — fall back to Tesseract
+        ocrText = await runImageOcr(buffer);
+      } else {
+        ocrText = pdfText;
+      }
     } else {
       // Scanned image → Tesseract OCR
       ocrText = await runImageOcr(buffer);

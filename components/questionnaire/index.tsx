@@ -7,6 +7,7 @@ import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
 import type { Child, Degree, Employer, PersonalDeduction, LifeEvent } from "@/types";
 import { slideVariants, STEPS } from "./StepShell";
+import Step0Personal from "./Step0Personal";
 import Step1Personal from "./Step1Personal";
 import Step2Education from "./Step2Education";
 import Step3Capital from "./Step3Capital";
@@ -27,9 +28,16 @@ export function Questionnaire() {
   const [step, setStep] = useState(state.questionnaire.step);
   const [dir,  setDir]  = useState(1);
 
+  // ── Step 0 state (personal details) ────────────────────────────────────────
+  const [firstName,  setFirstName]  = useState(taxpayer.firstName  ?? "");
+  const [lastName,   setLastName]   = useState(taxpayer.lastName   ?? "");
+  const [idNumber,   setIdNumber]   = useState(taxpayer.idNumber   ?? "");
+  const [address,    setAddress]    = useState(taxpayer.address    ?? { city: "", street: "", houseNumber: "" });
+  const [bank,       setBank]       = useState(taxpayer.bank       ?? { bankId: "", bankName: "", branch: "", account: "" });
+
   // ── Step 1 state ───────────────────────────────────────────────────────────
   const [maritalStatus, setMaritalStatus] = useState(taxpayer.maritalStatus);
-  const [spouseIncome,  setSpouseIncome]  = useState(taxpayer.spouseHasIncome ?? true);
+  const [spouseIncome,  setSpouseIncome]  = useState(taxpayer.spouseHasIncome ?? false);
   const [paysAlimony,   setPaysAlimony]   = useState(taxpayer.paysAlimony ?? false);
   const [children,      setChildren]      = useState<Child[]>(taxpayer.children);
 
@@ -128,6 +136,11 @@ export function Questionnaire() {
 
   const handleFinish = () => {
     updateTaxpayer({
+      firstName,
+      lastName,
+      idNumber,
+      address,
+      bank,
       maritalStatus,
       spouseHasIncome: spouseIncome,
       paysAlimony,
@@ -158,7 +171,7 @@ export function Questionnaire() {
             const done   = step > s.id;
             const active = step === s.id;
             return (
-              <div key={s.id} className="flex flex-col items-center gap-1.5 z-10 w-1/6">
+              <div key={s.id} className="flex flex-col items-center gap-1.5 z-10 w-[14.28%]">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                     done
@@ -197,6 +210,21 @@ export function Questionnaire() {
             className="p-8 space-y-6"
           >
             {step === 1 && (
+              <Step0Personal
+                firstName={firstName}
+                lastName={lastName}
+                idNumber={idNumber}
+                address={address}
+                bank={bank}
+                onFirstNameChange={setFirstName}
+                onLastNameChange={setLastName}
+                onIdNumberChange={setIdNumber}
+                onAddressChange={setAddress}
+                onBankChange={setBank}
+              />
+            )}
+
+            {step === 2 && (
               <Step1Personal
                 maritalStatus={maritalStatus}
                 spouseIncome={spouseIncome}
@@ -209,7 +237,7 @@ export function Questionnaire() {
               />
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <Step2Education
                 hasDegree={hasDegree}
                 degrees={degrees}
@@ -218,7 +246,7 @@ export function Questionnaire() {
               />
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <Step3Capital
                 investsCapital={investsCapital}
                 portfolioLocation={portfolioLocation}
@@ -229,7 +257,7 @@ export function Questionnaire() {
               />
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <Step4Employers
                 employers={employers}
                 hasOverlap={hasOverlap}
@@ -239,7 +267,7 @@ export function Questionnaire() {
               />
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <Step5Deductions
                 deductions={deductions}
                 donationCredit={donationCredit}
@@ -250,7 +278,7 @@ export function Questionnaire() {
               />
             )}
 
-            {step === 6 && (
+            {step === 7 && (
               <Step6LifeEvents
                 lifeEvents={lifeEvents}
                 maritalStatus={maritalStatus}

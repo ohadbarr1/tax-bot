@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import taxData from "@/data/tax_brackets_2024_2025.json";
 
 interface SpreadYear {
   year: number;
@@ -21,16 +22,10 @@ function calculateSeveranceSpreading(
   // Simplified: spread evenly across spreadYears
   const annualAmount = taxableSeverance / spreadYears;
 
-  // Tax brackets 2024
-  const brackets = [
-    { max: 84120, rate: 0.10 },
-    { max: 120720, rate: 0.14 },
-    { max: 193800, rate: 0.20 },
-    { max: 269280, rate: 0.31 },
-    { max: 560520, rate: 0.35 },
-    { max: 721560, rate: 0.47 },
-    { max: 9999999, rate: 0.50 },
-  ];
+  // Dynamic brackets from tax data
+  const safeYear = String(currentYear === 2025 ? 2025 : 2024) as "2024" | "2025";
+  const rawBrackets = taxData[safeYear].tax_brackets;
+  const brackets = rawBrackets.map((b) => ({ max: b.max, rate: b.rate }));
 
   function calcTax(income: number): number {
     let tax = 0;

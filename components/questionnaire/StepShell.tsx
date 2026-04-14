@@ -2,6 +2,7 @@
 
 import { Info, Check } from "lucide-react";
 import {
+  IdCard,
   User,
   GraduationCap,
   TrendingUp,
@@ -25,12 +26,13 @@ export function computeMonthsWorked(start: number, end: number): number {
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 export const STEPS = [
-  { id: 1, label: "מצב אישי",   icon: User },
-  { id: 2, label: "השכלה",      icon: GraduationCap },
-  { id: 3, label: "שוק ההון",   icon: TrendingUp },
-  { id: 4, label: "מעסיקים",    icon: Briefcase },
-  { id: 5, label: "ניכויים",    icon: HandCoins },
-  { id: 6, label: "אירועי חיים", icon: CalendarDays },
+  { id: 1, label: "פרטים אישיים", icon: IdCard },
+  { id: 2, label: "מצב אישי",    icon: User },
+  { id: 3, label: "השכלה",       icon: GraduationCap },
+  { id: 4, label: "שוק ההון",    icon: TrendingUp },
+  { id: 5, label: "מעסיקים",     icon: Briefcase },
+  { id: 6, label: "ניכויים",     icon: HandCoins },
+  { id: 7, label: "אירועי חיים",  icon: CalendarDays },
 ];
 
 // ─── Animation variants ───────────────────────────────────────────────────────

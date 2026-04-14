@@ -95,7 +95,7 @@ const cardVariants: Variants = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function FileDropzone() {
-  const { state, setView, updateTaxpayerAndRecalculate, updateFinancials } = useApp();
+  const { state, setView, updateTaxpayerAndRecalculate } = useApp();
   const { taxpayer, financials } = state;
 
   const [dragging, setDragging] = useState(false);
@@ -156,20 +156,19 @@ export function FileDropzone() {
             throw new Error(json.error ?? "שגיאה בפענוח קובץ ה-CSV.");
           }
 
-          // 1. Update capital gains in taxpayer state + re-run tax engine
-          updateTaxpayerAndRecalculate({
-            capitalGains: {
-              totalRealizedProfit: json.data.totalRealizedProfit,
-              totalRealizedLoss:   json.data.totalRealizedLoss,
-              foreignTaxWithheld:  json.data.foreignTaxWithheld,
-              dividends:           json.data.dividendsILS,
+          // Update capital gains in taxpayer state + store ibkrData atomically
+          // to avoid the double-setState race condition (5a) and draft sync loss (5b).
+          updateTaxpayerAndRecalculate(
+            {
+              capitalGains: {
+                totalRealizedProfit: json.data.totalRealizedProfit,
+                totalRealizedLoss:   json.data.totalRealizedLoss,
+                foreignTaxWithheld:  json.data.foreignTaxWithheld,
+                dividends:           json.data.dividendsILS,
+              },
             },
-          });
-
-          // 2. Store full parse result (USD + ILS) for IbkrAnalysisDashboard.
-          //    updateFinancials uses functional setState applied after the above,
-          //    so both financials.ibkrData and the recalculated fields coexist.
-          updateFinancials({ ibkrData: json.data });
+            { ibkrData: json.data },
+          );
 
         } else {
           // ── Form 106 ───────────────────────────────────────────────────
@@ -224,7 +223,7 @@ export function FileDropzone() {
         showToast(message);
       }
     },
-    [taxpayer.employers, updateTaxpayerAndRecalculate, updateFinancials, setView, showToast, startFakeProgress]
+    [taxpayer.employers, updateTaxpayerAndRecalculate, setView, showToast, startFakeProgress]
   );
 
   // ── File entry point ───────────────────────────────────────────────────────

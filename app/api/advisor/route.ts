@@ -29,17 +29,25 @@ export async function POST(request: Request) {
     ? `${systemPrompt}\n\n${draftContext}`
     : systemPrompt;
 
-  const result = streamText({
-    model: anthropic("claude-opus-4-5"),
-    system: fullSystem,
-    messages,
-    maxOutputTokens: 1024,
-    providerOptions: {
-      anthropic: {
-        cacheControl: { type: "ephemeral" },
+  try {
+    const result = streamText({
+      model: anthropic("claude-opus-4-5"),
+      system: fullSystem,
+      messages,
+      maxOutputTokens: 1024,
+      providerOptions: {
+        anthropic: {
+          cacheControl: { type: "ephemeral" },
+        },
       },
-    },
-  });
+    });
 
-  return result.toTextStreamResponse();
+    return result.toTextStreamResponse();
+  } catch (err) {
+    console.error("[advisor] streamText failed:", err);
+    return new Response(JSON.stringify({ error: "AI service unavailable" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }

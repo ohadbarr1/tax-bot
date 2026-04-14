@@ -58,7 +58,7 @@ export async function POST(
   // ── 2. Validate file type ─────────────────────────────────────────────────
   const isCSV =
     file.name.toLowerCase().endsWith(".csv") ||
-    ACCEPTED_MIME.some((m) => file.type.startsWith(m.split("/")[0]));
+    ACCEPTED_MIME.includes(file.type);
 
   if (!isCSV) {
     return NextResponse.json(

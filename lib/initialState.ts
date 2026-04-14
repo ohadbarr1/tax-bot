@@ -19,6 +19,8 @@ export const INITIAL_TAXPAYER = {
     pulledSeverancePay: false,
     hasForm161: false,
   },
+  address: { city: "", street: "", houseNumber: "" },
+  bank: { bankId: "", bankName: "", branch: "", account: "" },
 };
 
 // ─── Blank initial financials — all zeros, no pre-baked insights ─────────────
