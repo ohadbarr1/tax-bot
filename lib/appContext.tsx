@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import type { AppState, TaxPayer, FinancialData, TaxYearDraft, FilingType, FilingGoal, AdvisorMessage, VaultDocMeta, VaultDocType } from "@/types";
 import { INITIAL_STATE } from "./initialState";
-import { calculateFullRefund, buildInsightsFromResult } from "./calculateTax";
+import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
 import { saveState, loadState } from "./db";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
@@ -135,6 +135,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const year = s.financials.taxYears[0] ?? 2024;
       const result = calculateFullRefund(s.taxpayer, year);
       const insights = buildInsightsFromResult(result, s.taxpayer, year);
+      const actionItems = buildActionItemsFromResult(result, s.taxpayer);
       return {
         ...s,
         questionnaire: { ...s.questionnaire, completed: true },
@@ -143,6 +144,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...s.financials,
           estimatedRefund: result.netRefund,
           insights,
+          actionItems,
           calculationResult: result,
         },
       };
@@ -182,11 +184,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const year = prev.financials.taxYears[0] ?? 2024;
       const result = calculateFullRefund(newTaxpayer, year);
       const insights = buildInsightsFromResult(result, newTaxpayer, year);
+      const actionItems = buildActionItemsFromResult(result, newTaxpayer);
       const newFinancials: FinancialData = {
         ...prev.financials,
         ...financialsPatch,
         estimatedRefund: result.netRefund,
         insights,
+        actionItems,
         calculationResult: result,
       };
       return {

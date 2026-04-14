@@ -2,8 +2,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { FolderOpen, FileText } from "lucide-react";
 import { DocUploadZone, TYPE_LABELS } from "@/components/documents/DocUploadZone";
+import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZone";
 import { useApp } from "@/lib/appContext";
-import type { VaultDocMeta, VaultDocType } from "@/types";
+import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse } from "@/types";
 
 const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
   { id: "all",          label: "כל המסמכים" },
@@ -18,12 +19,17 @@ const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
 ];
 
 export default function DocumentsPage() {
-  const { state, addDocument, removeDocument, updateDocumentType, hydrated } = useApp();
+  const { state, addDocument, removeDocument, updateDocumentType, updateTaxpayerAndRecalculate, hydrated } = useApp();
 
   // Session-only blob URLs — never persisted (blob URLs are tab-lifetime only).
-  // A Map from doc id → objectUrl.
   const [sessionUrls, setSessionUrls] = useState<Map<string, string>>(new Map());
-  // Revoke URLs of removed docs to avoid memory leaks.
+  // Session-only File objects — needed for parsing
+  const [sessionFiles, setSessionFiles] = useState<Map<string, File>>(new Map());
+  // Parse status per doc
+  const [parseStatuses, setParseStatuses] = useState<Map<string, ParseStatus>>(new Map());
+  // Parse results per doc
+  const [parseResults, setParseResults] = useState<Map<string, ParseResult>>(new Map());
+
   const revokeUrl = useCallback((id: string) => {
     setSessionUrls((prev) => {
       const next = new Map(prev);
@@ -46,15 +52,116 @@ export default function DocumentsPage() {
   const docs: VaultDocMeta[] = state.documents ?? [];
   const filtered = activeCategory === "all" ? docs : docs.filter((d) => d.type === activeCategory);
 
-  const handleAdd = useCallback((meta: VaultDocMeta, objectUrl: string) => {
+  // ── Parse a file and update state ─────────────────────────────────────────
+
+  const parseDocument = useCallback(async (docId: string, docType: VaultDocType, file: File) => {
+    if (docType !== "form106" && docType !== "ibkr") return;
+
+    setParseStatuses((prev) => new Map(prev).set(docId, "parsing"));
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      if (docType === "form106") {
+        const res = await fetch("/api/parse/form-106", { method: "POST", body: formData });
+        const json: Form106ParseResponse = await res.json();
+        if (!json.success || !json.data) throw new Error(json.error ?? "parse failed");
+
+        const d = json.data;
+        const summary = [
+          `מעסיק: ${d.employerName}`,
+          `ברוטו: ₪${d.grossSalary.toLocaleString("he-IL")}`,
+          `מס שנוכה: ₪${d.taxWithheld.toLocaleString("he-IL")}`,
+          `פנסיה: ₪${d.pensionDeduction.toLocaleString("he-IL")}`,
+          `חודשים: ${d.monthsWorked}`,
+        ].join(" · ");
+
+        setParseResults((prev) => new Map(prev).set(docId, { summary, raw: d }));
+        setParseStatuses((prev) => new Map(prev).set(docId, "done"));
+
+        // Update global state — add/replace employer
+        updateTaxpayerAndRecalculate({
+          employers: [
+            ...state.taxpayer.employers.filter((e) => e.name !== d.employerName),
+            {
+              id: `emp-${docId}`,
+              name: d.employerName,
+              isMainEmployer: state.taxpayer.employers.length === 0,
+              monthsWorked: d.monthsWorked,
+              grossSalary: d.grossSalary,
+              taxWithheld: d.taxWithheld,
+              pensionDeduction: d.pensionDeduction,
+            },
+          ],
+        });
+
+      } else if (docType === "ibkr") {
+        const res = await fetch("/api/parse/ibkr", { method: "POST", body: formData });
+        const json: IbkrParseResponse = await res.json();
+        if (!json.success || !json.data) throw new Error(json.error ?? "parse failed");
+
+        const d = json.data;
+        const summary = [
+          `רווח: $${d.totalProfitUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+          `הפסד: $${d.totalLossUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+          `דיבידנדים: $${d.dividendsUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+          `WHT: $${d.foreignTaxUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+          `שער: ${d.exchangeRate}`,
+        ].join(" · ");
+
+        setParseResults((prev) => new Map(prev).set(docId, { summary, raw: d }));
+        setParseStatuses((prev) => new Map(prev).set(docId, "done"));
+
+        // Update global state
+        updateTaxpayerAndRecalculate(
+          {
+            capitalGains: {
+              totalRealizedProfit: d.totalRealizedProfit,
+              totalRealizedLoss: d.totalRealizedLoss,
+              foreignTaxWithheld: d.foreignTaxWithheld,
+              dividends: d.dividendsILS,
+            },
+          },
+          { ibkrData: d, hasForeignBroker: true }
+        );
+      }
+    } catch {
+      setParseStatuses((prev) => new Map(prev).set(docId, "error"));
+    }
+  }, [state.taxpayer.employers, updateTaxpayerAndRecalculate]);
+
+  const handleAdd = useCallback((meta: VaultDocMeta, objectUrl: string, file: File) => {
     addDocument(meta);
     setSessionUrls((prev) => new Map(prev).set(meta.id, objectUrl));
-  }, [addDocument]);
+    setSessionFiles((prev) => new Map(prev).set(meta.id, file));
+    // Auto-parse if parseable type
+    if (meta.type === "form106" || meta.type === "ibkr") {
+      parseDocument(meta.id, meta.type, file);
+    }
+  }, [addDocument, parseDocument]);
 
   const handleRemove = useCallback((id: string) => {
     removeDocument(id);
     revokeUrl(id);
+    setSessionFiles((prev) => { const n = new Map(prev); n.delete(id); return n; });
+    setParseStatuses((prev) => { const n = new Map(prev); n.delete(id); return n; });
+    setParseResults((prev) => { const n = new Map(prev); n.delete(id); return n; });
   }, [removeDocument, revokeUrl]);
+
+  const handleTypeChange = useCallback((id: string, type: VaultDocType) => {
+    updateDocumentType(id, type);
+    // If type changed to a parseable type and we have the file, auto-parse
+    const file = sessionFiles.get(id);
+    if (file && (type === "form106" || type === "ibkr")) {
+      parseDocument(id, type, file);
+    }
+  }, [updateDocumentType, sessionFiles, parseDocument]);
+
+  const handleReparse = useCallback((id: string) => {
+    // Called for docs from previous sessions (no File object) — prompt user
+    alert("הקובץ שמור ממפגש קודם. אנא העלה אותו מחדש לניתוח.");
+  }, []);
 
   if (!hydrated) {
     return (
@@ -115,9 +222,12 @@ export default function DocumentsPage() {
       <DocUploadZone
         docs={filtered}
         sessionUrls={sessionUrls}
+        parseStatuses={parseStatuses}
+        parseResults={parseResults}
         onAdd={handleAdd}
         onRemove={handleRemove}
-        onTypeChange={updateDocumentType}
+        onTypeChange={handleTypeChange}
+        onReparse={handleReparse}
       />
 
       {/* Empty state */}

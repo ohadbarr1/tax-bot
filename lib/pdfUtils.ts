@@ -35,7 +35,8 @@ const RTL_MARK = "\u200F";
  */
 export function hebrewForPdf(text: string): string {
   if (!text) return "";
-  return `${RTL_MARK}${text}`;
+  // pdf-lib draws LTR only; reverse characters for visual RTL order in PDF
+  return text.split("").reverse().join("");
 }
 
 /**

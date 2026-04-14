@@ -14,7 +14,7 @@
 
 import taxData from "@/data/tax_brackets_2024_2025.json";
 import peripheryData from "@/data/periphery_postcodes.json";
-import type { TaxPayer, PersonalDeduction, TaxInsight } from "@/types";
+import type { TaxPayer, PersonalDeduction, TaxInsight, ActionItem } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -415,7 +415,7 @@ export function convertUsdToIls(usdAmount: number, year: number): number {
  */
 export function calculateFullRefund(taxpayer: TaxPayer, year: number): CalculationResult {
   // Strict year type guard — default to 2024 for unsupported years
-  const safeYear: 2024 | 2025 = year === 2025 ? 2025 : 2024;
+  const safeYear: 2024 | 2025 = year >= 2025 ? 2025 : 2024;
 
   // Step 1: Total gross income from all employers
   const totalGrossIncome = taxpayer.employers.reduce(
@@ -657,4 +657,104 @@ export function buildInsightsFromResult(
   }
 
   return insights;
+}
+
+/**
+ * Build ActionItem[] from a CalculationResult + taxpayer profile.
+ * Items are prioritized: high = required for filing, medium = important, low = optional.
+ */
+export function buildActionItemsFromResult(
+  result: CalculationResult,
+  taxpayer: TaxPayer
+): ActionItem[] {
+  const items: ActionItem[] = [];
+
+  // Upload Form 106 for each employer without grossSalary
+  const employersWithoutForm106 = taxpayer.employers.filter((e) => !e.grossSalary);
+  if (employersWithoutForm106.length > 0) {
+    items.push({
+      id: "action-upload-106",
+      label: `העלה טופס 106 (${employersWithoutForm106.length} מעסיק${employersWithoutForm106.length > 1 ? "ים" : ""})`,
+      completed: false,
+      priority: "high",
+      formNumber: "106",
+    });
+  } else if (taxpayer.employers.length > 0) {
+    items.push({
+      id: "action-form106-done",
+      label: "טופס 106 — הועלה",
+      completed: true,
+      priority: "high",
+      formNumber: "106",
+    });
+  }
+
+  // Tax coordination (תיאום מס) — multiple employers
+  if (taxpayer.employers.length > 1) {
+    items.push({
+      id: "action-tax-coord",
+      label: "בצע תיאום מס (עבדת אצל יותר ממעסיק אחד)",
+      completed: false,
+      priority: "high",
+    });
+  }
+
+  // Capital gains — need IBKR statement
+  if (taxpayer.capitalGains) {
+    items.push({
+      id: "action-ibkr-done",
+      label: "דוח IBKR / ברוקר — הועלה",
+      completed: true,
+      priority: "high",
+    });
+  } else if (result.totalGrossIncome > 0) {
+    items.push({
+      id: "action-upload-ibkr",
+      label: "העלה דוח ברוקר זר (אם רלוונטי)",
+      completed: false,
+      priority: "medium",
+    });
+  }
+
+  // Download & file Form 135
+  items.push({
+    id: "action-download-135",
+    label: "הורד טופס 135 ממוולא",
+    completed: false,
+    priority: "high",
+    formNumber: "135",
+  });
+
+  // Personal deductions — if none declared but income is high
+  if (taxpayer.personalDeductions.length === 0 && result.totalGrossIncome > 50_000) {
+    items.push({
+      id: "action-personal-deductions",
+      label: "בדוק זכאות לזיכויים: פנסיה, תרומות, ביטוח חיים",
+      completed: false,
+      priority: "medium",
+    });
+  }
+
+  // Severance — Form 161
+  if (taxpayer.lifeEvents?.pulledSeverancePay) {
+    items.push({
+      id: "action-form161",
+      label: "צרף טופס 161 (פיצויים)",
+      completed: taxpayer.lifeEvents.hasForm161,
+      priority: "high",
+      formNumber: "161",
+    });
+  }
+
+  // Capital gains refund — WHT credit
+  if (result.capitalGainsTax > 0 && taxpayer.capitalGains?.foreignTaxWithheld) {
+    items.push({
+      id: "action-wht-credit",
+      label: "בדוק זיכוי מס זר על רווחי הון (WHT)",
+      completed: false,
+      priority: "medium",
+    });
+  }
+
+  return items;
 }

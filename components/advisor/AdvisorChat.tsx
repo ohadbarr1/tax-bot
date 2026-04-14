@@ -18,6 +18,12 @@ export function AdvisorChat() {
   const { state, saveAdvisorMessage, advisorMessages } = useApp();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(advisorMessages);
+
+  // Sync messages when advisorMessages hydrates from IndexedDB
+  useEffect(() => {
+    setMessages(advisorMessages);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [advisorMessages.length === 0 ? 0 : advisorMessages[0]?.id]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -122,10 +128,10 @@ export function AdvisorChat() {
   }, []);
 
   return (
-    <div className="fixed bottom-6 left-6 z-50" dir="rtl">
+    <div className="fixed bottom-6 right-6 z-50" dir="rtl">
       {/* Chat panel */}
       {open && (
-        <div className="absolute bottom-14 left-0 w-[360px] h-[480px] bg-card border border-border rounded-2xl shadow-[var(--shadow-card-hover)] flex flex-col overflow-hidden">
+        <div className="absolute bottom-14 right-0 w-[360px] h-[480px] bg-card border border-border rounded-2xl shadow-[var(--shadow-card-hover)] flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-brand-900">
             <div className="flex items-center gap-2">
