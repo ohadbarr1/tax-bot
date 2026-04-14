@@ -95,10 +95,27 @@ function extractFields(text: string): ExtractedFields {
 
 // ─── PDF text extraction ──────────────────────────────────────────────────────
 
+/**
+ * pdfjs-dist v5+ (bundled by pdf-parse v2) evaluates `DOMMatrix`, `ImageData`,
+ * and `Path2D` at module-load time. Node.js has none of these; in a local dev
+ * server the references are lazy enough that text extraction works, but on
+ * Firebase App Hosting Next.js loads the externalized package through a
+ * wrapper that throws `ReferenceError: DOMMatrix is not defined` *at import*,
+ * before we ever call getText(). Install minimal stubs — text extraction never
+ * invokes methods on these, so empty classes are sufficient.
+ */
+function installPdfjsDomStubs(): void {
+  const g = globalThis as unknown as Record<string, unknown>;
+  if (typeof g.DOMMatrix === "undefined") g.DOMMatrix = class {};
+  if (typeof g.ImageData === "undefined") g.ImageData = class {};
+  if (typeof g.Path2D    === "undefined") g.Path2D    = class {};
+}
+
 async function extractTextFromPdf(buffer: Buffer): Promise<string> {
-  // pdf-parse v2 bundles pdfjs-dist's legacy Node-compatible build under the
-  // hood, sidestepping the "DOMMatrix is not defined" crash the ESM entry
-  // throws on modern pdfjs-dist v5+ in a Node runtime.
+  installPdfjsDomStubs();
+
+  // pdf-parse v2 bundles pdfjs-dist's Node build internally. See stub
+  // explanation above for why we must install browser-global shims first.
   const { PDFParse } = await import("pdf-parse");
 
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
