@@ -3,7 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard, ClipboardList, FolderOpen, Send, Clock, Settings, Menu, X
+  LayoutDashboard, ClipboardList, FolderOpen, Send, Clock, Settings, Menu, X,
+  PieChart, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,8 @@ const NAV_ITEMS = [
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
   { href: "/filing", label: "הגשה", icon: Send },
   { href: "/history", label: "היסטוריה", icon: Clock },
+  { href: "/facts", label: "תמונת מצב", icon: PieChart },
+  { href: "/education", label: "מרכז ידע", icon: BookOpen },
   { href: "/settings", label: "הגדרות", icon: Settings },
 ];
 
