@@ -109,7 +109,11 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
       {docs.length > 0 && (
         <div className="space-y-2">
           {docs.map((doc) => {
+            // Prefer the in-session blob URL (no round-trip) but fall back
+            // to the persisted Firebase download URL so the file is still
+            // viewable after a page reload.
             const sessionUrl = sessionUrls.get(doc.id);
+            const viewUrl = sessionUrl ?? doc.downloadUrl;
             const parseStatus = parseStatuses.get(doc.id) ?? "idle";
             const parseResult = parseResults.get(doc.id);
             const canParse = doc.type === "form106" || doc.type === "ibkr";
@@ -134,8 +138,11 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
                           <option key={t} value={t}>{TYPE_LABELS[t]}</option>
                         ))}
                       </select>
-                      {!sessionUrl && (
-                        <span className="text-[10px] text-muted-foreground/60">· שמור ·</span>
+                      {!sessionUrl && viewUrl && (
+                        <span className="text-[10px] text-muted-foreground/60">· שמור בענן ·</span>
+                      )}
+                      {!viewUrl && (
+                        <span className="text-[10px] text-muted-foreground/60">· ללא קובץ ·</span>
                       )}
                     </div>
                   </div>
@@ -151,8 +158,11 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
                     {parseStatus === "error" && (
                       <AlertCircle className="w-3.5 h-3.5 text-destructive" />
                     )}
-                    {/* Re-parse button for saved docs (no session file) */}
-                    {canParse && !sessionUrl && parseStatus !== "parsing" && (
+                    {/* Re-parse button for saved docs with no payload — the
+                        file may be reachable via downloadUrl but re-running
+                        the parser requires the raw File object the user just
+                        provided, which is session-only. */}
+                    {canParse && !sessionUrl && !doc.parsedPayload && parseStatus !== "parsing" && (
                       <button
                         onClick={() => onReparse(doc.id)}
                         className="p-1.5 hover:bg-muted rounded-lg transition-colors"
@@ -161,9 +171,9 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
                         <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
                     )}
-                    {sessionUrl && (
+                    {viewUrl && (
                       <a
-                        href={sessionUrl}
+                        href={viewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 hover:bg-muted rounded-lg transition-colors"

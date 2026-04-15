@@ -32,7 +32,13 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
-import type { IbkrParseResponse, Form106ParseResponse, Employer } from "@/types";
+import type {
+  IbkrParseResponse,
+  Form106ParseResponse,
+  Employer,
+  VaultDocMeta,
+  VaultDocType,
+} from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +102,7 @@ const cardVariants: Variants = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function FileDropzone() {
-  const { state, setView, updateTaxpayerAndRecalculate } = useApp();
+  const { state, setView, updateTaxpayerAndRecalculate, addDocument } = useApp();
   const { taxpayer, financials } = state;
 
   const [dragging, setDragging] = useState(false);
@@ -139,9 +145,14 @@ export function FileDropzone() {
 
       const progressTimer = startFakeProgress(id);
 
-      // Fire-and-forget: persist the raw file to Cloud Storage under the
-      // signed-in user's folder. Failure is non-fatal — parsing still runs.
-      void uploadUserDocument(file, category === "IBKR" ? "ibkr" : "form-106", file.name);
+      // Upload to Cloud Storage concurrently with parsing — we need the
+      // {path, url} result to persist alongside the parsed payload so the
+      // document survives page reloads.
+      const uploadPromise = uploadUserDocument(
+        file,
+        category === "IBKR" ? "ibkr" : "form-106",
+        file.name,
+      );
 
       try {
         const body = new FormData();
@@ -153,6 +164,9 @@ export function FileDropzone() {
         clearInterval(progressTimer);
 
         if (!res.ok) throw new Error(`שגיאת שרת: ${res.status}`);
+
+        const uploadResult = await uploadPromise;
+        const vaultType: VaultDocType = category === "IBKR" ? "ibkr" : "form106";
 
         if (category === "IBKR") {
           // ── IBKR CSV ───────────────────────────────────────────────────
@@ -174,6 +188,19 @@ export function FileDropzone() {
             },
             { ibkrData: json.data },
           );
+
+          const meta: VaultDocMeta = {
+            id,
+            name: file.name,
+            type: vaultType,
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+            status: "mined",
+            storagePath: uploadResult?.path,
+            downloadUrl: uploadResult?.url,
+            parsedPayload: { kind: "ibkr", data: json.data },
+          };
+          addDocument(meta);
 
         } else {
           // ── Form 106 ───────────────────────────────────────────────────
@@ -203,6 +230,19 @@ export function FileDropzone() {
               : [...taxpayer.employers, newEmployer];
 
           updateTaxpayerAndRecalculate({ employers: updatedEmployers });
+
+          const meta: VaultDocMeta = {
+            id,
+            name: file.name,
+            type: vaultType,
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+            status: "mined",
+            storagePath: uploadResult?.path,
+            downloadUrl: uploadResult?.url,
+            parsedPayload: { kind: "form106", data: json.data },
+          };
+          addDocument(meta);
         }
 
         // Snap progress to 100%
@@ -228,7 +268,7 @@ export function FileDropzone() {
         showToast(message);
       }
     },
-    [taxpayer.employers, updateTaxpayerAndRecalculate, setView, showToast, startFakeProgress]
+    [taxpayer.employers, updateTaxpayerAndRecalculate, addDocument, setView, showToast, startFakeProgress]
   );
 
   // ── File entry point ───────────────────────────────────────────────────────

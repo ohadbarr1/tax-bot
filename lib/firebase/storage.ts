@@ -12,7 +12,7 @@
  * in-memory parsing only.
  */
 
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { getClientAuth, getClientStorage, isFirebaseConfigured } from "./client";
 
 export type DocKind =
@@ -59,6 +59,29 @@ export async function uploadUserDocument(
   } catch (err) {
     console.warn("[storage] upload failed:", err);
     return null;
+  }
+}
+
+/**
+ * Delete a previously uploaded document by its storage path. Safe to call
+ * for paths that no longer exist — the underlying `object-not-found` error
+ * is swallowed so the UI's delete flow stays idempotent.
+ */
+export async function deleteUserDocument(path: string): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (!isFirebaseConfigured()) return false;
+
+  const storage = getClientStorage();
+  if (!storage) return false;
+
+  try {
+    await deleteObject(ref(storage, path));
+    return true;
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === "storage/object-not-found") return true;
+    console.warn("[storage] delete failed:", err);
+    return false;
   }
 }
 

@@ -27,6 +27,8 @@ import { INITIAL_STATE } from "./initialState";
 import { currentTaxYear } from "./currentTaxYear";
 import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
 import { saveState, loadState } from "./db";
+import { deleteUserDocument } from "./firebase/storage";
+import { useAuth } from "./firebase/authContext";
 import { carryForwardFromPriorDraft } from "./yoyCarryover";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
@@ -185,17 +187,43 @@ function migrateLegacyState(stored: unknown): AppState {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [hydrated, setHydrated] = useState(false);
+  const { configured, ready, user } = useAuth();
+  const uid = user?.uid ?? null;
 
-  // ── Hydrate from IndexedDB on mount ────────────────────────────────────────
+  // ── Hydrate from Firestore whenever the signed-in user changes ──────────
+  // Local-dev fallback (Firebase not configured) hydrates once from the
+  // in-memory no-op store. In a configured env we wait for auth to resolve,
+  // then re-hydrate every time the uid flips — signOut → anon re-sign-in
+  // issues a new uid, so this doubles as "wipe prior user's state".
   useEffect(() => {
+    if (!configured) {
+      loadState().then((stored) => {
+        if (stored) setState(migrateLegacyState(stored));
+        setHydrated(true);
+      });
+      return;
+    }
+    if (!ready) return;
+    if (!uid) {
+      // Auth resolved to no-user (signOut mid-flight before anon re-signin).
+      // Pause persistence and blank the in-memory state so nothing from the
+      // prior user leaks into the next.
+      setHydrated(false);
+      setState(INITIAL_STATE);
+      return;
+    }
+    let cancelled = false;
+    setHydrated(false);
+    setState(INITIAL_STATE);
     loadState().then((stored) => {
-      if (stored) {
-        const migrated = migrateLegacyState(stored);
-        setState(migrated);
-      }
+      if (cancelled) return;
+      if (stored) setState(migrateLegacyState(stored));
       setHydrated(true);
     });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [configured, ready, uid]);
 
   // ── Persist to IndexedDB on every state change (500ms debounce) ───────────
   const persistState = useCallback((s: AppState) => {
@@ -373,10 +401,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
 
   const removeDocument = (id: string) =>
-    setState((s) => ({
-      ...s,
-      documents: (s.documents ?? []).filter((d) => d.id !== id),
-    }));
+    setState((s) => {
+      const doomed = (s.documents ?? []).find((d) => d.id === id);
+      // Fire-and-forget the Cloud Storage delete so the raw blob doesn't
+      // linger after the user removes it. The helper swallows "not found"
+      // so this is idempotent across re-clicks.
+      if (doomed?.storagePath) void deleteUserDocument(doomed.storagePath);
+      return {
+        ...s,
+        documents: (s.documents ?? []).filter((d) => d.id !== id),
+      };
+    });
 
   const updateDocumentType = (id: string, type: VaultDocType) =>
     setState((s) => ({

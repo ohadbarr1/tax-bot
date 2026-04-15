@@ -20,7 +20,7 @@ const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
 ];
 
 export default function DocumentsPage() {
-  const { state, addDocument, removeDocument, updateDocumentType, updateTaxpayerAndRecalculate, hydrated } = useApp();
+  const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, hydrated } = useApp();
 
   // Session-only blob URLs — never persisted (blob URLs are tab-lifetime only).
   const [sessionUrls, setSessionUrls] = useState<Map<string, string>>(new Map());
@@ -48,6 +48,52 @@ export default function DocumentsPage() {
     sessionUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
+  // Rehydrate parse summaries from persisted payloads once AppState loads —
+  // turns a freshly-reloaded page into the exact card view the user left.
+  useEffect(() => {
+    if (!hydrated) return;
+    const docs = state.documents ?? [];
+    setParseStatuses((prev) => {
+      const next = new Map(prev);
+      for (const doc of docs) {
+        if (doc.parsedPayload && !next.has(doc.id)) next.set(doc.id, "done");
+      }
+      return next;
+    });
+    setParseResults((prev) => {
+      const next = new Map(prev);
+      for (const doc of docs) {
+        if (!doc.parsedPayload || next.has(doc.id)) continue;
+        if (doc.parsedPayload.kind === "form106") {
+          const d = doc.parsedPayload.data;
+          next.set(doc.id, {
+            summary: [
+              `מעסיק: ${d.employerName}`,
+              `ברוטו: ₪${d.grossSalary.toLocaleString("he-IL")}`,
+              `מס שנוכה: ₪${d.taxWithheld.toLocaleString("he-IL")}`,
+              `פנסיה: ₪${d.pensionDeduction.toLocaleString("he-IL")}`,
+              `חודשים: ${d.monthsWorked}`,
+            ].join(" · "),
+            raw: d,
+          });
+        } else {
+          const d = doc.parsedPayload.data;
+          next.set(doc.id, {
+            summary: [
+              `רווח: $${d.totalProfitUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+              `הפסד: $${d.totalLossUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+              `דיבידנדים: $${d.dividendsUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+              `WHT: $${d.foreignTaxUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+              `שער: ${d.exchangeRate}`,
+            ].join(" · "),
+            raw: d,
+          });
+        }
+      }
+      return next;
+    });
+  }, [hydrated, state.documents]);
+
   const [activeCategory, setActiveCategory] = useState<"all" | VaultDocType>("all");
 
   const docs: VaultDocMeta[] = state.documents ?? [];
@@ -60,10 +106,14 @@ export default function DocumentsPage() {
 
     setParseStatuses((prev) => new Map(prev).set(docId, "parsing"));
 
-    // Fire-and-forget upload to Cloud Storage so the raw document is
-    // persisted alongside the parsed fields. Failure is non-fatal — we
-    // continue with parsing regardless.
-    void uploadUserDocument(file, docType === "form106" ? "form-106" : "ibkr", file.name);
+    // Upload to Cloud Storage in parallel with parsing — we need the
+    // {path, url} result to persist alongside the parsed payload so the
+    // document survives page reloads.
+    const uploadPromise = uploadUserDocument(
+      file,
+      docType === "form106" ? "form-106" : "ibkr",
+      file.name,
+    );
 
     try {
       const formData = new FormData();
@@ -110,6 +160,13 @@ export default function DocumentsPage() {
           ],
         });
 
+        const uploadResult = await uploadPromise;
+        updateDocumentStatus(docId, "mined", {
+          storagePath: uploadResult?.path,
+          downloadUrl: uploadResult?.url,
+          parsedPayload: { kind: "form106", data: d },
+        });
+
       } else if (docType === "ibkr") {
         const res = await fetch("/api/parse/ibkr", { method: "POST", body: formData });
         const json: IbkrParseResponse = await res.json();
@@ -139,11 +196,18 @@ export default function DocumentsPage() {
           },
           { ibkrData: d, hasForeignBroker: true }
         );
+
+        const uploadResult = await uploadPromise;
+        updateDocumentStatus(docId, "mined", {
+          storagePath: uploadResult?.path,
+          downloadUrl: uploadResult?.url,
+          parsedPayload: { kind: "ibkr", data: d },
+        });
       }
     } catch {
       setParseStatuses((prev) => new Map(prev).set(docId, "error"));
     }
-  }, [state.taxpayer.employers, updateTaxpayerAndRecalculate]);
+  }, [state.taxpayer.employers, updateTaxpayerAndRecalculate, updateDocumentStatus]);
 
   const handleAdd = useCallback((meta: VaultDocMeta, objectUrl: string, file: File) => {
     addDocument(meta);

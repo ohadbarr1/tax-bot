@@ -217,6 +217,15 @@ export type VaultDocStatus =
   | "failed";         // extraction errored (retry available)
 
 /**
+ * Persisted payload from a successful parse — discriminated on kind so we
+ * can rehydrate the parsing UI (summary cards, raw fields) on reload
+ * without re-running the server-side extractor.
+ */
+export type VaultDocParsedPayload =
+  | { kind: "form106"; data: NonNullable<Form106ParseResponse["data"]> }
+  | { kind: "ibkr";    data: NonNullable<IbkrParseResponse["data"]> };
+
+/**
  * Persisted document metadata (no objectUrl — blob URLs are session-only
  * and cannot survive IndexedDB round-trips).
  */
@@ -231,6 +240,10 @@ export interface VaultDocMeta {
   sourceIds?: IncomeSourceId[];
   /** Server-side storage path in Firebase Storage, if uploaded. */
   storagePath?: string;
+  /** Signed download URL for the raw file (refreshable via getDownloadURL). */
+  downloadUrl?: string;
+  /** Parsed JSON payload — rehydrated into the UI on reload. */
+  parsedPayload?: VaultDocParsedPayload;
   /** Last mining error (user-facing, Hebrew). */
   miningError?: string;
 }
