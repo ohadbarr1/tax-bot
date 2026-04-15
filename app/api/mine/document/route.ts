@@ -11,11 +11,13 @@ const ERROR_PARSE = "לא הצלחנו לקרוא את המסמך. נסה שוב
 const ERROR_TOO_BIG = "הקובץ גדול מדי (עד 10MB).";
 const MAX_BYTES = 10 * 1024 * 1024;
 
-// Claude vision schema — every field is required-with-null rather than
-// `optional()` because Anthropic's tool-grammar compiler caps structured
-// outputs at 24 optional parameters, and this schema originally had 31.
-// `nullable()` does not count against the limit: the model must always
-// emit the key, but may return `null` for unknowns.
+// Claude vision schema — flat, NO nullables and NO optionals. Anthropic's
+// tool-grammar compiler caps structured outputs at 24 optional parameters
+// AND 16 union-typed parameters (nullable counts as a union). Flat string/
+// number fields with sentinel "unknowns" keep both counts at zero. Missing
+// strings come back as "" and missing numbers as -1; toMinedFields() filters
+// those before they reach the app state.
+const UNKNOWN_NUM = -1;
 const MinedShape = z.object({
   detectedType: z.enum([
     "form106",
@@ -29,56 +31,27 @@ const MinedShape = z.object({
     "rental_contract",
     "other",
   ]),
-  summary: z.string().max(200).nullable(),
-  taxpayer: z
-    .object({
-      idNumber: z.string().nullable(),
-      firstName: z.string().nullable(),
-      lastName: z.string().nullable(),
-      address: z
-        .object({
-          city: z.string().nullable(),
-          street: z.string().nullable(),
-          houseNumber: z.string().nullable(),
-        })
-        .nullable(),
-      bank: z
-        .object({
-          bankId: z.string().nullable(),
-          bankName: z.string().nullable(),
-          branch: z.string().nullable(),
-          account: z.string().nullable(),
-        })
-        .nullable(),
-    })
-    .nullable(),
-  employer: z
-    .object({
-      name: z.string().nullable(),
-      grossSalary: z.number().nullable(),
-      taxWithheld: z.number().nullable(),
-      pensionDeduction: z.number().nullable(),
-      monthsWorked: z.number().nullable(),
-    })
-    .nullable(),
-  capitalGains: z
-    .object({
-      totalRealizedProfit: z.number().nullable(),
-      totalRealizedLoss: z.number().nullable(),
-      foreignTaxWithheld: z.number().nullable(),
-      dividends: z.number().nullable(),
-    })
-    .nullable(),
-  /** Per-field confidence tiers — model picks one of three. */
-  confidence: z
-    .object({
-      identity: z.enum(["high", "medium", "low"]).nullable(),
-      address: z.enum(["high", "medium", "low"]).nullable(),
-      bank: z.enum(["high", "medium", "low"]).nullable(),
-      employer: z.enum(["high", "medium", "low"]).nullable(),
-      capitalGains: z.enum(["high", "medium", "low"]).nullable(),
-    })
-    .nullable(),
+  summary: z.string().max(200),
+  idNumber: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  addressCity: z.string(),
+  addressStreet: z.string(),
+  addressHouseNumber: z.string(),
+  bankId: z.string(),
+  bankName: z.string(),
+  bankBranch: z.string(),
+  bankAccount: z.string(),
+  employerName: z.string(),
+  grossSalary: z.number(),
+  taxWithheld: z.number(),
+  pensionDeduction: z.number(),
+  monthsWorked: z.number(),
+  cgRealizedProfit: z.number(),
+  cgRealizedLoss: z.number(),
+  cgForeignTaxWithheld: z.number(),
+  cgDividends: z.number(),
+  overallConfidence: z.enum(["high", "medium", "low"]),
 });
 
 type MinedShape = z.infer<typeof MinedShape>;
@@ -89,12 +62,12 @@ You receive a single image or PDF of a tax document (usually in Hebrew, sometime
 
 Rules:
 1. Extract ONLY values you can read directly from the document. Never guess or synthesize.
-2. For numeric fields, return plain integers (no thousand separators, no currency symbols). All amounts are in ILS (₪) unless the document is from Interactive Brokers, in which case convert USD→ILS using an implicit 3.6 rate — but prefer returning null if uncertain about the currency.
-3. For each top-level group (identity, address, bank, employer, capitalGains), set the matching key in "confidence" to one of:
-   - "high": you read the value clearly and cross-checked an explicit label (e.g. "שם עובד", "ברוטו", "שדה 158").
-   - "medium": the value is readable but the label is ambiguous or partially occluded.
-   - "low": you're inferring from position only — the UI will show this as "found something, please verify".
-4. If a field is absent or unreadable, return null — do NOT fabricate.
+2. For numeric fields, return plain integers (no thousand separators, no currency symbols). All amounts are in ILS (₪) unless the document is from Interactive Brokers, in which case convert USD→ILS using an implicit 3.6 rate — but prefer returning -1 if uncertain about the currency.
+3. UNKNOWN VALUES — the schema has no nullable fields. For any field you cannot read:
+   - String fields → return an empty string "".
+   - Number fields → return -1.
+   Do NOT fabricate or guess values just to fill the field.
+4. "overallConfidence" — one of "high"/"medium"/"low" reflecting your overall read of the document.
 5. "detectedType" — pick the type that best matches:
    - "form106": Israeli annual salary slip (טופס 106) from an employer. Header usually says "טופס 106 - ריכוז משכורת ונכויים".
    - "form867": Israeli bank/broker annual tax statement for capital gains.
@@ -112,64 +85,68 @@ function normalizeConfidence(c: unknown): ProvenanceConfidence {
 }
 
 /**
- * Flatten the nested mining result into a list of MinedField entries with
- * their target state paths. The /lib/appContext.applyMiningResult action
- * uses these to write into taxpayer/financials via setPath.
- *
- * Only non-null values are emitted — a null means "model couldn't read it".
+ * Flatten the mining result into MinedField entries with target state paths.
+ * Sentinel filter: "" (string) and -1 (number) mean "model couldn't read it".
  */
 function toMinedFields(mined: MinedShape): MinedField[] {
   const out: MinedField[] = [];
-  const push = (fieldPath: string, value: unknown, confidence: ProvenanceConfidence) => {
-    if (value === null || value === undefined) return;
-    if (typeof value === "string" && value.trim() === "") return;
-    out.push({ fieldPath, value, confidence });
+  const conf = normalizeConfidence(mined.overallConfidence);
+  const pushStr = (fieldPath: string, value: string) => {
+    if (!value || value.trim() === "") return;
+    out.push({ fieldPath, value, confidence: conf });
+  };
+  const pushNum = (fieldPath: string, value: number) => {
+    if (value === UNKNOWN_NUM || Number.isNaN(value)) return;
+    out.push({ fieldPath, value, confidence: conf });
+  };
+  const pushBool = (fieldPath: string, value: boolean) => {
+    out.push({ fieldPath, value, confidence: conf });
+  };
+  const pushAny = (fieldPath: string, value: string) => {
+    out.push({ fieldPath, value, confidence: conf });
   };
 
-  const tpConf = (k: "identity" | "address" | "bank"): ProvenanceConfidence =>
-    normalizeConfidence(mined.confidence?.[k]);
-
   // Identity
-  push("taxpayer.idNumber", mined.taxpayer?.idNumber, tpConf("identity"));
-  push("taxpayer.firstName", mined.taxpayer?.firstName, tpConf("identity"));
-  push("taxpayer.lastName", mined.taxpayer?.lastName, tpConf("identity"));
-  if (mined.taxpayer?.firstName && mined.taxpayer?.lastName) {
-    push("taxpayer.fullName", `${mined.taxpayer.firstName} ${mined.taxpayer.lastName}`, tpConf("identity"));
+  pushStr("taxpayer.idNumber", mined.idNumber);
+  pushStr("taxpayer.firstName", mined.firstName);
+  pushStr("taxpayer.lastName", mined.lastName);
+  if (mined.firstName && mined.lastName) {
+    pushStr("taxpayer.fullName", `${mined.firstName} ${mined.lastName}`);
   }
 
   // Address
-  push("taxpayer.address.city", mined.taxpayer?.address?.city, tpConf("address"));
-  push("taxpayer.address.street", mined.taxpayer?.address?.street, tpConf("address"));
-  push("taxpayer.address.houseNumber", mined.taxpayer?.address?.houseNumber, tpConf("address"));
+  pushStr("taxpayer.address.city", mined.addressCity);
+  pushStr("taxpayer.address.street", mined.addressStreet);
+  pushStr("taxpayer.address.houseNumber", mined.addressHouseNumber);
 
   // Bank
-  push("taxpayer.bank.bankId", mined.taxpayer?.bank?.bankId, tpConf("bank"));
-  push("taxpayer.bank.bankName", mined.taxpayer?.bank?.bankName, tpConf("bank"));
-  push("taxpayer.bank.branch", mined.taxpayer?.bank?.branch, tpConf("bank"));
-  push("taxpayer.bank.account", mined.taxpayer?.bank?.account, tpConf("bank"));
+  pushStr("taxpayer.bank.bankId", mined.bankId);
+  pushStr("taxpayer.bank.bankName", mined.bankName);
+  pushStr("taxpayer.bank.branch", mined.bankBranch);
+  pushStr("taxpayer.bank.account", mined.bankAccount);
 
-  // Employer — written as first employer in the array. The details page lets
-  // the user merge/replace across multiple form 106 uploads. A post-mining
-  // consolidation pass happens in the client (see appContext.applyMiningResult).
-  const empConf = normalizeConfidence(mined.confidence?.employer);
-  if (mined.employer) {
-    push("taxpayer.employers[0].id", `employer-${Date.now()}`, empConf);
-    push("taxpayer.employers[0].name", mined.employer.name ?? null, empConf);
-    push("taxpayer.employers[0].isMainEmployer", true, empConf);
-    push("taxpayer.employers[0].monthsWorked", mined.employer.monthsWorked ?? null, empConf);
-    push("taxpayer.employers[0].grossSalary", mined.employer.grossSalary ?? null, empConf);
-    push("taxpayer.employers[0].taxWithheld", mined.employer.taxWithheld ?? null, empConf);
-    push("taxpayer.employers[0].pensionDeduction", mined.employer.pensionDeduction ?? null, empConf);
+  // Employer — written as first employer in the array. Only emit if we have
+  // at least a name or a salary figure, otherwise the consolidation pass
+  // ends up with an empty shell employer.
+  const hasEmployer =
+    mined.employerName.trim() !== "" ||
+    mined.grossSalary !== UNKNOWN_NUM ||
+    mined.taxWithheld !== UNKNOWN_NUM;
+  if (hasEmployer) {
+    pushAny("taxpayer.employers[0].id", `employer-${Date.now()}`);
+    pushStr("taxpayer.employers[0].name", mined.employerName);
+    pushBool("taxpayer.employers[0].isMainEmployer", true);
+    pushNum("taxpayer.employers[0].monthsWorked", mined.monthsWorked);
+    pushNum("taxpayer.employers[0].grossSalary", mined.grossSalary);
+    pushNum("taxpayer.employers[0].taxWithheld", mined.taxWithheld);
+    pushNum("taxpayer.employers[0].pensionDeduction", mined.pensionDeduction);
   }
 
   // Capital gains
-  const cgConf = normalizeConfidence(mined.confidence?.capitalGains);
-  if (mined.capitalGains) {
-    push("taxpayer.capitalGains.totalRealizedProfit", mined.capitalGains.totalRealizedProfit ?? null, cgConf);
-    push("taxpayer.capitalGains.totalRealizedLoss", mined.capitalGains.totalRealizedLoss ?? null, cgConf);
-    push("taxpayer.capitalGains.foreignTaxWithheld", mined.capitalGains.foreignTaxWithheld ?? null, cgConf);
-    push("taxpayer.capitalGains.dividends", mined.capitalGains.dividends ?? null, cgConf);
-  }
+  pushNum("taxpayer.capitalGains.totalRealizedProfit", mined.cgRealizedProfit);
+  pushNum("taxpayer.capitalGains.totalRealizedLoss", mined.cgRealizedLoss);
+  pushNum("taxpayer.capitalGains.foreignTaxWithheld", mined.cgForeignTaxWithheld);
+  pushNum("taxpayer.capitalGains.dividends", mined.cgDividends);
 
   return out;
 }
@@ -244,7 +221,7 @@ export async function POST(request: Request): Promise<Response> {
       data: {
         detectedType: object.detectedType,
         fields,
-        summary: object.summary ?? undefined,
+        summary: object.summary && object.summary.trim() !== "" ? object.summary : undefined,
         backend: "claude-vision",
       },
     };
