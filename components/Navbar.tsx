@@ -6,11 +6,14 @@ import { useApp } from "@/lib/appContext";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DraftSwitcher } from "@/components/DraftSwitcher";
+import { AuthButton } from "@/components/AuthButton";
+import { useAuth } from "@/lib/firebase/authContext";
 
 export function Navbar() {
   const { state, setView } = useApp();
   const { taxpayer } = state;
   const router = useRouter();
+  const { configured } = useAuth();
   const initials = taxpayer.fullName
     .split(" ")
     .filter((w) => /[\u0590-\u05FF]/.test(w) || /[A-Z]/.test(w[0]))
@@ -71,19 +74,23 @@ export function Navbar() {
           {/* Theme toggle */}
           <ThemeToggle />
 
-          {/* User avatar */}
-          <button className="flex items-center gap-2 ps-3 border-s border-border">
-            <div className="w-8 h-8 rounded-full bg-brand-900 flex items-center justify-center">
-              <span className="text-white text-xs font-semibold">{initials || "OB"}</span>
-            </div>
-            <div className="hidden sm:flex flex-col items-start">
-              <span className="text-xs font-medium text-foreground leading-tight">
-                {taxpayer.fullName.split(" - ")[1] || taxpayer.fullName}
-              </span>
-              <span className="text-xs text-slate-500">{taxpayer.profession}</span>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </button>
+          {/* Auth — Firebase-backed sign-in when configured, else local profile */}
+          {configured ? (
+            <AuthButton />
+          ) : (
+            <button className="flex items-center gap-2 ps-3 border-s border-border">
+              <div className="w-8 h-8 rounded-full bg-brand-900 flex items-center justify-center">
+                <span className="text-white text-xs font-semibold">{initials || "OB"}</span>
+              </div>
+              <div className="hidden sm:flex flex-col items-start">
+                <span className="text-xs font-medium text-foreground leading-tight">
+                  {taxpayer.fullName.split(" - ")[1] || taxpayer.fullName}
+                </span>
+                <span className="text-xs text-slate-500">{taxpayer.profession}</span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+          )}
         </div>
       </div>
     </header>

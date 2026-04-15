@@ -31,6 +31,7 @@ import {
   LineChart,
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
+import { uploadUserDocument } from "@/lib/firebase/storage";
 import type { IbkrParseResponse, Form106ParseResponse, Employer } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -137,6 +138,10 @@ export function FileDropzone() {
       ]);
 
       const progressTimer = startFakeProgress(id);
+
+      // Fire-and-forget: persist the raw file to Cloud Storage under the
+      // signed-in user's folder. Failure is non-fatal — parsing still runs.
+      void uploadUserDocument(file, category === "IBKR" ? "ibkr" : "form-106", file.name);
 
       try {
         const body = new FormData();

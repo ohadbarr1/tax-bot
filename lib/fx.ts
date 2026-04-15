@@ -2,7 +2,7 @@
  * fx.ts — Bank of Israel FX Rate Service
  *
  * Fetches the official USD/ILS annual average rate from the Bank of Israel API.
- * Results are cached in IndexedDB for 24 hours to avoid redundant fetches.
+ * Results are cached in localStorage for 24 hours to avoid redundant fetches.
  * Falls back to hardcoded rates if the API is unreachable.
  *
  * BoI XML feed: https://edge.boi.gov.il/FusionEdgeServer/sdmx/v2/data/dataflow/BOI.STATISTICS/EXR/1.0/RER_USD_ILS
@@ -12,41 +12,28 @@
  * For annual averages we use the prebuilt endpoint below (same source the ITA uses).
  */
 
-import { openDB } from "idb";
-
 // ─── Fallback rates (Bank of Israel annual average) ───────────────────────────
 const FALLBACK_RATES: Record<number, number> = {
   2024: 3.71,
   2025: 3.65,
 };
 
-const CACHE_DB_NAME    = "taxbot-fx-cache";
-const CACHE_DB_VERSION = 1;
-const CACHE_STORE      = "rates";
-const CACHE_TTL_MS     = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_PREFIX = "taxbot-fx:";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface CachedRate {
   rate: number;
   fetchedAt: number; // Date.now()
 }
 
-async function getCacheDb() {
+/** Read a cached FX rate from localStorage, respecting the 24-hour TTL. */
+function readCached(key: string): number | null {
   if (typeof window === "undefined") return null;
-  return openDB(CACHE_DB_NAME, CACHE_DB_VERSION, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(CACHE_STORE)) {
-        db.createObjectStore(CACHE_STORE);
-      }
-    },
-  });
-}
-
-async function readCached(key: string): Promise<number | null> {
   try {
-    const db = await getCacheDb();
-    if (!db) return null;
-    const entry: CachedRate | undefined = await db.get(CACHE_STORE, key);
-    if (!entry) return null;
+    const raw = window.localStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    const entry = JSON.parse(raw) as CachedRate;
+    if (!entry || typeof entry.rate !== "number") return null;
     if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) return null; // stale
     return entry.rate;
   } catch {
@@ -54,13 +41,14 @@ async function readCached(key: string): Promise<number | null> {
   }
 }
 
-async function writeCache(key: string, rate: number): Promise<void> {
+/** Persist a fetched FX rate for later reuse. Non-fatal on any error. */
+function writeCache(key: string, rate: number): void {
+  if (typeof window === "undefined") return;
   try {
-    const db = await getCacheDb();
-    if (!db) return;
-    await db.put(CACHE_STORE, { rate, fetchedAt: Date.now() }, key);
+    const entry: CachedRate = { rate, fetchedAt: Date.now() };
+    window.localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry));
   } catch {
-    /* non-fatal */
+    /* non-fatal — storage disabled or quota exceeded */
   }
 }
 
@@ -75,7 +63,7 @@ export async function getUsdIlsRate(year: number): Promise<number> {
   const cacheKey = `usd_ils_${year}`;
 
   // 1. Try cache first
-  const cached = await readCached(cacheKey);
+  const cached = readCached(cacheKey);
   if (cached !== null) {
     return cached;
   }
@@ -99,7 +87,7 @@ export async function getUsdIlsRate(year: number): Promise<number> {
       if (rates.length > 0) {
         const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
         const rounded = Math.round(avg * 100) / 100;
-        await writeCache(cacheKey, rounded);
+        writeCache(cacheKey, rounded);
         return rounded;
       }
     }

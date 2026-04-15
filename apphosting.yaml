@@ -1,11 +1,48 @@
+# Firebase App Hosting configuration — https://firebase.google.com/docs/app-hosting
+#
+# Runtime settings for the Next.js server. These caps stay generous because
+# Form-106 OCR (Tesseract Hebrew+English) and PDF text extraction can spike
+# RAM and wall-clock on cold starts. Adjust down once you profile real traffic.
+
 runConfig:
-  # Tesseract OCR (Hebrew+English lang data) + pdf-lib + pdfjs can spike RAM
-  # on a single request. Cap instances low but give each one enough headroom.
   cpu: 2
   memoryMiB: 2048
   concurrency: 40
   minInstances: 0
   maxInstances: 10
-  # PDF generation (pdf-lib draws + subset:false font embed) can take >30s
-  # on cold-start; OCR on multi-page 106 scans can also exceed 60s.
   timeoutSeconds: 300
+
+# Environment variables. Firebase App Hosting injects these into the Next.js
+# runtime. NEXT_PUBLIC_* vars are also exposed to the browser bundle at build
+# time — do not put secrets there. True secrets (ANTHROPIC_API_KEY) should be
+# stored via `firebase apphosting:secrets:set` and referenced with `secret:`.
+#
+# Fill the `value:` slots below with your Firebase project's web config
+# (Firebase Console → Project Settings → General → Your apps → SDK setup).
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: ""
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: ""
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: ""
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: ""
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: ""
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: ""
+    availability: [BUILD, RUNTIME]
+
+  # Anthropic API key — set via:
+  #   firebase apphosting:secrets:set ANTHROPIC_API_KEY
+  # then uncomment the block below. Leaving it out until the secret exists
+  # keeps initial deploys from failing on a missing reference.
+  # - variable: ANTHROPIC_API_KEY
+  #   secret: ANTHROPIC_API_KEY
+  #   availability: [RUNTIME]

@@ -4,6 +4,7 @@ import { FolderOpen, FileText } from "lucide-react";
 import { DocUploadZone, TYPE_LABELS } from "@/components/documents/DocUploadZone";
 import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZone";
 import { useApp } from "@/lib/appContext";
+import { uploadUserDocument } from "@/lib/firebase/storage";
 import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse } from "@/types";
 
 const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
@@ -58,6 +59,11 @@ export default function DocumentsPage() {
     if (docType !== "form106" && docType !== "ibkr") return;
 
     setParseStatuses((prev) => new Map(prev).set(docId, "parsing"));
+
+    // Fire-and-forget upload to Cloud Storage so the raw document is
+    // persisted alongside the parsed fields. Failure is non-fatal — we
+    // continue with parsing regardless.
+    void uploadUserDocument(file, docType === "form106" ? "form-106" : "ibkr", file.name);
 
     try {
       const formData = new FormData();

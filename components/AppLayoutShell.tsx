@@ -1,5 +1,6 @@
 "use client";
 import { AppProvider } from "@/lib/appContext";
+import { AuthProvider } from "@/lib/firebase/authContext";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { AdvisorChat } from "@/components/advisor/AdvisorChat";
@@ -8,6 +9,7 @@ interface Props { children: React.ReactNode; }
 
 export default function AppLayoutShell({ children }: Props) {
   return (
+    <AuthProvider>
     <AppProvider>
       {/* RTL: sidebar is FIRST in DOM = visually on the RIGHT */}
       <div className="flex min-h-screen bg-background">
@@ -23,5 +25,6 @@ export default function AppLayoutShell({ children }: Props) {
         </div>
       </div>
     </AppProvider>
+    </AuthProvider>
   );
 }
