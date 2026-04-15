@@ -12,31 +12,35 @@ runConfig:
   maxInstances: 10
   timeoutSeconds: 300
 
-# Environment variables. Firebase App Hosting injects these into the Next.js
-# runtime. NEXT_PUBLIC_* vars are also exposed to the browser bundle at build
-# time — do not put secrets there. True secrets (ANTHROPIC_API_KEY) should be
-# stored via `firebase apphosting:secrets:set` and referenced with `secret:`.
+# Environment variables.
 #
-# Fill the `value:` slots below with your Firebase project's web config
-# (Firebase Console → Project Settings → General → Your apps → SDK setup).
+# The NEXT_PUBLIC_FIREBASE_* block below hard-codes the public web config for
+# the `taxbackil` Firebase project. These values are *not* secrets — they are
+# shipped to the browser bundle at build time so the client SDK can connect to
+# Auth/Firestore/Storage. Security is enforced by firestore.rules + storage.rules
+# (scoped to request.auth.uid) and by Firebase Auth's "Authorized domains" list.
+#
+# True secrets (ANTHROPIC_API_KEY) must be stored via
+#   firebase apphosting:secrets:set ANTHROPIC_API_KEY
+# and referenced with `secret:` rather than `value:`.
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: ""
+    value: AIzaSyBJhsxrgaw9ML_MaPQOsCr3zjOFTdOlfzs
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: ""
+    value: taxbackil.firebaseapp.com
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: ""
+    value: taxbackil
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: ""
+    value: taxbackil.firebasestorage.app
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: ""
+    value: "335346608639"
     availability: [BUILD, RUNTIME]
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: ""
+    value: "1:335346608639:web:d1ba92ab74673c017e1fca"
     availability: [BUILD, RUNTIME]
 
   # Anthropic API key — set via:
