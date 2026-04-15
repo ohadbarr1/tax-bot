@@ -12,7 +12,7 @@ interface Props {
   hasDegree: boolean;
   degreesCount: number;
   investsCapital: boolean;
-  portfolioLocation: "bank" | "local_broker" | "foreign_broker";
+  portfolioLocation: "bank" | "local_broker" | "foreign_broker" | null;
   selectedBroker: string;
   employersCount: number;
   hasOverlap: boolean;

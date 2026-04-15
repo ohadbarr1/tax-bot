@@ -7,7 +7,7 @@ const BROKERS = ["Interactive Brokers", "Charles Schwab", "Tastytrade", "אחר"
 
 interface Props {
   investsCapital: boolean;
-  portfolioLocation: "bank" | "local_broker" | "foreign_broker";
+  portfolioLocation: "bank" | "local_broker" | "foreign_broker" | null;
   selectedBroker: string;
   onInvestsCapitalChange: (v: boolean) => void;
   onPortfolioLocationChange: (v: "bank" | "local_broker" | "foreign_broker") => void;

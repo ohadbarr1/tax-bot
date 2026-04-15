@@ -11,6 +11,7 @@
  */
 
 import { useApp } from "@/lib/appContext";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 import {
   Card,
   CardHeader,
@@ -165,7 +166,7 @@ export default function FactsDashboard() {
   const { taxpayer, financials } = state;
   const { employers, capitalGains } = taxpayer;
   const { calculationResult, ibkrData } = financials;
-  const taxYear = financials.taxYears[0] ?? 2024;
+  const taxYear = financials.taxYears[0] ?? currentTaxYear();
 
   // ── Salary aggregates ─────────────────────────────────────────────────────
   const hasEmployers = employers.length > 0;

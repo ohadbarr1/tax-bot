@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import type { AppState, TaxPayer, FinancialData, TaxYearDraft, FilingType, FilingGoal, AdvisorMessage, VaultDocMeta, VaultDocType } from "@/types";
 import { INITIAL_STATE } from "./initialState";
+import { currentTaxYear } from "./currentTaxYear";
 import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
 import { saveState, loadState } from "./db";
 
@@ -68,7 +69,7 @@ function useDebounce<T extends (...args: Parameters<T>) => void>(
 function migrateLegacyState(stored: unknown): AppState {
   const s = stored as Record<string, unknown>;
   if (!s.drafts) {
-    const taxYear = ((s.financials as FinancialData)?.taxYears?.[0]) ?? 2024;
+    const taxYear = ((s.financials as FinancialData)?.taxYears?.[0]) ?? currentTaxYear();
     const draftId = `draft-${taxYear}`;
     return {
       ...(s as unknown as Partial<AppState>),
@@ -90,6 +91,28 @@ function migrateLegacyState(stored: unknown): AppState {
   const migrated = s as unknown as AppState;
   if (!migrated.advisorHistory) migrated.advisorHistory = {};
   if (!migrated.documents) migrated.documents = [];
+
+  // Draft isolation fix (2026-04-15): the pre-fix Form 106 parser returned
+  // empty employerName on Phoenix-style PDFs, so every re-upload appended a
+  // fresh stale empty-named employer instead of deduping. Drop any stored
+  // employer with no name — the user's next upload will recreate it cleanly.
+  const cleanEmployers = (emps: TaxPayer["employers"] | undefined) =>
+    (emps ?? []).filter((e) => e && typeof e.name === "string" && e.name.trim().length > 0);
+
+  if (migrated.taxpayer) {
+    migrated.taxpayer = { ...migrated.taxpayer, employers: cleanEmployers(migrated.taxpayer.employers) };
+  }
+  if (migrated.drafts) {
+    for (const id of Object.keys(migrated.drafts)) {
+      const d = migrated.drafts[id];
+      if (!d?.taxpayer) continue;
+      migrated.drafts[id] = {
+        ...d,
+        taxpayer: { ...d.taxpayer, employers: cleanEmployers(d.taxpayer.employers) },
+      };
+    }
+  }
+
   return migrated;
 }
 
@@ -132,20 +155,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const completeQuestionnaire = () =>
     setState((s) => {
-      const year = s.financials.taxYears[0] ?? 2024;
+      const year = s.financials.taxYears[0] ?? currentTaxYear();
       const result = calculateFullRefund(s.taxpayer, year);
       const insights = buildInsightsFromResult(result, s.taxpayer, year);
       const actionItems = buildActionItemsFromResult(result, s.taxpayer);
+      const newFinancials: FinancialData = {
+        ...s.financials,
+        estimatedRefund: result.netRefund,
+        insights,
+        actionItems,
+        calculationResult: result,
+      };
+      const newQuestionnaire = { ...s.questionnaire, completed: true };
       return {
         ...s,
-        questionnaire: { ...s.questionnaire, completed: true },
+        questionnaire: newQuestionnaire,
         currentView: "upload",
-        financials: {
-          ...s.financials,
-          estimatedRefund: result.netRefund,
-          insights,
-          actionItems,
-          calculationResult: result,
+        financials: newFinancials,
+        // Mirror completion into the draft so reloads and switchDraft see it.
+        drafts: {
+          ...s.drafts,
+          [s.currentDraftId]: {
+            ...s.drafts[s.currentDraftId],
+            questionnaire: newQuestionnaire,
+            financials: newFinancials,
+            updatedAt: new Date().toISOString(),
+          },
         },
       };
     });
@@ -181,7 +216,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateTaxpayerAndRecalculate = (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) =>
     setState((prev) => {
       const newTaxpayer: TaxPayer = { ...prev.taxpayer, ...patch };
-      const year = prev.financials.taxYears[0] ?? 2024;
+      const year = prev.financials.taxYears[0] ?? currentTaxYear();
       const result = calculateFullRefund(newTaxpayer, year);
       const insights = buildInsightsFromResult(result, newTaxpayer, year);
       const actionItems = buildActionItemsFromResult(result, newTaxpayer);

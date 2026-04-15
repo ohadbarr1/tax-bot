@@ -1,5 +1,30 @@
 import type { TaxPayer, FinancialData } from "@/types";
 import { calculateFullRefund } from "./calculateTax";
+import peripheryData from "@/data/periphery_postcodes.json";
+
+// Pre-build a lowercase set of city names mentioned in the periphery dataset.
+// We can't look up by postcode (the user hasn't entered one yet — that's the
+// whole point of the suggestion), but if they live in a Hebrew city name that
+// appears anywhere in the periphery postcode map we surface the suggestion.
+const peripheryCityNames: Set<string> = (() => {
+  const data = peripheryData as { postcodes: Record<string, { city: string }> };
+  const set = new Set<string>();
+  for (const entry of Object.values(data.postcodes)) {
+    if (!entry?.city) continue;
+    // City entries look like "באר שבע" or "ירושלים (שכונות פריפריה)".
+    // Strip the parenthetical qualifier so "ירושלים" matches on its own.
+    const normalized = entry.city.replace(/\s*\([^)]*\)\s*/g, "").trim();
+    if (normalized) set.add(normalized);
+  }
+  return set;
+})();
+
+function cityLooksPeripheral(city: string): boolean {
+  const trimmed = city.trim();
+  if (!trimmed) return false;
+  // Exact match only — don't fuzzy-match "תל אביב" into "תל אביב יפו".
+  return peripheryCityNames.has(trimmed);
+}
 
 export interface OptimizationSuggestion {
   id: string;
@@ -70,18 +95,11 @@ export function generateOptimizations(
     }
   }
 
-  // 4. Oleh chadash unclaimed
-  if (!taxpayer.aliyahDate && !result.breakdown.creditPointsBreakdown.oleh_chadash_3pts) {
-    suggestions.push({
-      id: "opt-oleh",
-      title: "בדוק זכאות — עולה חדש",
-      description: `עולים חדשים זכאים לעד 3 נקודות זיכוי (₪${(3 * creditPointValue).toLocaleString("he-IL")}/שנה) ב-3.5 השנים הראשונות. עדכן תאריך עלייה בפרופיל.`,
-      estimatedSaving: 3 * creditPointValue,
-      priority: "medium",
-      action: "update_profile",
-      actionPayload: { field: "aliyahDate" },
-    });
-  }
+  // 4. Oleh chadash — DO NOT auto-suggest to every user who hasn't set an
+  // aliyahDate. The overwhelming majority of Israeli taxpayers are lifelong
+  // residents and pushing a "check עולה חדש eligibility" card at them was
+  // noise. The CreditQuiz (components/CreditQuiz.tsx) asks the question
+  // explicitly instead — that's the right place for opt-in discovery.
 
   // 5. LTC insurance missing
   const hasLtc = taxpayer.personalDeductions.some((d) => d.type === "ltc_insurance_sec45a");
@@ -98,12 +116,22 @@ export function generateOptimizations(
     });
   }
 
-  // 6. Periphery postcode missing
-  if (!taxpayer.postcode && !result.breakdown.creditPointsBreakdown.periphery) {
+  // 6. Periphery — same reasoning as oleh chadash: do not auto-surface to
+  // every user. Only cities in `data/periphery_postcodes.json` qualify and
+  // the user already declared their city in Step 0. If we want to surface a
+  // match we should do a positive city→postcode lookup and only suggest when
+  // the city hit, not when the postcode field is blank.
+  const addr = taxpayer.address;
+  if (
+    addr?.city &&
+    !taxpayer.postcode &&
+    !result.breakdown.creditPointsBreakdown.periphery &&
+    cityLooksPeripheral(addr.city)
+  ) {
     suggestions.push({
       id: "opt-periphery",
       title: "בדוק ישוב פריפריה",
-      description: `תושבי ישובים פריפריאליים זכאים ל-0.5-1.0 נקודת זיכוי (₪${Math.round(0.5 * creditPointValue).toLocaleString("he-IL")}–₪${creditPointValue.toLocaleString("he-IL")}). עדכן מיקוד בפרופיל.`,
+      description: `${addr.city} עשוי להיות מזוהה כישוב פריפריה. הוסף מיקוד לפרופיל כדי לחשב זכאות לנקודת זיכוי (₪${Math.round(0.5 * creditPointValue).toLocaleString("he-IL")}–₪${creditPointValue.toLocaleString("he-IL")}).`,
       estimatedSaving: creditPointValue,
       priority: "low",
       action: "update_profile",

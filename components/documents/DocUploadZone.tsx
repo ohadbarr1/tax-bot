@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { Upload, File, Trash2, ExternalLink, Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MAX_UPLOAD_LABEL, MAX_UPLOAD_BYTES } from "@/lib/uploadLimits";
 import type { VaultDocMeta, VaultDocType } from "@/types";
 
 export type { VaultDocMeta };
@@ -48,6 +49,12 @@ interface DocUploadZoneProps {
 
 export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, onAdd, onRemove, onTypeChange, onReparse }: DocUploadZoneProps) {
   const processFile = useCallback((file: File) => {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      // Keep it a plain alert for now — the vault intentionally has no
+      // toast/snackbar stack. Once one exists, replace this.
+      alert(`קובץ גדול מדי. המגבלה היא ${MAX_UPLOAD_LABEL} לקובץ.`);
+      return;
+    }
     const objectUrl = URL.createObjectURL(file);
     const meta: VaultDocMeta = {
       id: `doc-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -85,7 +92,7 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
         </div>
         <div className="text-center">
           <p className="text-sm font-medium text-foreground">גרור קבצים לכאן</p>
-          <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, CSV · עד 20MB לקובץ</p>
+          <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, CSV · עד {MAX_UPLOAD_LABEL} לקובץ</p>
         </div>
         <input
           type="file"
@@ -195,8 +202,24 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
 
 /**
  * Guess document type from filename and MIME type.
- * Uses multiple signals — filename keywords, extensions, MIME — in priority order.
- * Falls through to "other" only when nothing matches.
+ *
+ * Priority is deliberate — form-number checks run BEFORE brand/keyword
+ * checks so filenames like "Phoenix_106.pdf" classify as form106, not
+ * pension. The pension-brand list includes "phoenix" and Hebrew insurer
+ * names which used to swallow these files whole.
+ *
+ * Order of signals (first match wins):
+ *   1. CSV / text-csv            → ibkr (every broker export we see is CSV)
+ *   2. Form number in filename   → form106 / form135
+ *   3. Hebrew "טופס 106/135"     → form106 / form135
+ *   4. Broker keywords           → ibkr
+ *   5. Pension / provident keys  → pension
+ *   6. RSU / equity keys         → rsu_grant
+ *   7. Bank keys                 → bank_statement
+ *   8. Receipt keys              → receipt
+ *   9. fallthrough               → other
+ *
+ * The user can always override via the dropdown on each card.
  */
 function guessDocType(filename: string, mimeType: string): VaultDocType {
   const lower = filename.toLowerCase();
@@ -204,9 +227,10 @@ function guessDocType(filename: string, mimeType: string): VaultDocType {
   // CSV → almost always IBKR / broker export
   if (lower.endsWith(".csv") || mimeType === "text/csv") return "ibkr";
 
-  // Form numbers in filename
-  if (/\b106\b/.test(lower)) return "form106";
-  if (/\b135\b/.test(lower)) return "form135";
+  // Form numbers in filename — CHECK BEFORE brand keywords so "Phoenix_106"
+  // classifies as form106 and not pension.
+  if (/\b106\b/.test(lower) || /טופס\s*106|106\s*טופס/.test(lower)) return "form106";
+  if (/\b135\b/.test(lower) || /טופס\s*135|135\s*טופס/.test(lower)) return "form135";
 
   // Broker / brokerage keywords
   if (/ibkr|interactive|broker|activity.?statement|trade/.test(lower)) return "ibkr";
@@ -222,9 +246,6 @@ function guessDocType(filename: string, mimeType: string): VaultDocType {
 
   // Receipt keywords
   if (/receipt|קבלה|invoice|חשבונית/.test(lower)) return "receipt";
-
-  // Hebrew "106" alternate spellings
-  if (/טופס.?106|106.?טופס/.test(lower)) return "form106";
 
   return "other";
 }

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/appContext";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 import type { FilingType, FilingGoal } from "@/types";
 import { Briefcase, UserCheck, Layers, Receipt, FileText, Eye, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,10 @@ export function WelcomeWizard() {
   const { createDraft } = useApp();
 
   const [step, setStep] = useState(1);
-  const [taxYear, setTaxYear] = useState(2024);
+  // Default to "the year you're most likely filing for right now" — the
+  // previous calendar year — rather than a hardcoded 2024 that rotted every
+  // January. See lib/currentTaxYear.ts.
+  const [taxYear, setTaxYear] = useState<number>(currentTaxYear());
   const [filingType, setFilingType] = useState<FilingType>("salaried");
   const [filingGoal, setFilingGoal] = useState<FilingGoal>("refund");
 

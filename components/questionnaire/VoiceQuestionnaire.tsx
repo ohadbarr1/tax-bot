@@ -24,6 +24,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Mic, MicOff, ChevronLeft, ChevronRight, Check, Volume2, VolumeX, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/lib/appContext";
@@ -240,6 +241,7 @@ function makeInitialSteps(): StepState[] {
 }
 
 export function VoiceQuestionnaire() {
+  const router = useRouter();
   const { updateTaxpayer, updateFinancials, completeQuestionnaire, state } = useApp();
 
   const [currentQ, setCurrentQ] = useState(0);
@@ -372,7 +374,8 @@ export function VoiceQuestionnaire() {
     }
 
     completeQuestionnaire();
-  }, [steps, updateTaxpayer, updateFinancials, completeQuestionnaire]);
+    router.push("/documents");
+  }, [steps, updateTaxpayer, updateFinancials, completeQuestionnaire, router]);
 
   const currentStep = steps[currentQ];
   const isLastQuestion = currentQ === QUESTIONS.length - 1;

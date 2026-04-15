@@ -4,6 +4,7 @@ import { Sparkles, ChevronLeft, TrendingUp, AlertCircle } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { generateOptimizations } from "@/lib/optimizer";
 import type { OptimizationSuggestion } from "@/lib/optimizer";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 import { cn } from "@/lib/utils";
 
 const priorityColors = {
@@ -18,7 +19,7 @@ export function Optimizer() {
   const [suggestions, setSuggestions] = useState<OptimizationSuggestion[]>([]);
 
   useEffect(() => {
-    const taxYear = state.financials.taxYears[0] ?? 2024;
+    const taxYear = state.financials.taxYears[0] ?? currentTaxYear();
     const opts = generateOptimizations(state.taxpayer, state.financials, taxYear);
     setSuggestions(opts.slice(0, 3));
   }, [state.taxpayer, state.financials]);

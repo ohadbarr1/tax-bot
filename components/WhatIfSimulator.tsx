@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { Sliders, TrendingUp, TrendingDown } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { calculateFullRefund } from "@/lib/calculateTax";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 import type { TaxPayer } from "@/types";
 
 interface SimParams {
@@ -43,7 +44,7 @@ function SliderRow({ label, value, min, max, step, onChange, formatFn }: {
 
 export function WhatIfSimulator() {
   const { state } = useApp();
-  const taxYear = state.financials.taxYears[0] ?? 2024;
+  const taxYear = state.financials.taxYears[0] ?? currentTaxYear();
   const baseline = state.financials.calculationResult;
 
   const [params, setParams] = useState<SimParams>({

@@ -80,14 +80,22 @@ export default function DocumentsPage() {
         setParseResults((prev) => new Map(prev).set(docId, { summary, raw: d }));
         setParseStatuses((prev) => new Map(prev).set(docId, "done"));
 
-        // Update global state — add/replace employer
+        // Update global state — add/replace employer.
+        // Dedupe by doc-ID (emp-${docId}), NOT by name: a re-parse of the same
+        // document must replace the prior entry even if the new parser ran
+        // with a different name extraction, and two real employers that share
+        // a name prefix must not collide. Also strip legacy empty-name rows.
+        const empId = `emp-${docId}`;
+        const cleanExisting = state.taxpayer.employers.filter(
+          (e) => e.id !== empId && e.name && e.name.trim().length > 0
+        );
         updateTaxpayerAndRecalculate({
           employers: [
-            ...state.taxpayer.employers.filter((e) => e.name !== d.employerName),
+            ...cleanExisting,
             {
-              id: `emp-${docId}`,
+              id: empId,
               name: d.employerName,
-              isMainEmployer: state.taxpayer.employers.length === 0,
+              isMainEmployer: cleanExisting.length === 0,
               monthsWorked: d.monthsWorked,
               grossSalary: d.grossSalary,
               taxWithheld: d.taxWithheld,

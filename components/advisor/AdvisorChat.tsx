@@ -2,6 +2,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { Bot, X, Send, Minimize2 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 import { cn } from "@/lib/utils";
 
 interface ChatMessage {
@@ -71,13 +72,26 @@ export function AdvisorChat() {
             })),
             taxpayer: state.taxpayer,
             financials: state.financials,
-            taxYear: state.financials.taxYears[0] ?? 2024,
+            taxYear: state.financials.taxYears[0] ?? currentTaxYear(),
           }),
         });
 
-        if (!res.ok || !res.body) {
-          throw new Error(`HTTP ${res.status}`);
+        // The server returns JSON `{error}` on 5xx — surface that text in
+        // the bubble instead of a generic stub. A streaming success has a
+        // text/plain body, so a Content-Type sniff is enough to distinguish.
+        if (!res.ok) {
+          let errMsg = `שגיאה ${res.status} מהשרת.`;
+          if (res.headers.get("content-type")?.includes("application/json")) {
+            try {
+              const json = (await res.json()) as { error?: string };
+              if (json?.error) errMsg = json.error;
+            } catch {
+              /* fall through to stub */
+            }
+          }
+          throw new Error(errMsg);
         }
+        if (!res.body) throw new Error("שגיאה בתקשורת עם היועץ.");
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -96,11 +110,13 @@ export function AdvisorChat() {
         }
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
+          const text =
+            err instanceof Error && err.message
+              ? err.message
+              : "אירעה שגיאה. נסה שוב.";
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: "אירעה שגיאה. נסה שוב." }
-                : m
+              m.id === assistantId ? { ...m, content: text } : m
             )
           );
         }

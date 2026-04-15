@@ -15,10 +15,21 @@ export default function DashboardPage() {
     );
   }
 
+  // Dashboard is the single post-questionnaire landing surface. Once the
+  // questionnaire is complete we render it unconditionally — even with zero
+  // uploaded documents the estimated refund and insights are already computed
+  // from the questionnaire answers and the user should see them immediately.
+  // Pre-completion only, we respect `currentView` so /dashboard can still be
+  // used as a hosting page for the upload/ibkr flows if the user lands here
+  // early.
+  if (state.questionnaire.completed) {
+    return <Dashboard />;
+  }
+
   return (
     <>
       {state.currentView === "upload" && <FileDropzone />}
-      {(state.currentView === "dashboard" || state.currentView === "questionnaire") && <Dashboard />}
+      {state.currentView === "dashboard" && <Dashboard />}
       {state.currentView === "ibkr" && <IbkrAnalysisDashboard />}
     </>
   );

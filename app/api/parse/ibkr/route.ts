@@ -33,6 +33,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { IbkrParseResponse } from "@/types";
 import { parseIbkrCsv } from "@/lib/ibkrParser";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@/lib/uploadLimits";
 
 const ACCEPTED_MIME = [
   "text/csv",
@@ -64,6 +65,13 @@ export async function POST(
     return NextResponse.json(
       { success: false, error: "סוג קובץ לא נתמך. יש להעלות קובץ CSV מ-Interactive Brokers." },
       { status: 400 }
+    );
+  }
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json(
+      { success: false, error: `הקובץ חורג מהמגבלה של ${MAX_UPLOAD_LABEL}.` },
+      { status: 413 }
     );
   }
 

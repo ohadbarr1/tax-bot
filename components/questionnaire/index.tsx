@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useApp } from "@/lib/appContext";
@@ -16,6 +17,7 @@ import Step5Deductions from "./Step5Deductions";
 import Step6LifeEvents from "./Step6LifeEvents";
 
 export function Questionnaire() {
+  const router = useRouter();
   const {
     state,
     setQuestionnaireStep,
@@ -46,10 +48,15 @@ export function Questionnaire() {
   const [degrees,   setDegrees]   = useState<Degree[]>(taxpayer.degrees);
 
   // ── Step 3 state ───────────────────────────────────────────────────────────
+  // Default `investsCapital` ONLY to true when we already know the user has a
+  // foreign broker; otherwise leave it untouched so they can answer "no"
+  // without the app pre-picking "bank" for them.
   const [investsCapital,   setInvestsCapital]   = useState(financials.hasForeignBroker);
+  // `portfolioLocation` starts as null so the radio group shows no initial
+  // selection — the old default of "bank" was a silent answer we never asked.
   const [portfolioLocation, setPortfolioLocation] = useState<
-    "bank" | "local_broker" | "foreign_broker"
-  >(financials.hasForeignBroker ? "foreign_broker" : "bank");
+    "bank" | "local_broker" | "foreign_broker" | null
+  >(financials.hasForeignBroker ? "foreign_broker" : null);
   const [selectedBroker, setSelectedBroker] = useState(financials.brokerName ?? "");
 
   // ── Step 4 state ──────────────────────────────────────────────────────────
@@ -157,6 +164,8 @@ export function Questionnaire() {
       employersCount: employers.length,
     });
     completeQuestionnaire();
+    // App Router doesn't react to `state.currentView` — must push explicitly.
+    router.push("/documents");
   };
 
   return (
@@ -196,9 +205,13 @@ export function Questionnaire() {
         </div>
       </div>
 
-      {/* ── Card ── */}
+      {/* ── Card ──
+          AnimatePresence without `mode="wait"`: old step exits in parallel
+          with new step entering, so content lands at the same instant the
+          stepper indicator updates. With mode="wait" the 280ms exit stalls
+          the new step, leaving the indicator visibly ahead of the content. */}
       <div className="bg-white dark:bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-        <AnimatePresence mode="wait" custom={dir}>
+        <AnimatePresence custom={dir} initial={false}>
           <motion.div
             key={step}
             custom={dir}
@@ -206,7 +219,7 @@ export function Questionnaire() {
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.28, ease: "easeInOut" }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
             className="p-8 space-y-6"
           >
             {step === 1 && (

@@ -21,6 +21,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 import IbkrSummaryCards from "@/components/ibkr/IbkrSummaryCards";
 import IbkrCharts from "@/components/ibkr/IbkrCharts";
 import IbkrTaxShield from "@/components/ibkr/IbkrTaxShield";
@@ -112,7 +113,7 @@ export default function IbkrAnalysisDashboard() {
               ניתוח ברוקר זר מתקדם
             </h1>
             <p className="text-xs text-slate-500">
-              Interactive Brokers · שנת מס {state.financials.taxYears[0] ?? 2024}
+              Interactive Brokers · שנת מס {state.financials.taxYears[0] ?? currentTaxYear()}
             </p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">

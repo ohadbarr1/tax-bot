@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import taxData from "@/data/tax_brackets_2024_2025.json";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 
 interface SpreadYear {
   year: number;
@@ -84,9 +85,10 @@ export async function POST(request: Request) {
     }
 
     const years = Math.min(Math.max(1, spreadYears ?? 3), 6);
+    const resolvedYear = currentYear ?? currentTaxYear();
     const spreading = calculateSeveranceSpreading(
       taxableSeverance,
-      currentYear ?? 2024,
+      resolvedYear,
       years,
       currentYearIncome ?? 0
     );
@@ -96,7 +98,7 @@ export async function POST(request: Request) {
       form161: {
         taxpayerName,
         idNumber,
-        taxYear: currentYear ?? 2024,
+        taxYear: resolvedYear,
         taxableSeverance,
         spreadYears: years,
         spreading,
