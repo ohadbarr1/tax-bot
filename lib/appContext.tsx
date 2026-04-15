@@ -419,20 +419,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const nextProvenance = { ...(prev.provenance ?? {}) };
       const now = new Date().toISOString();
 
+      // Resolve employer-conflict: the miner always emits `employers[0]`, but
+      // the user may have already added employer 0 from a previous upload.
+      // Find the mined employer's name, match against existing employers by
+      // (lowercased) name, and rewrite the field paths to the matched or
+      // next-free index. Fields that DON'T touch `employers[0]` pass through.
+      const employerNameField = fields.find(
+        (f) => f.fieldPath === "taxpayer.employers[0].name"
+      );
+      let resolvedEmployerIdx = 0;
+      if (employerNameField && typeof employerNameField.value === "string") {
+        const minedName = employerNameField.value.trim().toLowerCase();
+        const existing = nextTaxpayer.employers ?? [];
+        const matchIdx = existing.findIndex(
+          (e) => (e.name ?? "").trim().toLowerCase() === minedName && minedName.length > 0
+        );
+        resolvedEmployerIdx = matchIdx >= 0 ? matchIdx : existing.length;
+      }
+
+      const rewritePath = (path: string): string => {
+        if (resolvedEmployerIdx === 0) return path;
+        return path.replace(/^taxpayer\.employers\[0\]/, `taxpayer.employers[${resolvedEmployerIdx}]`);
+      };
+
       for (const f of fields) {
-        const existing = nextProvenance[f.fieldPath];
+        const targetPath = rewritePath(f.fieldPath);
+        const existing = nextProvenance[targetPath];
         if (existing?.userConfirmed) continue;
 
-        if (f.fieldPath.startsWith("taxpayer.")) {
-          nextTaxpayer = setPath(nextTaxpayer, f.fieldPath.slice("taxpayer.".length), f.value);
-        } else if (f.fieldPath.startsWith("financials.")) {
-          nextFinancials = setPath(nextFinancials, f.fieldPath.slice("financials.".length), f.value);
+        if (targetPath.startsWith("taxpayer.")) {
+          nextTaxpayer = setPath(nextTaxpayer, targetPath.slice("taxpayer.".length), f.value);
+        } else if (targetPath.startsWith("financials.")) {
+          nextFinancials = setPath(nextFinancials, targetPath.slice("financials.".length), f.value);
         } else {
           continue;
         }
 
-        nextProvenance[f.fieldPath] = {
-          fieldPath: f.fieldPath,
+        nextProvenance[targetPath] = {
+          fieldPath: targetPath,
           sourceDocId: docId,
           sourceLabel,
           confidence: f.confidence,
