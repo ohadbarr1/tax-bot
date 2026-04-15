@@ -12,7 +12,6 @@ import { PillarGrid } from "./PillarGrid";
 import { ActionItems } from "./ActionItems";
 import { InsightsList } from "./InsightsList";
 import { Optimizer } from "@/components/Optimizer";
-import { WhatIfSimulator } from "@/components/WhatIfSimulator";
 import { YoYCompare } from "@/components/YoYCompare";
 import { DeferredDocReminderBanner } from "@/components/DeferredDocReminderBanner";
 
@@ -203,11 +202,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Smart tools row — YoY cell hidden until we have 2+ years of data */}
-      <div className={hasYoY ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
-        <WhatIfSimulator />
-        {hasYoY && <YoYCompare />}
-      </div>
+      {/* YoY comparison — hidden until 2+ years of data exist. What-If moved
+          to its own standalone /tax-calculator page. */}
+      {hasYoY && <YoYCompare />}
     </motion.div>
   );
 }
