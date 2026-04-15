@@ -198,6 +198,22 @@ export async function POST(request: Request): Promise<Response> {
 
   const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  // Claude vision accepts PDFs via the `file` content part (NOT `image`). Mixing
+  // them up returns an opaque schema error and the user sees "can't read it".
+  // Images still go through the `image` part.
+  const isPdf = mediaType === "application/pdf";
+  const filePart = isPdf
+    ? ({
+        type: "file" as const,
+        data: new Uint8Array(bytes),
+        mediaType,
+      })
+    : ({
+        type: "image" as const,
+        image: new Uint8Array(bytes),
+        mediaType,
+      });
+
   try {
     const { object } = await generateObject({
       model: anthropic("claude-sonnet-4-6"),
@@ -213,11 +229,7 @@ export async function POST(request: Request): Promise<Response> {
                 ? `The user uploaded this file and labeled it as "${hintedType}". Extract all supported fields.`
                 : `Extract all supported fields from this document.`,
             },
-            {
-              type: "image",
-              image: new Uint8Array(bytes),
-              mediaType,
-            },
+            filePart,
           ],
         },
       ],

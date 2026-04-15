@@ -12,8 +12,34 @@ import {
 } from "lucide-react";
 import { docsForSources, sourceById, type SourceDocRequest } from "@/lib/sourceCatalog";
 import { useApp } from "@/lib/appContext";
-import type { IncomeSourceId, DocMineResponse, VaultDocMeta } from "@/types";
+import { uploadUserDocument } from "@/lib/firebase/storage";
+import type {
+  IncomeSourceId,
+  DocMineResponse,
+  IbkrParseResponse,
+  VaultDocMeta,
+  VaultDocType,
+} from "@/types";
 import { cn } from "@/lib/utils";
+
+/**
+ * Mapping doc type → HTML <input accept=""> string. IBKR activity statements
+ * are always CSV; Form 106 / form 867 / pension / receipt arrive as PDF or
+ * scanned images. Keeping this in one place so both the idle and retry
+ * buttons stay in sync.
+ */
+function acceptForType(type: VaultDocType): string {
+  if (type === "ibkr") return ".csv,text/csv";
+  return ".pdf,image/*";
+}
+
+/** Storage kind used when uploading the raw blob to Cloud Storage. */
+function storageKindForType(type: VaultDocType): "form-106" | "form-867" | "ibkr" | "other" {
+  if (type === "form106") return "form-106";
+  if (type === "form867") return "form-867";
+  if (type === "ibkr") return "ibkr";
+  return "other";
+}
 
 /**
  * DocRequestPanel — second screen of onboarding.
@@ -47,7 +73,7 @@ interface Props {
 }
 
 export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
-  const { addDocument, updateDocumentStatus, applyMiningResult } = useApp();
+  const { addDocument, updateDocumentStatus, applyMiningResult, updateTaxpayerAndRecalculate } = useApp();
   const docs = docsForSources(sources);
   const [cards, setCards] = useState<Record<string, CardState>>({});
 
@@ -69,7 +95,48 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
       addDocument(meta);
       setCard(req.type, { kind: "mining", docId, fileName: file.name });
 
+      // Persist the raw blob to Cloud Storage in parallel with parsing so it
+      // survives a page reload / re-login. Returns null when Firebase is
+      // unconfigured — callers treat that as "in-memory only", no failure.
+      const uploadPromise = uploadUserDocument(file, storageKindForType(req.type), file.name);
+
       try {
+        // IBKR activity statements are CSV, not vision-capable — route them
+        // through the dedicated CSV parser, which returns structured IbkrData
+        // we fold into financials directly (no Claude vision call).
+        if (req.type === "ibkr") {
+          const form = new FormData();
+          form.append("file", file);
+          const res = await fetch("/api/parse/ibkr", { method: "POST", body: form });
+          const json = (await res.json()) as IbkrParseResponse;
+          if (!res.ok || !json.success || !json.data) {
+            throw new Error(json.error ?? "IBKR parse failed");
+          }
+          const d = json.data;
+          updateTaxpayerAndRecalculate(
+            {
+              capitalGains: {
+                totalRealizedProfit: d.totalRealizedProfit,
+                totalRealizedLoss: d.totalRealizedLoss,
+                foreignTaxWithheld: d.foreignTaxWithheld,
+                dividends: d.dividendsILS,
+              },
+            },
+            { ibkrData: d, hasForeignBroker: true }
+          );
+
+          const summary = `IBKR: רווח $${d.totalProfitUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })} · הפסד $${d.totalLossUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+          const uploadResult = await uploadPromise;
+          updateDocumentStatus(docId, "mined", {
+            storagePath: uploadResult?.path,
+            downloadUrl: uploadResult?.url,
+            parsedPayload: { kind: "ibkr", data: d },
+          });
+          setCard(req.type, { kind: "mined", docId, fileName: file.name, summary });
+          return;
+        }
+
+        // Default path: PDFs and images → Claude-vision miner.
         const form = new FormData();
         form.append("file", file);
         form.append("type", req.type);
@@ -82,7 +149,11 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
         }
 
         applyMiningResult(docId, req.label, json.data.fields);
-        updateDocumentStatus(docId, "mined");
+        const uploadResult = await uploadPromise;
+        updateDocumentStatus(docId, "mined", {
+          storagePath: uploadResult?.path,
+          downloadUrl: uploadResult?.url,
+        });
         setCard(req.type, {
           kind: "mined",
           docId,
@@ -95,7 +166,7 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
         setCard(req.type, { kind: "failed", error: msg, fileName: file.name });
       }
     },
-    [addDocument, applyMiningResult, updateDocumentStatus, sources]
+    [addDocument, applyMiningResult, updateDocumentStatus, updateTaxpayerAndRecalculate, sources]
   );
 
   const handleDefer = (req: SourceDocRequest) => {
@@ -272,7 +343,7 @@ function DocCard({
                   העלאה
                   <input
                     type="file"
-                    accept=".pdf,image/*"
+                    accept={acceptForType(req.type)}
                     className="hidden"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -334,7 +405,7 @@ function DocCard({
                   נסה שוב
                   <input
                     type="file"
-                    accept=".pdf,image/*"
+                    accept={acceptForType(req.type)}
                     className="hidden"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
