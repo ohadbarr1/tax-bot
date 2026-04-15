@@ -101,6 +101,30 @@ npm run dev          # http://localhost:3000
 Without the env vars the app still runs — it just skips Firestore/Storage
 calls (`isFirebaseConfigured()` returns `false`) so you can iterate offline.
 
+### Admin bootstrap
+
+There is no self-serve admin sign-up. The admin portal at `/admin` is gated
+by a document at `admins/{uid}` in Firestore — both on the server (every
+`/api/admin/*` route calls `requireAdmin`) and in the UI shell.
+
+To create the first admin:
+
+1. Open the Firebase Console → Firestore Database.
+2. Add a top-level collection called `admins` (if it doesn't exist).
+3. For the new document, set the **Document ID** to the user's Firebase UID
+   (find it in Authentication → Users → copy UID).
+4. Set fields:
+   - `role: "owner"` (string)
+   - `createdAt: <server timestamp>` (timestamp, choose "set to server time")
+   - `note: "<free text>"` (string, optional)
+5. Save. The user can now hit `/admin` and will see the dashboard after a
+   reload of their session. In-portal admin management is out of scope for
+   v1 — create additional admins the same way.
+
+The `admins/{uid}` collection has `allow read, write: if false` in
+`firestore.rules`, so no client can read or mutate it — only the Firebase
+Console + Admin SDK (used by `lib/admin/isAdmin.ts`) can touch it.
+
 ## Notes
 
 - **Anonymous auth**: every visitor is signed in automatically on first load.

@@ -22,6 +22,7 @@ import type {
   IncomeSourceId,
   FieldProvenance,
   MinedField,
+  UserPreferences,
 } from "@/types";
 import { INITIAL_STATE } from "./initialState";
 import { currentTaxYear } from "./currentTaxYear";
@@ -72,6 +73,8 @@ interface AppContextValue {
   // ── AI Advisor (P5) ───────────────────────────────────────────────────────
   saveAdvisorMessage: (msg: AdvisorMessage) => void;
   advisorMessages: AdvisorMessage[];
+  // ── User preferences ──────────────────────────────────────────────────────
+  updatePreferences: (patch: Partial<UserPreferences>) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -135,6 +138,7 @@ function migrateLegacyState(stored: unknown): AppState {
     const draftId = `draft-${taxYear}`;
     return {
       ...(s as unknown as Partial<AppState>),
+      preferences: ((s.preferences as UserPreferences | undefined) ?? { notifyOnRefundUpdates: false }),
       currentDraftId: draftId,
       drafts: {
         [draftId]: {
@@ -156,6 +160,9 @@ function migrateLegacyState(stored: unknown): AppState {
   if (!migrated.provenance) migrated.provenance = {};
   if (!migrated.onboarding) {
     migrated.onboarding = { sources: [], sourcesSelected: false, detailsConfirmed: false };
+  }
+  if (!migrated.preferences) {
+    migrated.preferences = { notifyOnRefundUpdates: false };
   }
 
   // Draft isolation fix (2026-04-15): the pre-fix Form 106 parser returned
@@ -582,6 +589,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return { ...s, provenance: next };
     });
 
+  // ── User preferences ───────────────────────────────────────────────────────
+  const updatePreferences = (patch: Partial<UserPreferences>) =>
+    setState((s) => ({
+      ...s,
+      preferences: {
+        ...(s.preferences ?? { notifyOnRefundUpdates: false }),
+        ...patch,
+      },
+    }));
+
   // ── Advisor history ────────────────────────────────────────────────────────
   const saveAdvisorMessage = (msg: AdvisorMessage) =>
     setState((s) => ({
@@ -624,6 +641,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         undoFieldMining,
         saveAdvisorMessage,
         advisorMessages,
+        updatePreferences,
       }}
     >
       {children}

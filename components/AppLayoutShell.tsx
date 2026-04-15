@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/firebase/authContext";
 import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { AdvisorChat } from "@/components/advisor/AdvisorChat";
+import { AuthErrorToast } from "@/components/auth/AuthErrorToast";
 
 interface Props { children: React.ReactNode; }
 
@@ -19,6 +20,7 @@ export default function AppLayoutShell({ children }: Props) {
           <Navbar />
           <main className="flex-1 pb-16 md:pb-0">{children}</main>
           <AdvisorChat />
+          <AuthErrorToast />
           <footer className="hidden md:block border-t border-border py-3 text-center text-xs text-muted-foreground">
             TaxBack IL · כל הזכויות שמורות · מאובטח בהצפנת TLS 1.3
           </footer>

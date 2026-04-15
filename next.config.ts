@@ -22,6 +22,28 @@ const nextConfig: NextConfig = {
   // Next.js 16 uses Turbopack by default.
   // Empty config silences the "webpack config present but no turbopack config" error.
   turbopack: {},
+
+  // Cross-Origin-Opener-Policy: same-origin-allow-popups
+  // Chrome's default COOP breaks `window.opener.postMessage` from Firebase's
+  // auth-handler popup (firebaseapp.com) back to the parent on *.hosted.app,
+  // so `signInWithPopup` opens the Google sheet fine but never resolves in
+  // the parent when the popup closes. `same-origin-allow-popups` keeps the
+  // main window's origin isolated but explicitly allows the popup we opened
+  // ourselves to talk back to us. Do NOT set COEP — it would disable
+  // third-party scripts (gstatic, Firebase auth handler).
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

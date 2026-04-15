@@ -300,12 +300,20 @@ export interface AdvisorMessage {
   timestamp: string;
 }
 
+/** User-level preferences, persisted on AppState. */
+export interface UserPreferences {
+  /** Opt-in to non-transactional email about refund status updates. */
+  notifyOnRefundUpdates: boolean;
+}
+
 export interface AppState {
   currentView: 'onboarding' | 'details' | 'dashboard' | 'ibkr' | 'questionnaire' | 'upload';
   questionnaire: {
     step: number;
     completed: boolean;
   };
+  /** User-level preferences (notifications, etc.) — opt-in and off by default. */
+  preferences: UserPreferences;
   // ── Onboarding (new paradigm) ─────────────────────────────────────────────
   onboarding: {
     /** Income sources the user selected on the first screen. */

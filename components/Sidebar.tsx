@@ -18,6 +18,9 @@ const NAV_ITEMS = [
   { href: "/history", label: "היסטוריה", icon: Clock },
   { href: "/facts", label: "תמונת מצב", icon: PieChart },
   { href: "/education", label: "מרכז ידע", icon: BookOpen },
+  // /profile lands ABOVE /settings on the desktop nav (indices 9–10). Mobile
+  // tab bar only renders `slice(0, 6)` so it stays unchanged.
+  { href: "/profile", label: "פרופיל", icon: User },
   { href: "/settings", label: "הגדרות", icon: Settings },
 ];
 

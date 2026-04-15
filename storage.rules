@@ -5,11 +5,21 @@ rules_version = '2';
 // lib/uploadLimits.ts). Read is split from write because `request.resource`
 // is null on reads, so a combined rule with `request.resource.size < …`
 // evaluates false on GET/getDownloadURL and breaks preview links.
+//
+// Admins (allow-listed in Firestore `admins/{uid}`) may read any user's
+// uploads via the portal. Writes always remain scoped to the owner — admin
+// destructive actions go through server routes that use the Admin SDK and
+// bypass rules entirely.
 service firebase.storage {
   match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
     match /users/{uid}/{allPaths=**} {
-      allow read: if request.auth != null
-                  && request.auth.uid == uid;
+      allow read:  if (request.auth != null && request.auth.uid == uid)
+                  || isAdmin();
       allow write: if request.auth != null
                    && request.auth.uid == uid
                    && request.resource.size < 20 * 1024 * 1024;

@@ -45,6 +45,9 @@ export const INITIAL_STATE: AppState = {
   currentView: "onboarding",
   questionnaire: { step: 1, completed: false },
 
+  // ─── User preferences (opt-in, off by default) ────────────────────────────
+  preferences: { notifyOnRefundUpdates: false },
+
   // ─── Onboarding (new paradigm) ────────────────────────────────────────────
   onboarding: { sources: [], sourcesSelected: false, detailsConfirmed: false },
 
