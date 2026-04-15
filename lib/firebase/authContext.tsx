@@ -64,18 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Resolve `ready` immediately on subscribe — not inside the callback.
+    // Firebase Auth blocks its first `onAuthStateChanged` emit on IndexedDB
+    // persistence init, which can hang indefinitely (observed: stuck-open
+    // `firebaseLocalStorageDb` after hot reload / rollout). Setting ready
+    // here means AuthGate falls through to SignInPrompt; when/if the
+    // callback eventually fires, setUser re-renders into the real content.
+    setReady(true);
+
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      // Resolve ready immediately — the UI needs to know whether to render
-      // the SignInPrompt or the real content. Previously we waited for the
-      // anon sign-in to round-trip before setting ready, which caused an
-      // infinite spinner when the anon sign-in hung (observed after an IDB
-      // wipe / incognito first load).
-      setReady(true);
       if (!u) {
-        // No user yet — sign in anonymously in the background so Firestore
-        // has a stable uid for public-read flows. If this fails we stay
-        // signed-out; the gated routes will show SignInPrompt anyway.
         try {
           await signInAnonymously(auth);
         } catch (err) {
