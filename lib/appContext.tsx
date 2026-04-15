@@ -8,7 +8,21 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import type { AppState, TaxPayer, FinancialData, TaxYearDraft, FilingType, FilingGoal, AdvisorMessage, VaultDocMeta, VaultDocType } from "@/types";
+import type {
+  AppState,
+  TaxPayer,
+  FinancialData,
+  TaxYearDraft,
+  FilingType,
+  FilingGoal,
+  AdvisorMessage,
+  VaultDocMeta,
+  VaultDocType,
+  VaultDocStatus,
+  IncomeSourceId,
+  FieldProvenance,
+  MinedField,
+} from "@/types";
 import { INITIAL_STATE } from "./initialState";
 import { currentTaxYear } from "./currentTaxYear";
 import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
@@ -41,6 +55,15 @@ interface AppContextValue {
   addDocument: (meta: VaultDocMeta) => void;
   removeDocument: (id: string) => void;
   updateDocumentType: (id: string, type: VaultDocType) => void;
+  updateDocumentStatus: (id: string, status: VaultDocStatus, patch?: Partial<VaultDocMeta>) => void;
+  // ── Onboarding (new paradigm) ─────────────────────────────────────────────
+  setIncomeSources: (sources: IncomeSourceId[]) => void;
+  markSourcesSelected: () => void;
+  markDetailsConfirmed: () => void;
+  // ── Provenance / prefill ──────────────────────────────────────────────────
+  applyMiningResult: (docId: string, sourceLabel: string, fields: MinedField[]) => void;
+  markFieldUserConfirmed: (fieldPath: string) => void;
+  undoFieldMining: (fieldPath: string) => void;
   // ── AI Advisor (P5) ───────────────────────────────────────────────────────
   saveAdvisorMessage: (msg: AdvisorMessage) => void;
   advisorMessages: AdvisorMessage[];
@@ -62,6 +85,40 @@ function useDebounce<T extends (...args: Parameters<T>) => void>(
     },
     [fn, delay]
   ) as T;
+}
+
+// ─── Dot-path set (used by applyMiningResult) ────────────────────────────────
+
+/**
+ * Immutably sets `state[path] = value`, where path is a dot-path that may include
+ * numeric array indices (e.g. "taxpayer.employers[0].grossSalary"). Creates
+ * intermediate arrays/objects as needed. Used by the mining pipeline to write
+ * extracted fields into the state tree without the UI having to hand-craft
+ * setters for every possible target.
+ */
+function setPath<T>(root: T, path: string, value: unknown): T {
+  const segments = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
+  if (segments.length === 0) return root;
+
+  const rec = (node: unknown, i: number): unknown => {
+    const key = segments[i];
+    const isIndex = /^\d+$/.test(key);
+    const idx = isIndex ? Number(key) : key;
+    const last = i === segments.length - 1;
+
+    if (isIndex) {
+      const arr = Array.isArray(node) ? [...(node as unknown[])] : [];
+      arr[idx as number] = last ? value : rec(arr[idx as number], i + 1);
+      return arr;
+    }
+    const obj = (node && typeof node === "object" ? { ...(node as Record<string, unknown>) } : {}) as Record<string, unknown>;
+    obj[idx as string] = last ? value : rec(obj[idx as string], i + 1);
+    return obj;
+  };
+  return rec(root, 0) as T;
 }
 
 // ─── Migration helper ─────────────────────────────────────────────────────────
@@ -91,6 +148,10 @@ function migrateLegacyState(stored: unknown): AppState {
   const migrated = s as unknown as AppState;
   if (!migrated.advisorHistory) migrated.advisorHistory = {};
   if (!migrated.documents) migrated.documents = [];
+  if (!migrated.provenance) migrated.provenance = {};
+  if (!migrated.onboarding) {
+    migrated.onboarding = { sources: [], sourcesSelected: false, detailsConfirmed: false };
+  }
 
   // Draft isolation fix (2026-04-15): the pre-fix Form 106 parser returned
   // empty employerName on Phoenix-style PDFs, so every re-upload appended a
@@ -311,6 +372,119 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       documents: (s.documents ?? []).map((d) => d.id === id ? { ...d, type } : d),
     }));
 
+  const updateDocumentStatus = (id: string, status: VaultDocStatus, patch: Partial<VaultDocMeta> = {}) =>
+    setState((s) => ({
+      ...s,
+      documents: (s.documents ?? []).map((d) => d.id === id ? { ...d, status, ...patch } : d),
+    }));
+
+  // ── Onboarding (new paradigm) ─────────────────────────────────────────────
+
+  const setIncomeSources = (sources: IncomeSourceId[]) =>
+    setState((s) => ({
+      ...s,
+      onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), sources },
+    }));
+
+  const markSourcesSelected = () =>
+    setState((s) => ({
+      ...s,
+      onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), sourcesSelected: true },
+    }));
+
+  const markDetailsConfirmed = () =>
+    setState((s) => ({
+      ...s,
+      currentView: "dashboard",
+      // The new paradigm replaces the step-by-step questionnaire with the
+      // details page. Downstream code still gates "show the dashboard" on
+      // `questionnaire.completed`, so flip it here.
+      questionnaire: { step: s.questionnaire?.step ?? 1, completed: true },
+      onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), detailsConfirmed: true },
+    }));
+
+  // ── Provenance / prefill ──────────────────────────────────────────────────
+
+  /**
+   * Apply a mining result from /api/mine/document to state. For each field:
+   *   - If the user has already confirmed the field, skip (never overwrite).
+   *   - Otherwise write the value via setPath + record a FieldProvenance entry.
+   * Triggers a full tax recalculation at the end so the LiveRefundCounter
+   * updates in real time as docs land.
+   */
+  const applyMiningResult = (docId: string, sourceLabel: string, fields: MinedField[]) =>
+    setState((prev) => {
+      let nextTaxpayer = prev.taxpayer;
+      let nextFinancials = prev.financials;
+      const nextProvenance = { ...(prev.provenance ?? {}) };
+      const now = new Date().toISOString();
+
+      for (const f of fields) {
+        const existing = nextProvenance[f.fieldPath];
+        if (existing?.userConfirmed) continue;
+
+        if (f.fieldPath.startsWith("taxpayer.")) {
+          nextTaxpayer = setPath(nextTaxpayer, f.fieldPath.slice("taxpayer.".length), f.value);
+        } else if (f.fieldPath.startsWith("financials.")) {
+          nextFinancials = setPath(nextFinancials, f.fieldPath.slice("financials.".length), f.value);
+        } else {
+          continue;
+        }
+
+        nextProvenance[f.fieldPath] = {
+          fieldPath: f.fieldPath,
+          sourceDocId: docId,
+          sourceLabel,
+          confidence: f.confidence,
+          bbox: f.bbox,
+          minedAt: now,
+          userConfirmed: false,
+        };
+      }
+
+      const year = nextFinancials.taxYears[0] ?? currentTaxYear();
+      const result = calculateFullRefund(nextTaxpayer, year);
+      const insights = buildInsightsFromResult(result, nextTaxpayer, year);
+      const actionItems = buildActionItemsFromResult(result, nextTaxpayer);
+      const recalculated: FinancialData = {
+        ...nextFinancials,
+        estimatedRefund: result.netRefund,
+        insights,
+        actionItems,
+        calculationResult: result,
+      };
+
+      return {
+        ...prev,
+        taxpayer: nextTaxpayer,
+        financials: recalculated,
+        provenance: nextProvenance,
+        drafts: {
+          ...prev.drafts,
+          [prev.currentDraftId]: {
+            ...prev.drafts[prev.currentDraftId],
+            taxpayer: nextTaxpayer,
+            financials: recalculated,
+            updatedAt: now,
+          },
+        },
+      };
+    });
+
+  const markFieldUserConfirmed = (fieldPath: string) =>
+    setState((s) => {
+      const p = s.provenance?.[fieldPath];
+      if (!p) return s;
+      return { ...s, provenance: { ...s.provenance, [fieldPath]: { ...p, userConfirmed: true } } };
+    });
+
+  const undoFieldMining = (fieldPath: string) =>
+    setState((s) => {
+      const next = { ...(s.provenance ?? {}) };
+      delete next[fieldPath];
+      return { ...s, provenance: next };
+    });
+
   // ── Advisor history ────────────────────────────────────────────────────────
   const saveAdvisorMessage = (msg: AdvisorMessage) =>
     setState((s) => ({
@@ -343,6 +517,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addDocument,
         removeDocument,
         updateDocumentType,
+        updateDocumentStatus,
+        setIncomeSources,
+        markSourcesSelected,
+        markDetailsConfirmed,
+        applyMiningResult,
+        markFieldUserConfirmed,
+        undoFieldMining,
         saveAdvisorMessage,
         advisorMessages,
       }}

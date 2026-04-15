@@ -3,14 +3,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard, ClipboardList, FolderOpen, Send, Clock, Settings, Menu, X,
+  LayoutDashboard, User, FolderOpen, Send, Clock, Settings, Menu, X,
   PieChart, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "דשבורד", icon: LayoutDashboard },
-  { href: "/questionnaire", label: "שאלון", icon: ClipboardList },
+  { href: "/details", label: "פרטים", icon: User },
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
   { href: "/filing", label: "הגשה", icon: Send },
   { href: "/history", label: "היסטוריה", icon: Clock },

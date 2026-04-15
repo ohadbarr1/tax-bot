@@ -36,7 +36,7 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-1">
           <DraftSwitcher />
           {[
-            { label: "שאלון", view: "questionnaire" as const, href: "/questionnaire" },
+            { label: "פרטים", view: "details" as const, href: "/details" },
             { label: "מסמכים", view: "upload" as const, href: null },
             { label: "לוח בקרה", view: "dashboard" as const, href: null },
           ].map((item) => (

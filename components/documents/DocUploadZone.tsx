@@ -8,20 +8,22 @@ import type { VaultDocMeta, VaultDocType } from "@/types";
 export type { VaultDocMeta };
 
 export const TYPE_LABELS: Record<VaultDocType, string> = {
-  form106:       "טופס 106",
-  form135:       "טופס 135",
-  ibkr:          "IBKR / ברוקר",
-  pension:       "קרן פנסיה",
-  receipt:       "קבלה",
-  bank_statement:"דף חשבון",
-  rsu_grant:     "RSU / ESPP",
-  other:         "אחר",
+  form106:        "טופס 106",
+  form135:        "טופס 135",
+  form867:        "טופס 867",
+  ibkr:           "IBKR / ברוקר",
+  pension:        "קרן פנסיה",
+  receipt:        "קבלה",
+  bank_statement: "דף חשבון",
+  rsu_grant:      "RSU / ESPP",
+  rental_contract:"חוזה שכירות",
+  other:          "אחר",
 };
 
 // All selectable types in the dropdown (same set, ordered nicely)
 const TYPE_OPTIONS: VaultDocType[] = [
-  "form106", "ibkr", "pension", "form135",
-  "receipt", "bank_statement", "rsu_grant", "other",
+  "form106", "form867", "ibkr", "pension", "form135",
+  "receipt", "bank_statement", "rsu_grant", "rental_contract", "other",
 ];
 
 export type ParseStatus = "idle" | "parsing" | "done" | "error";
