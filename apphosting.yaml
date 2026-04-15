@@ -43,10 +43,10 @@ env:
     value: "1:335346608639:web:d1ba92ab74673c017e1fca"
     availability: [BUILD, RUNTIME]
 
-  # Anthropic API key — set via:
+  # Anthropic API key — stored in Google Cloud Secret Manager. Set via:
   #   firebase apphosting:secrets:set ANTHROPIC_API_KEY
-  # then uncomment the block below. Leaving it out until the secret exists
-  # keeps initial deploys from failing on a missing reference.
-  # - variable: ANTHROPIC_API_KEY
-  #   secret: ANTHROPIC_API_KEY
-  #   availability: [RUNTIME]
+  # The runner service account is granted secretAccessor scoped to this one
+  # secret. Only RUNTIME — the build step never sees the key.
+  - variable: ANTHROPIC_API_KEY
+    secret: ANTHROPIC_API_KEY
+    availability: [RUNTIME]
