@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard, User, FolderOpen, Send, Clock, Settings, Menu, X,
-  PieChart, BookOpen,
+  PieChart, BookOpen, ReceiptText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "דשבורד", icon: LayoutDashboard },
   { href: "/details", label: "פרטים", icon: User },
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
+  { href: "/income-tax", label: "ניתוח מס הכנסה", icon: ReceiptText },
   { href: "/filing", label: "הגשה", icon: Send },
   { href: "/history", label: "היסטוריה", icon: Clock },
   { href: "/facts", label: "תמונת מצב", icon: PieChart },

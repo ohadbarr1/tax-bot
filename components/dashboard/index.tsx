@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { Variants } from "framer-motion";
-import { LineChart, ArrowRight } from "lucide-react";
+import { LineChart, ArrowRight, ReceiptText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
@@ -52,6 +52,13 @@ export default function Dashboard() {
   const totalActions = financials.actionItems.length;
   const pendingActions = totalActions - completedActions;
   const hasOverlap = employersOverlap(taxpayer.employers);
+
+  const salaryEmployers = taxpayer.employers.filter(
+    (e) => typeof e.grossSalary === "number" && e.grossSalary > 0
+  );
+  const totalGross = salaryEmployers.reduce((s, e) => s + (e.grossSalary ?? 0), 0);
+  const totalWithheld = salaryEmployers.reduce((s, e) => s + (e.taxWithheld ?? 0), 0);
+  const hasSalaryData = salaryEmployers.length > 0;
 
   return (
     <motion.div
@@ -117,6 +124,43 @@ export default function Dashboard() {
               <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-900/30 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50
                               flex items-center justify-center transition-colors">
                 <ArrowRight className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+          </button>
+        </motion.div>
+      )}
+
+      {/* Income Tax Analysis Card — Form 106 aggregated view, placed directly below IBKR */}
+      {hasSalaryData && (
+        <motion.div variants={fadeUp}>
+          <button
+            onClick={() => router.push("/income-tax")}
+            className="w-full group text-start bg-white dark:bg-card rounded-2xl border border-amber-200 dark:border-amber-900/50
+                       hover:border-amber-400 dark:hover:border-amber-700 hover:shadow-md transition-all duration-200 p-5"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50
+                                flex items-center justify-center flex-shrink-0 transition-colors">
+                  <ReceiptText className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-foreground">
+                      ניתוח מס הכנסה
+                    </p>
+                    <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                      {salaryEmployers.length} מעסיק{salaryEmployers.length > 1 ? "ים" : ""} ✓
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {`ברוטו: ₪${totalGross.toLocaleString("he-IL")} · מס שנוכה: ₪${totalWithheld.toLocaleString("he-IL")} · מדרגות מס ושיעור אפקטיבי`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-900/30 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/50
+                              flex items-center justify-center transition-colors">
+                <ArrowRight className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               </div>
             </div>
           </button>
