@@ -61,6 +61,8 @@ interface AppContextValue {
   setIncomeSources: (sources: IncomeSourceId[]) => void;
   markSourcesSelected: () => void;
   markDetailsConfirmed: () => void;
+  /** Wipe the current in-progress onboarding draft back to a fresh slate. */
+  discardCurrentDraft: () => void;
   // ── Provenance / prefill ──────────────────────────────────────────────────
   applyMiningResult: (docId: string, sourceLabel: string, fields: MinedField[]) => void;
   markFieldUserConfirmed: (fieldPath: string) => void;
@@ -402,6 +404,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), sourcesSelected: true },
     }));
 
+  const discardCurrentDraft = () =>
+    setState((s) => {
+      const draftId = s.currentDraftId;
+      const taxYear = s.financials.taxYears[0] ?? currentTaxYear();
+      const freshTaxpayer = { ...INITIAL_STATE.taxpayer, id: `taxpayer-${draftId}` };
+      const freshFinancials = { ...INITIAL_STATE.financials, taxYears: [taxYear] };
+      return {
+        ...s,
+        taxpayer: freshTaxpayer,
+        financials: freshFinancials,
+        provenance: {},
+        onboarding: { sources: [], sourcesSelected: false, detailsConfirmed: false },
+        questionnaire: { step: 1, completed: false },
+        drafts: {
+          ...s.drafts,
+          [draftId]: {
+            ...s.drafts[draftId],
+            taxpayer: freshTaxpayer,
+            financials: freshFinancials,
+            questionnaire: { step: 1, completed: false },
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+    });
+
   const markDetailsConfirmed = () =>
     setState((s) => ({
       ...s,
@@ -555,6 +583,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIncomeSources,
         markSourcesSelected,
         markDetailsConfirmed,
+        discardCurrentDraft,
         applyMiningResult,
         markFieldUserConfirmed,
         undoFieldMining,
