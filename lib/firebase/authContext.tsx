@@ -87,14 +87,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth || !auth.currentUser) return;
     const provider = new GoogleAuthProvider();
     try {
-      // If currently anonymous, upgrade the account in place
+      // If currently anonymous, upgrade the account in place.
       if (auth.currentUser.isAnonymous) {
         await linkWithPopup(auth.currentUser, provider);
-      } else {
-        await signInWithPopup(auth, provider);
+        return;
       }
-    } catch (err) {
-      console.error("[auth] Google link failed:", err);
+      await signInWithPopup(auth, provider);
+    } catch (err: unknown) {
+      // credential-already-in-use: the Google account is already linked to a
+      // different Firebase UID (usually: same user signed in previously on
+      // another device, or anon→link was attempted twice). Drop the throwaway
+      // anon session and sign in as the existing Google-linked user.
+      const code = (err as { code?: string } | null)?.code;
+      if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
+        try {
+          await fbSignOut(auth);
+          await signInWithPopup(auth, provider);
+          return;
+        } catch (err2) {
+          console.error("[auth] fallback sign-in after link-collision failed:", err2);
+          throw err2;
+        }
+      }
+      // auth/cancelled-popup-request / popup-closed-by-user: benign, don't log.
+      if (code !== "auth/cancelled-popup-request" && code !== "auth/popup-closed-by-user") {
+        console.error("[auth] Google link failed:", err);
+      }
       throw err;
     }
   }, []);
