@@ -27,6 +27,7 @@ import { INITIAL_STATE } from "./initialState";
 import { currentTaxYear } from "./currentTaxYear";
 import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
 import { saveState, loadState } from "./db";
+import { carryForwardFromPriorDraft } from "./yoyCarryover";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 
@@ -309,29 +310,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const createDraft = (taxYear: number, filingType?: FilingType, filingGoal?: FilingGoal): string => {
     const draftId = `draft-${taxYear}-${Date.now()}`;
-    setState((s) => ({
-      ...s,
-      currentDraftId: draftId,
-      currentView: "questionnaire",
-      questionnaire: { step: 1, completed: false },
-      taxpayer: { ...INITIAL_STATE.taxpayer, id: `taxpayer-${draftId}` },
-      financials: { ...INITIAL_STATE.financials, taxYears: [taxYear] },
-      drafts: {
-        ...s.drafts,
-        [draftId]: {
-          id: draftId,
-          taxYear,
-          status: "draft",
-          filingType,
-          filingGoal,
-          questionnaire: { step: 1, completed: false },
-          taxpayer: { ...INITIAL_STATE.taxpayer, id: `taxpayer-${draftId}` },
-          financials: { ...INITIAL_STATE.financials, taxYears: [taxYear] },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+    setState((s) => {
+      const carry = carryForwardFromPriorDraft(s.drafts, taxYear, draftId);
+      const seededTaxpayer = carry.taxpayer;
+      const seededFinancials = { ...INITIAL_STATE.financials, taxYears: [taxYear] };
+      return {
+        ...s,
+        currentDraftId: draftId,
+        currentView: "questionnaire",
+        questionnaire: { step: 1, completed: false },
+        taxpayer: seededTaxpayer,
+        financials: seededFinancials,
+        // Merge carried provenance on top of any preexisting map — prior-year
+        // tags won't collide with document provenance because the new draft
+        // has no documents yet.
+        provenance: { ...(s.provenance ?? {}), ...carry.provenance },
+        drafts: {
+          ...s.drafts,
+          [draftId]: {
+            id: draftId,
+            taxYear,
+            status: "draft",
+            filingType,
+            filingGoal,
+            questionnaire: { step: 1, completed: false },
+            taxpayer: seededTaxpayer,
+            financials: seededFinancials,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
         }
-      }
-    }));
+      };
+    });
     return draftId;
   };
 
