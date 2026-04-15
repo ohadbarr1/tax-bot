@@ -14,6 +14,7 @@ import { InsightsList } from "./InsightsList";
 import { Optimizer } from "@/components/Optimizer";
 import { WhatIfSimulator } from "@/components/WhatIfSimulator";
 import { YoYCompare } from "@/components/YoYCompare";
+import { DeferredDocReminderBanner } from "@/components/DeferredDocReminderBanner";
 
 const stagger: Variants = {
   hidden: { opacity: 0 },
@@ -59,6 +60,9 @@ export default function Dashboard() {
       animate="show"
       className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8"
     >
+      {/* Deferred-doc reminder — only renders when there's something due */}
+      <DeferredDocReminderBanner />
+
       {/* Hero */}
       <Hero
         financials={financials}
