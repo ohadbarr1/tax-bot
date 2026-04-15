@@ -11,8 +11,11 @@ const ERROR_PARSE = "לא הצלחנו לקרוא את המסמך. נסה שוב
 const ERROR_TOO_BIG = "הקובץ גדול מדי (עד 10MB).";
 const MAX_BYTES = 10 * 1024 * 1024;
 
-// Claude vision schema — intentionally narrow. The model returns only fields
-// it's highly confident about; unknowns become nulls and we drop them below.
+// Claude vision schema — every field is required-with-null rather than
+// `optional()` because Anthropic's tool-grammar compiler caps structured
+// outputs at 24 optional parameters, and this schema originally had 31.
+// `nullable()` does not count against the limit: the model must always
+// emit the key, but may return `null` for unknowns.
 const MinedShape = z.object({
   detectedType: z.enum([
     "form106",
@@ -26,58 +29,56 @@ const MinedShape = z.object({
     "rental_contract",
     "other",
   ]),
-  summary: z.string().max(200).optional(),
+  summary: z.string().max(200).nullable(),
   taxpayer: z
     .object({
-      idNumber: z.string().nullable().optional(),
-      firstName: z.string().nullable().optional(),
-      lastName: z.string().nullable().optional(),
+      idNumber: z.string().nullable(),
+      firstName: z.string().nullable(),
+      lastName: z.string().nullable(),
       address: z
         .object({
-          city: z.string().nullable().optional(),
-          street: z.string().nullable().optional(),
-          houseNumber: z.string().nullable().optional(),
+          city: z.string().nullable(),
+          street: z.string().nullable(),
+          houseNumber: z.string().nullable(),
         })
-        .nullable()
-        .optional(),
+        .nullable(),
       bank: z
         .object({
-          bankId: z.string().nullable().optional(),
-          bankName: z.string().nullable().optional(),
-          branch: z.string().nullable().optional(),
-          account: z.string().nullable().optional(),
+          bankId: z.string().nullable(),
+          bankName: z.string().nullable(),
+          branch: z.string().nullable(),
+          account: z.string().nullable(),
         })
-        .nullable()
-        .optional(),
+        .nullable(),
     })
-    .optional(),
+    .nullable(),
   employer: z
     .object({
-      name: z.string().nullable().optional(),
-      grossSalary: z.number().nullable().optional(),
-      taxWithheld: z.number().nullable().optional(),
-      pensionDeduction: z.number().nullable().optional(),
-      monthsWorked: z.number().nullable().optional(),
+      name: z.string().nullable(),
+      grossSalary: z.number().nullable(),
+      taxWithheld: z.number().nullable(),
+      pensionDeduction: z.number().nullable(),
+      monthsWorked: z.number().nullable(),
     })
-    .optional(),
+    .nullable(),
   capitalGains: z
     .object({
-      totalRealizedProfit: z.number().nullable().optional(),
-      totalRealizedLoss: z.number().nullable().optional(),
-      foreignTaxWithheld: z.number().nullable().optional(),
-      dividends: z.number().nullable().optional(),
+      totalRealizedProfit: z.number().nullable(),
+      totalRealizedLoss: z.number().nullable(),
+      foreignTaxWithheld: z.number().nullable(),
+      dividends: z.number().nullable(),
     })
-    .optional(),
+    .nullable(),
   /** Per-field confidence tiers — model picks one of three. */
   confidence: z
     .object({
-      identity: z.enum(["high", "medium", "low"]).optional(),
-      address: z.enum(["high", "medium", "low"]).optional(),
-      bank: z.enum(["high", "medium", "low"]).optional(),
-      employer: z.enum(["high", "medium", "low"]).optional(),
-      capitalGains: z.enum(["high", "medium", "low"]).optional(),
+      identity: z.enum(["high", "medium", "low"]).nullable(),
+      address: z.enum(["high", "medium", "low"]).nullable(),
+      bank: z.enum(["high", "medium", "low"]).nullable(),
+      employer: z.enum(["high", "medium", "low"]).nullable(),
+      capitalGains: z.enum(["high", "medium", "low"]).nullable(),
     })
-    .optional(),
+    .nullable(),
 });
 
 type MinedShape = z.infer<typeof MinedShape>;
@@ -243,7 +244,7 @@ export async function POST(request: Request): Promise<Response> {
       data: {
         detectedType: object.detectedType,
         fields,
-        summary: object.summary,
+        summary: object.summary ?? undefined,
         backend: "claude-vision",
       },
     };
