@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
   try {
     const result = streamText({
-      model: anthropic("claude-opus-4-5"),
+      model: anthropic("claude-sonnet-4-6"),
       system: fullSystem,
       messages,
       maxOutputTokens: 1024,
