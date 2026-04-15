@@ -187,8 +187,14 @@ export async function POST(request: Request): Promise<Response> {
 
   const hintedType = (form.get("type") as VaultDocType | null) ?? undefined;
 
-  const bytes = await file.arrayBuffer();
-  const mediaType = normalizeMediaType(file.type, file.name);
+  let bytes: ArrayBuffer;
+  let mediaType: string;
+  try {
+    ({ bytes, mediaType } = await loadAndMaybeConvert(file));
+  } catch (err) {
+    console.error("[mine/document] preprocessing failed:", err);
+    return json({ success: false, error: ERROR_PARSE }, 400);
+  }
 
   const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -255,11 +261,45 @@ async function safeFormData(request: Request): Promise<FormData | null> {
 }
 
 /**
- * Claude vision accepts image/*, application/pdf. HEIC and older formats
- * need server-side conversion (not implemented — flagged as TODO for Phase 4
- * "HEIC support"). For now coerce obvious aliases and fall back to octet-stream
- * so the model errors clearly if the user uploads something weird.
+ * Claude vision accepts image/{jpeg,png,gif,webp} and application/pdf — no
+ * HEIC. iOS users routinely upload HEIC straight from Photos, so we detect
+ * those (by mime OR by extension OR by magic bytes) and transcode to JPEG
+ * server-side via heic-convert (pure JS, no native deps).
+ *
+ * Other image types / PDFs pass through untouched.
  */
+async function loadAndMaybeConvert(
+  file: File
+): Promise<{ bytes: ArrayBuffer; mediaType: string }> {
+  const raw = await file.arrayBuffer();
+  const declared = normalizeMediaType(file.type, file.name);
+
+  const isHeic =
+    declared === "image/heic" ||
+    declared === "image/heif" ||
+    looksLikeHeic(raw);
+
+  if (!isHeic) return { bytes: raw, mediaType: declared };
+
+  // Dynamic import so cold starts that never see a HEIC don't pay the cost.
+  // heic-convert has no types — pin the signature we use.
+  type HeicConvertArgs = { buffer: Uint8Array; format: "JPEG" | "PNG"; quality?: number };
+  type HeicConvert = (args: HeicConvertArgs) => Promise<ArrayBuffer | Uint8Array>;
+  const mod = (await import("heic-convert")) as unknown as { default: HeicConvert };
+  const heicConvert = mod.default;
+
+  const jpeg = await heicConvert({
+    buffer: new Uint8Array(raw),
+    format: "JPEG",
+    quality: 0.92,
+  });
+  const jpegU8 = jpeg instanceof Uint8Array ? jpeg : new Uint8Array(jpeg);
+  // Re-slice to a clean ArrayBuffer so downstream consumers don't see the
+  // original HEIC backing store behind the view.
+  const jpegBuf = jpegU8.buffer.slice(jpegU8.byteOffset, jpegU8.byteOffset + jpegU8.byteLength) as ArrayBuffer;
+  return { bytes: jpegBuf, mediaType: "image/jpeg" };
+}
+
 function normalizeMediaType(mime: string, name: string): string {
   if (mime && mime !== "application/octet-stream") return mime;
   const lower = name.toLowerCase();
@@ -267,6 +307,29 @@ function normalizeMediaType(mime: string, name: string): string {
   if (lower.endsWith(".png")) return "image/png";
   if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
   if (lower.endsWith(".webp")) return "image/webp";
-  if (lower.endsWith(".heic") || lower.endsWith(".heif")) return "image/heic";
+  if (lower.endsWith(".heic")) return "image/heic";
+  if (lower.endsWith(".heif")) return "image/heif";
   return "application/octet-stream";
+}
+
+/**
+ * HEIC files are ISOBMFF containers — bytes 4..8 are "ftyp" and the next
+ * 4 bytes encode the brand. Detect the common HEIC brands even when the
+ * browser reports a generic mime (Safari sometimes sends empty/wrong mime).
+ */
+function looksLikeHeic(buf: ArrayBuffer): boolean {
+  if (buf.byteLength < 12) return false;
+  const view = new Uint8Array(buf, 0, 12);
+  const ftyp = String.fromCharCode(view[4], view[5], view[6], view[7]);
+  if (ftyp !== "ftyp") return false;
+  const brand = String.fromCharCode(view[8], view[9], view[10], view[11]);
+  return (
+    brand === "heic" ||
+    brand === "heix" ||
+    brand === "mif1" ||
+    brand === "msf1" ||
+    brand === "heis" ||
+    brand === "hevc" ||
+    brand === "hevx"
+  );
 }
