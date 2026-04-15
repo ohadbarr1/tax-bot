@@ -35,9 +35,18 @@ const PILLAR_ORDER: InsightPillar[] = [
 ];
 
 export default function Dashboard() {
-  const { state, setView, updateFinancials } = useApp();
+  const { state, setView, updateFinancials, allDrafts } = useApp();
   const { financials, taxpayer } = state;
   const router = useRouter();
+
+  // YoY comparison is meaningful only with drafts from 2+ distinct tax years
+  // that have computed results. With a single year we hide the whole cell.
+  const extractedYears = new Set(
+    allDrafts
+      .filter((d) => d.financials.calculationResult)
+      .map((d) => d.taxYear)
+  );
+  const hasYoY = extractedYears.size > 1;
 
   const insightsByPillar = PILLAR_ORDER.reduce<Record<InsightPillar, TaxInsight[]>>(
     (acc, p) => {
@@ -194,10 +203,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Smart tools row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Smart tools row — YoY cell hidden until we have 2+ years of data */}
+      <div className={hasYoY ? "grid grid-cols-1 lg:grid-cols-2 gap-6" : ""}>
         <WhatIfSimulator />
-        <YoYCompare />
+        {hasYoY && <YoYCompare />}
       </div>
     </motion.div>
   );
