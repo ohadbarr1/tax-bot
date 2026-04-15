@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { type ReactNode } from "react";
 import { useAuth } from "@/lib/firebase/authContext";
 
 /**
@@ -12,31 +11,24 @@ import { useAuth } from "@/lib/firebase/authContext";
  * Behavior:
  *   - Firebase unconfigured (local dev / tests)  → no-op, render children.
  *   - Auth not ready yet                          → render a small spinner.
- *   - Ready + no user                             → redirect to `redirectTo`
- *                                                   (default `/`) and render
- *                                                   null while the router swap
- *                                                   is in flight.
- *   - Ready + user                                → render children.
+ *   - Ready + no user                             → render a sign-in prompt
+ *                                                   (the anonymous sign-in
+ *                                                   path is kept for the
+ *                                                   Firestore scope, but the
+ *                                                   gate forces a real Google
+ *                                                   identity before onboarding).
+ *   - Ready + anonymous user                      → render a sign-in prompt.
+ *   - Ready + linked user                         → render children.
  *
- * Note: the app signs visitors in anonymously automatically, so in practice
- * the "no user" path only fires if anonymous sign-in failed or the user
- * explicitly signed out. Still a real gate — anonymous accounts are
- * first-class users with a stable uid for Firestore/Storage scoping.
+ * The landing page and marketing routes remain open to anon users; only
+ * onboarding/vault routes use this gate.
  */
 export function AuthGate({
   children,
-  redirectTo = "/",
 }: {
   children: ReactNode;
-  redirectTo?: string;
 }) {
-  const router = useRouter();
-  const { user, ready, configured } = useAuth();
-
-  useEffect(() => {
-    if (!configured) return;
-    if (ready && !user) router.replace(redirectTo);
-  }, [configured, ready, user, redirectTo, router]);
+  const { user, ready, configured, linkGoogle } = useAuth();
 
   if (!configured) return <>{children}</>;
   if (!ready) {
@@ -46,6 +38,26 @@ export function AuthGate({
       </div>
     );
   }
-  if (!user) return null;
+  if (!user || user.isAnonymous) return <SignInPrompt linkGoogle={linkGoogle} />;
   return <>{children}</>;
+}
+
+function SignInPrompt({ linkGoogle }: { linkGoogle: () => Promise<void> }) {
+  return (
+    <div dir="rtl" className="min-h-[60vh] flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-card border border-border rounded-2xl shadow-sm p-8 text-center">
+        <h1 className="text-2xl font-bold text-foreground mb-2">התחברות נדרשת</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          כדי להשתמש בדשבורד המס, נא להתחבר עם חשבון Google. המסמכים שלך יישמרו בצורה מאובטחת
+          ויהיו זמינים בהתחברות הבאה.
+        </p>
+        <button
+          onClick={() => linkGoogle().catch(() => { /* user cancelled popup */ })}
+          className="w-full py-3 px-4 rounded-xl bg-brand-900 text-white font-semibold hover:opacity-90 transition-opacity"
+        >
+          התחבר עם Google
+        </button>
+      </div>
+    </div>
+  );
 }

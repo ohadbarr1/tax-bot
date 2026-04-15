@@ -5,6 +5,7 @@ import { DocUploadZone, TYPE_LABELS } from "@/components/documents/DocUploadZone
 import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZone";
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
+import { AuthGate } from "@/components/auth/AuthGate";
 import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse } from "@/types";
 
 const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
@@ -20,6 +21,14 @@ const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
 ];
 
 export default function DocumentsPage() {
+  return (
+    <AuthGate>
+      <DocumentsPageInner />
+    </AuthGate>
+  );
+}
+
+function DocumentsPageInner() {
   const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, hydrated } = useApp();
 
   // Session-only blob URLs — never persisted (blob URLs are tab-lifetime only).
