@@ -51,7 +51,7 @@ export function Field({
       : "border-border";
 
   return (
-    <div className={cn("space-y-1", className)} dir={dir}>
+    <div className={cn("space-y-1", className)} dir={dir} data-field-path={path}>
       <div className="flex items-center justify-between gap-2">
         <label className="text-xs font-semibold text-muted-foreground">{label}</label>
         {prov && (
