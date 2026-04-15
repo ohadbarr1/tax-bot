@@ -42,14 +42,20 @@ export const INITIAL_FINANCIALS = {
 const DEFAULT_DRAFT_ID = `draft-${DEFAULT_TAX_YEAR}`;
 
 export const INITIAL_STATE: AppState = {
-  currentView: "questionnaire",
+  currentView: "onboarding",
   questionnaire: { step: 1, completed: false },
+
+  // ─── Onboarding (new paradigm) ────────────────────────────────────────────
+  onboarding: { sources: [], sourcesSelected: false, detailsConfirmed: false },
 
   // ─── Taxpayer ──────────────────────────────────────────────────────────────
   taxpayer: INITIAL_TAXPAYER,
 
   // ─── Financials ────────────────────────────────────────────────────────────
   financials: INITIAL_FINANCIALS,
+
+  // ─── Per-field provenance (prefill trust layer) ───────────────────────────
+  provenance: {},
 
   // ─── Multi-draft (P2) ──────────────────────────────────────────────────────
   currentDraftId: DEFAULT_DRAFT_ID,

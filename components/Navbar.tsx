@@ -1,19 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import { Lock, ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DraftSwitcher } from "@/components/DraftSwitcher";
 import { AuthButton } from "@/components/AuthButton";
 import { useAuth } from "@/lib/firebase/authContext";
+import { useOnboardingDirty } from "@/lib/useOnboardingDirty";
+import { ConfirmLeaveDialog } from "@/components/onboarding/ConfirmLeaveDialog";
 
 export function Navbar() {
-  const { state, setView } = useApp();
+  const { state, setView, discardCurrentDraft } = useApp();
   const { taxpayer } = state;
   const router = useRouter();
+  const pathname = usePathname() ?? "";
   const { configured } = useAuth();
+  const dirty = useOnboardingDirty();
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const initials = taxpayer.fullName
     .split(" ")
     .filter((w) => /[\u0590-\u05FF]/.test(w) || /[A-Z]/.test(w[0]))
@@ -24,9 +30,15 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/90 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo (right side in RTL) */}
+        {/* Logo (right side in RTL) — always routes home, but guards dirty onboarding */}
         <button
-          onClick={() => setView("dashboard")}
+          onClick={() => {
+            if (dirty) {
+              setLeaveDialogOpen(true);
+              return;
+            }
+            router.push("/");
+          }}
           className="flex items-center gap-2 group"
         >
           <Logo />
@@ -36,22 +48,29 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-1">
           <DraftSwitcher />
           {[
-            { label: "שאלון", view: "questionnaire" as const, href: "/questionnaire" },
+            { label: "פרטים", view: "details" as const, href: "/details" },
             { label: "מסמכים", view: "upload" as const, href: null },
             { label: "לוח בקרה", view: "dashboard" as const, href: null },
-          ].map((item) => (
-            <button
-              key={item.view}
-              onClick={() => item.href ? router.push(item.href) : setView(item.view)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                state.currentView === item.view
-                  ? "bg-brand-900 text-white"
-                  : "text-slate-600 hover:text-brand-900 hover:bg-slate-100"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+            { label: "מחשבון מס", view: null, href: "/tax-calculator" },
+          ].map((item) => {
+            const isActive = item.href
+              ? pathname.startsWith(item.href)
+              : item.view !== null && state.currentView === item.view;
+            const key = item.view ?? item.href!;
+            return (
+              <button
+                key={key}
+                onClick={() => item.href ? router.push(item.href) : item.view && setView(item.view)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-brand-900 text-white"
+                    : "text-slate-600 hover:text-brand-900 hover:bg-slate-100"
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Left side actions (left in RTL = visually on the left) */}
@@ -93,6 +112,24 @@ export function Navbar() {
           )}
         </div>
       </div>
+
+      <ConfirmLeaveDialog
+        open={leaveDialogOpen}
+        onSave={() => {
+          // State already auto-persists on every setState via the db.ts
+          // debounce (see appContext.tsx); "save" here is purely the UX
+          // confirmation that yes, the user wants to leave with the draft
+          // preserved. Close dialog and navigate.
+          setLeaveDialogOpen(false);
+          router.push("/");
+        }}
+        onDiscard={() => {
+          discardCurrentDraft();
+          setLeaveDialogOpen(false);
+          router.push("/");
+        }}
+        onCancel={() => setLeaveDialogOpen(false)}
+      />
     </header>
   );
 }

@@ -199,12 +199,31 @@ export interface FinancialData {
 export type VaultDocType =
   | "form106"
   | "form135"
-  | "ibkr"
+  | "form867"         // broker statement (Israeli)
+  | "ibkr"            // Interactive Brokers CSV
   | "pension"
   | "receipt"
   | "bank_statement"
   | "rsu_grant"
+  | "rental_contract"
   | "other";
+
+/** Status of a document in the new mining pipeline. */
+export type VaultDocStatus =
+  | "pending_upload"  // user deferred upload ("I'll upload later")
+  | "uploaded"        // blob arrived, mining queued
+  | "mining"          // Claude vision / Tesseract in flight
+  | "mined"           // extraction finished, fields written to state
+  | "failed";         // extraction errored (retry available)
+
+/**
+ * Persisted payload from a successful parse — discriminated on kind so we
+ * can rehydrate the parsing UI (summary cards, raw fields) on reload
+ * without re-running the server-side extractor.
+ */
+export type VaultDocParsedPayload =
+  | { kind: "form106"; data: NonNullable<Form106ParseResponse["data"]> }
+  | { kind: "ibkr";    data: NonNullable<IbkrParseResponse["data"]> };
 
 /**
  * Persisted document metadata (no objectUrl — blob URLs are session-only
@@ -216,6 +235,60 @@ export interface VaultDocMeta {
   type: VaultDocType;
   size: number;
   uploadedAt: string;
+  status?: VaultDocStatus;
+  /** Income-source tag(s) this doc belongs to (e.g. ["salary"], ["investments"]). */
+  sourceIds?: IncomeSourceId[];
+  /** Server-side storage path in Firebase Storage, if uploaded. */
+  storagePath?: string;
+  /** Signed download URL for the raw file (refreshable via getDownloadURL). */
+  downloadUrl?: string;
+  /** Parsed JSON payload — rehydrated into the UI on reload. */
+  parsedPayload?: VaultDocParsedPayload;
+  /** Last mining error (user-facing, Hebrew). */
+  miningError?: string;
+}
+
+// ─── Income Sources (new onboarding paradigm) ────────────────────────────────
+
+/** A tag on the income-source grid. Extensible — add entries here + to sourceCatalog.ts. */
+export type IncomeSourceId =
+  | "salary"
+  | "rental"
+  | "freelance"
+  | "investments"
+  | "crypto"
+  | "pension"
+  | "foreign"
+  | "unsure";
+
+// ─── Field Provenance (prefill trust layer) ──────────────────────────────────
+
+/**
+ * Trust tier for a prefilled value. Never shown as a raw percentage — the UI
+ * renders one of three visual states (normal / amber underline / empty).
+ */
+export type ProvenanceConfidence = "high" | "medium" | "low";
+
+/**
+ * Source of a prefilled field value. Attached to any field the doc-mining
+ * pipeline writes so the user can see "this came from your Form 106" and
+ * click through to the scan region.
+ */
+export interface FieldProvenance {
+  /** Dot-path of the field in TaxPayer/FinancialData (e.g. "taxpayer.idNumber"). */
+  fieldPath: string;
+  /** Document that produced this value. */
+  sourceDocId: string;
+  /** User-facing doc label (e.g. "טופס 106 — מעסיק א'"). */
+  sourceLabel: string;
+  /** Trust tier — NEVER displayed as a percentage. */
+  confidence: ProvenanceConfidence;
+  /** Optional bounding box on the source doc image (px coordinates). */
+  bbox?: { x: number; y: number; w: number; h: number; page?: number };
+  /** True once the user has manually edited this field — locks it from re-mining overwrite. */
+  userConfirmed?: boolean;
+  /** ISO timestamp when the value was written. */
+  minedAt: string;
 }
 
 // ─── App State ────────────────────────────────────────────────────────────────
@@ -228,13 +301,29 @@ export interface AdvisorMessage {
 }
 
 export interface AppState {
-  currentView: 'questionnaire' | 'upload' | 'dashboard' | 'ibkr';
+  currentView: 'onboarding' | 'details' | 'dashboard' | 'ibkr' | 'questionnaire' | 'upload';
   questionnaire: {
     step: number;
     completed: boolean;
   };
+  // ── Onboarding (new paradigm) ─────────────────────────────────────────────
+  onboarding: {
+    /** Income sources the user selected on the first screen. */
+    sources: IncomeSourceId[];
+    /** Whether the initial source selection has been done (gate for /welcome). */
+    sourcesSelected: boolean;
+    /** Whether the user has confirmed the prefilled details page. */
+    detailsConfirmed: boolean;
+  };
   taxpayer: TaxPayer;
   financials: FinancialData;
+  /**
+   * Per-field provenance map, keyed by dot-path
+   * (e.g. "taxpayer.idNumber", "taxpayer.employers[0].grossSalary").
+   * Parallel to taxpayer/financials — keeps those types lean while allowing
+   * the UI to show a source pill next to any prefilled value.
+   */
+  provenance: Record<string, FieldProvenance>;
   // ── Document vault ────────────────────────────────────────────────────────
   /** Persisted metadata for all uploaded documents (no blob URLs). */
   documents: VaultDocMeta[];
@@ -307,6 +396,40 @@ export interface Form106ParseResponse {
     taxWithheld: number;
     /** Field 045 — pension deduction */
     pensionDeduction: number;
+  };
+  error?: string;
+}
+
+// ─── Doc Mining (Claude vision) ──────────────────────────────────────────────
+
+/**
+ * A single field extracted from a document by the mining pipeline. The server
+ * picks the target path; the client writes to taxpayer/financials via
+ * applyMiningResult() and records a FieldProvenance entry for each field.
+ */
+export interface MinedField {
+  /** Dot-path into AppState where the value should be written. */
+  fieldPath: string;
+  /** The extracted raw value (string, number, or nested object). */
+  value: unknown;
+  /** Trust tier — never shown to users as a %. */
+  confidence: ProvenanceConfidence;
+  /** Optional scanned-region bbox. */
+  bbox?: { x: number; y: number; w: number; h: number; page?: number };
+}
+
+/** Response from POST /api/mine/document */
+export interface DocMineResponse {
+  success: boolean;
+  data?: {
+    /** The document type the miner detected (may differ from user-supplied type). */
+    detectedType: VaultDocType;
+    /** Extracted fields, each with its target path + confidence. */
+    fields: MinedField[];
+    /** Optional natural-language summary for the advisor nudge rail. */
+    summary?: string;
+    /** Which mining backend produced this (for debugging). */
+    backend: "claude-vision" | "tesseract" | "ibkr-csv";
   };
   error?: string;
 }
