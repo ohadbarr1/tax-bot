@@ -1,4 +1,4 @@
-import { streamText } from "ai";
+import { generateText, streamText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { buildSystemPrompt, buildDraftContext } from "@/lib/advisorPrompt";
 import { currentTaxYear } from "@/lib/currentTaxYear";
@@ -46,23 +46,23 @@ export async function POST(request: Request) {
     ? `${systemPrompt}\n\n${draftContext}`
     : systemPrompt;
 
+  // DIAG: generateText surfaces errors synchronously so catch can expose them.
+  // Revert to streamText once root cause is identified.
+  void streamText;
   try {
-    const result = streamText({
+    const result = await generateText({
       model: anthropic("claude-sonnet-4-6"),
       system: fullSystem,
       messages,
       maxOutputTokens: 1024,
-      providerOptions: {
-        anthropic: {
-          cacheControl: { type: "ephemeral" },
-        },
-      },
     });
-
-    return result.toTextStreamResponse();
+    return new Response(result.text, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   } catch (err) {
-    console.error("[advisor] streamText failed:", err);
-    return new Response(JSON.stringify({ error: ERROR_GENERIC }), {
+    console.error("[advisor] generateText failed:", err);
+    const debug = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    return new Response(JSON.stringify({ error: ERROR_GENERIC, debug }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
