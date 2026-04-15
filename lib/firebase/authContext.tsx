@@ -55,6 +55,15 @@ interface AuthContextValue {
   user: User | null;
   /** True once the initial auth state has been resolved. */
   ready: boolean;
+  /**
+   * True only after the FIRST `onAuthStateChanged` callback has fired (i.e.
+   * IDB persistence has been read and `user` reflects reality). Unlike
+   * `ready` — which we set immediately on subscribe to unblock the /welcome
+   * spinner when IDB hangs — this stays `false` until Firebase has actually
+   * resolved the user. Gates that must not false-redirect anon-looking
+   * sessions (e.g. `AdminShell`) should wait on this.
+   */
+  authResolved: boolean;
   /** True when Firebase env is set. When false the app runs in local-only mode. */
   configured: boolean;
   /** Link the current anonymous account to a Google account, or sign in with Google. */
@@ -134,6 +143,7 @@ function hebrewMessageFor(code: string | undefined): string {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser]   = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const configured = isFirebaseConfigured();
 
@@ -144,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth) {
       // Unconfigured → finish hydration so UI can render
       setReady(true);
+      setAuthResolved(true);
       return;
     }
 
@@ -170,6 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      setAuthResolved(true);
       if (!u) {
         try {
           await signInAnonymously(auth);
@@ -289,7 +301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, ready, configured, linkGoogle, signOut, authError, dismissAuthError }}
+      value={{ user, ready, authResolved, configured, linkGoogle, signOut, authError, dismissAuthError }}
     >
       {children}
     </AuthContext.Provider>

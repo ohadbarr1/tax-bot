@@ -41,14 +41,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
 }
 
 function AdminShellInner({ children }: { children: ReactNode }) {
-  const { user, ready, signOut } = useAuth();
+  const { user, authResolved, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [checked, setChecked] = useState<"pending" | "ok" | "denied">("pending");
 
   useEffect(() => {
     let cancelled = false;
-    if (!ready) return;
+    // Wait for Firebase to FINISH reading IDB persistence before making a
+    // redirect decision. Using `ready` alone would false-redirect because
+    // `ready` is set immediately on subscribe (to unblock the /welcome
+    // spinner on IDB hangs), long before `user` has hydrated.
+    if (!authResolved) return;
     if (!user || user.isAnonymous) {
       router.replace("/");
       return;
@@ -79,9 +83,9 @@ function AdminShellInner({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [ready, user, router]);
+  }, [authResolved, user, router]);
 
-  if (!ready || checked === "pending") {
+  if (!authResolved || checked === "pending") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
