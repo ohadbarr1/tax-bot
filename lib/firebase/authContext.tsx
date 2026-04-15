@@ -88,9 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const linkGoogle = useCallback(async () => {
     const auth = getClientAuth();
-    if (!auth || !auth.currentUser) return;
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
+      // No currentUser → Firebase persistence hung before anon sign-in
+      // completed. Skip the link step entirely and open the popup.
+      if (!auth.currentUser) {
+        await signInWithPopup(auth, provider);
+        return;
+      }
       // If currently anonymous, upgrade the account in place.
       if (auth.currentUser.isAnonymous) {
         await linkWithPopup(auth.currentUser, provider);
