@@ -65,16 +65,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        setUser(u);
-        setReady(true);
-      } else {
-        // No user yet — sign in anonymously for a stable uid
+      setUser(u);
+      // Resolve ready immediately — the UI needs to know whether to render
+      // the SignInPrompt or the real content. Previously we waited for the
+      // anon sign-in to round-trip before setting ready, which caused an
+      // infinite spinner when the anon sign-in hung (observed after an IDB
+      // wipe / incognito first load).
+      setReady(true);
+      if (!u) {
+        // No user yet — sign in anonymously in the background so Firestore
+        // has a stable uid for public-read flows. If this fails we stay
+        // signed-out; the gated routes will show SignInPrompt anyway.
         try {
           await signInAnonymously(auth);
         } catch (err) {
           console.warn("[auth] anonymous sign-in failed:", err);
-          setReady(true);
         }
       }
     });
