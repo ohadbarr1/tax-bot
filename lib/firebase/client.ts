@@ -21,6 +21,7 @@ import { getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from "
 import {
   initializeAuth,
   getAuth,
+  browserPopupRedirectResolver,
   indexedDBLocalPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
@@ -78,6 +79,10 @@ export function getClientAuth(): Auth | null {
     // in-memory. Firebase walks the list and picks the first usable backend;
     // IDB has been observed to hang on some privacy-hardened browsers, which
     // is why we provide real fallbacks instead of IDB-only.
+    // `popupRedirectResolver` MUST be provided when using `initializeAuth` if
+     // the app uses signInWithPopup / signInWithRedirect / getRedirectResult.
+     // Without it Firebase throws `auth/argument-error` on every popup/redirect
+     // call. `getAuth` wires this implicitly; `initializeAuth` does not.
     _auth = initializeAuth(app, {
       persistence: [
         indexedDBLocalPersistence,
@@ -85,6 +90,7 @@ export function getClientAuth(): Auth | null {
         browserSessionPersistence,
         inMemoryPersistence,
       ],
+      popupRedirectResolver: browserPopupRedirectResolver,
     });
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
