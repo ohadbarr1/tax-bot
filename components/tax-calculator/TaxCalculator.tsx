@@ -191,7 +191,7 @@ function NumberField({
   );
 }
 
-export default function TaxCalculator() {
+export default function TaxCalculator({ showBackLink = false }: { showBackLink?: boolean }) {
   const [period, setPeriod] = useState<Period>("yearly");
   // Inputs are stored in ANNUAL ILS internally; monthly toggle only affects
   // the display and the edit helpers — we multiply/divide at the I/O edge.
@@ -266,13 +266,15 @@ export default function TaxCalculator() {
       {/* ── Header with back link + period toggle ───────────────────────── */}
       <motion.div variants={fadeUp} className="flex items-start justify-between gap-4 flex-wrap">
         <div className="space-y-2">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#0B3B5C] transition-colors"
-          >
-            <ArrowRight className="w-3.5 h-3.5" />
-            חזור ללוח הבקרה הראשי
-          </Link>
+          {showBackLink && (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#0B3B5C] transition-colors"
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              חזור ללוח הבקרה הראשי
+            </Link>
+          )}
           <h1 className="text-2xl font-bold text-[#0B3B5C] flex items-center gap-2">
             <Calculator className="w-6 h-6" />
             מחשבון מס

@@ -4,6 +4,7 @@ import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
+  { href: "/tax-calculator", label: "מחשבון מס" },
   { href: "/how-it-works", label: "איך זה עובד" },
   { href: "/pricing", label: "תמחור" },
   { href: "/about", label: "אודות" },

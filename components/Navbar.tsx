@@ -13,7 +13,7 @@ import { useOnboardingDirty } from "@/lib/useOnboardingDirty";
 import { ConfirmLeaveDialog } from "@/components/onboarding/ConfirmLeaveDialog";
 
 export function Navbar() {
-  const { state, setView, discardCurrentDraft } = useApp();
+  const { state, discardCurrentDraft } = useApp();
   const { taxpayer } = state;
   const router = useRouter();
   const pathname = usePathname() ?? "";
@@ -48,19 +48,16 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-1">
           <DraftSwitcher />
           {[
-            { label: "פרטים", view: "details" as const, href: "/details" },
-            { label: "מסמכים", view: "upload" as const, href: null },
-            { label: "לוח בקרה", view: "dashboard" as const, href: null },
-            { label: "מחשבון מס", view: null, href: "/tax-calculator" },
+            { label: "היסטוריה", href: "/history" },
+            { label: "מרכז ידע", href: "/education" },
+            { label: "פרופיל", href: "/profile" },
+            { label: "הגדרות", href: "/settings" },
           ].map((item) => {
-            const isActive = item.href
-              ? pathname.startsWith(item.href)
-              : item.view !== null && state.currentView === item.view;
-            const key = item.view ?? item.href!;
+            const isActive = pathname.startsWith(item.href);
             return (
               <button
-                key={key}
-                onClick={() => item.href ? router.push(item.href) : item.view && setView(item.view)}
+                key={item.href}
+                onClick={() => router.push(item.href)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-brand-900 text-white"

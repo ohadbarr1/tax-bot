@@ -3,8 +3,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard, User, FolderOpen, Send, Clock, Settings, Menu, X,
-  PieChart, BookOpen, ReceiptText, Calculator,
+  LayoutDashboard, User, FolderOpen, Menu, X,
+  PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,16 +12,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "דשבורד", icon: LayoutDashboard },
   { href: "/details", label: "פרטים", icon: User },
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
-  { href: "/income-tax", label: "ניתוח מס הכנסה", icon: ReceiptText },
-  { href: "/tax-calculator", label: "מחשבון מס", icon: Calculator },
-  { href: "/filing", label: "הגשה", icon: Send },
-  { href: "/history", label: "היסטוריה", icon: Clock },
   { href: "/facts", label: "תמונת מצב", icon: PieChart },
-  { href: "/education", label: "מרכז ידע", icon: BookOpen },
-  // /profile lands ABOVE /settings on the desktop nav (indices 9–10). Mobile
-  // tab bar only renders `slice(0, 6)` so it stays unchanged.
-  { href: "/profile", label: "פרופיל", icon: User },
-  { href: "/settings", label: "הגדרות", icon: Settings },
 ];
 
 export function Sidebar() {
