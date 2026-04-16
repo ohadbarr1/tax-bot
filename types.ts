@@ -360,6 +360,10 @@ export interface TaxYearDraft {
   financials: FinancialData;
   createdAt: string;
   updatedAt: string;
+  /** User-assigned session name (set when explicitly saved). */
+  name?: string;
+  /** Whether the user has explicitly saved this draft. */
+  saved?: boolean;
 }
 
 // ─── API Response Interfaces ──────────────────────────────────────────────────

@@ -15,22 +15,11 @@ export default function DashboardPage() {
     );
   }
 
-  // Dashboard is the single post-questionnaire landing surface. Once the
-  // questionnaire is complete we render it unconditionally — even with zero
-  // uploaded documents the estimated refund and insights are already computed
-  // from the questionnaire answers and the user should see them immediately.
-  // Pre-completion only, we respect `currentView` so /dashboard can still be
-  // used as a hosting page for the upload/ibkr flows if the user lands here
-  // early.
-  if (state.questionnaire.completed) {
-    return <Dashboard />;
-  }
-
-  return (
-    <>
-      {state.currentView === "upload" && <FileDropzone />}
-      {state.currentView === "dashboard" && <Dashboard />}
-      {state.currentView === "ibkr" && <IbkrAnalysisDashboard />}
-    </>
-  );
+  // Respect currentView for sub-views (IBKR analysis, file upload) regardless
+  // of questionnaire completion. The dashboard is the default landing surface,
+  // but clicking "ניתוח ברוקר זר" sets currentView to "ibkr" which must render
+  // even after questionnaire is complete.
+  if (state.currentView === "ibkr") return <IbkrAnalysisDashboard />;
+  if (state.currentView === "upload") return <FileDropzone />;
+  return <Dashboard />;
 }

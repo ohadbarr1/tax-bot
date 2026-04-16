@@ -305,6 +305,16 @@ function DocumentsPageInner() {
         })}
       </div>
 
+      {/* Multi-employer hint — show when exactly 1 form-106 exists */}
+      {docs.filter((d) => d.type === "form106").length === 1 && (
+        <div className="flex items-start gap-2 text-xs text-blue-700 bg-blue-50 px-3 py-2.5 rounded-xl border border-blue-100">
+          <FileText className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-blue-400" />
+          <span className="leading-relaxed">
+            יש לך יותר ממעסיק אחד? העלה טופס 106 נוסף לכל מעסיק — המערכת תנתח כל אחד בנפרד ותפרק את הנתונים בניתוח מס ההכנסה.
+          </span>
+        </div>
+      )}
+
       {/* Upload zone */}
       <DocUploadZone
         docs={filtered}

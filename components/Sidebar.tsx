@@ -3,13 +3,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard, User, FolderOpen, Menu, X,
+  User, FolderOpen, Menu, X,
   PieChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "דשבורד", icon: LayoutDashboard },
   { href: "/details", label: "פרטים", icon: User },
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
   { href: "/facts", label: "תמונת מצב", icon: PieChart },

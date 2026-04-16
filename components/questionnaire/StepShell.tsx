@@ -9,6 +9,7 @@ import {
   Briefcase,
   HandCoins,
   CalendarDays,
+  Award,
 } from "lucide-react";
 import type { Variants } from "framer-motion";
 
@@ -33,6 +34,7 @@ export const STEPS = [
   { id: 5, label: "מעסיקים",     icon: Briefcase },
   { id: 6, label: "ניכויים",     icon: HandCoins },
   { id: 7, label: "אירועי חיים",  icon: CalendarDays },
+  { id: 8, label: "נקודות זיכוי", icon: Award },
 ];
 
 // ─── Animation variants ───────────────────────────────────────────────────────

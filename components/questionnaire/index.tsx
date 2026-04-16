@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
-import type { Child, Degree, Employer, PersonalDeduction, LifeEvent } from "@/types";
+import type { Child, Degree, Employer, PersonalDeduction, LifeEvent, DisabilityType } from "@/types";
 import { slideVariants, STEPS } from "./StepShell";
 import Step0Personal from "./Step0Personal";
 import Step1Personal from "./Step1Personal";
@@ -15,6 +15,7 @@ import Step3Capital from "./Step3Capital";
 import Step4Employers from "./Step4Employers";
 import Step5Deductions from "./Step5Deductions";
 import Step6LifeEvents from "./Step6LifeEvents";
+import Step7CreditPoints from "./Step7CreditPoints";
 
 export function Questionnaire() {
   const router = useRouter();
@@ -134,6 +135,20 @@ export function Questionnaire() {
   const updateLifeEvent = (patch: Partial<LifeEvent>) =>
     setLifeEvents((prev) => ({ ...prev, ...patch }));
 
+  // ── Step 7 state (credit points) ─────────────────────────────────────────
+  const [gender, setGender] = useState<"male" | "female" | undefined>(taxpayer.gender);
+  const [servedInArmy, setServedInArmy] = useState(taxpayer.dischargeYear != null);
+  const [dischargeYear, setDischargeYear] = useState<number | undefined>(taxpayer.dischargeYear);
+  const [isOleh, setIsOleh] = useState(taxpayer.aliyahDate != null && taxpayer.aliyahDate !== "");
+  const [aliyahDate, setAliyahDate] = useState(taxpayer.aliyahDate ?? "");
+  const [postcode, setPostcode] = useState(taxpayer.postcode ?? "");
+  const [kibbutzMember, setKibbutzMember] = useState(taxpayer.kibbutzMember ?? false);
+  const [hasDisability, setHasDisability] = useState(
+    taxpayer.disabilityType != null || (taxpayer.disabilityPercent != null && taxpayer.disabilityPercent > 0)
+  );
+  const [disabilityType, setDisabilityType] = useState<DisabilityType | undefined>(taxpayer.disabilityType);
+  const [disabilityPercent, setDisabilityPercent] = useState(taxpayer.disabilityPercent ?? 0);
+
   // ── Navigation ─────────────────────────────────────────────────────────────
   const navigate = (newStep: number) => {
     setDir(newStep > step ? 1 : -1);
@@ -156,6 +171,13 @@ export function Questionnaire() {
       employers,
       personalDeductions: deductions,
       lifeEvents,
+      gender,
+      dischargeYear: servedInArmy ? dischargeYear : undefined,
+      aliyahDate: isOleh ? aliyahDate : undefined,
+      postcode: postcode || undefined,
+      kibbutzMember,
+      disabilityType: hasDisability ? disabilityType : undefined,
+      disabilityPercent: hasDisability ? disabilityPercent : undefined,
     });
     updateFinancials({
       hasForeignBroker: portfolioLocation === "foreign_broker",
@@ -180,7 +202,7 @@ export function Questionnaire() {
             const done   = step > s.id;
             const active = step === s.id;
             return (
-              <div key={s.id} className="flex flex-col items-center gap-1.5 z-10 w-[14.28%]">
+              <div key={s.id} className="flex flex-col items-center gap-1.5 z-10 w-[12.5%]">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                     done
@@ -305,6 +327,33 @@ export function Questionnaire() {
                 hasOverlap={hasOverlap}
                 deductionsCount={deductions.length}
                 onUpdateLifeEvent={updateLifeEvent}
+              />
+            )}
+
+            {step === 8 && (
+              <Step7CreditPoints
+                gender={gender}
+                servedInArmy={servedInArmy}
+                dischargeYear={dischargeYear}
+                isOleh={isOleh}
+                aliyahDate={aliyahDate}
+                postcode={postcode}
+                kibbutzMember={kibbutzMember}
+                hasDisability={hasDisability}
+                disabilityType={disabilityType}
+                disabilityPercent={disabilityPercent}
+                children={children}
+                onGenderChange={setGender}
+                onServedInArmyChange={setServedInArmy}
+                onDischargeYearChange={setDischargeYear}
+                onIsOlehChange={setIsOleh}
+                onAliyahDateChange={setAliyahDate}
+                onPostcodeChange={setPostcode}
+                onKibbutzMemberChange={setKibbutzMember}
+                onHasDisabilityChange={setHasDisability}
+                onDisabilityTypeChange={setDisabilityType}
+                onDisabilityPercentChange={setDisabilityPercent}
+                onChildrenChange={setChildren}
               />
             )}
           </motion.div>

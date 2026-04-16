@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Lock, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Lock, ChevronDown, Shield } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { Logo } from "@/components/Logo";
@@ -11,15 +11,38 @@ import { AuthButton } from "@/components/AuthButton";
 import { useAuth } from "@/lib/firebase/authContext";
 import { useOnboardingDirty } from "@/lib/useOnboardingDirty";
 import { ConfirmLeaveDialog } from "@/components/onboarding/ConfirmLeaveDialog";
+import { authedFetch } from "@/lib/admin/adminFetch";
 
 export function Navbar() {
   const { state, discardCurrentDraft } = useApp();
   const { taxpayer } = state;
   const router = useRouter();
   const pathname = usePathname() ?? "";
-  const { configured } = useAuth();
+  const { user, configured, authResolved } = useAuth();
   const dirty = useOnboardingDirty();
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!authResolved || !user || user.isAnonymous) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authedFetch("/api/admin/whoami", { method: "GET" });
+        if (cancelled) return;
+        if (res.ok) {
+          const data = (await res.json()) as { isAdmin?: boolean };
+          setIsAdmin(data.isAdmin === true);
+        }
+      } catch {
+        // Silently ignore — non-admin by default
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [authResolved, user]);
   const initials = taxpayer.fullName
     .split(" ")
     .filter((w) => /[\u0590-\u05FF]/.test(w) || /[A-Z]/.test(w[0]))
@@ -86,6 +109,18 @@ export function Navbar() {
           >
             🇮🇱<span className="text-[10px]">/EN</span>
           </button>
+
+          {/* Admin panel link — visible only for verified admins */}
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/admin")}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors"
+              aria-label="ניהול"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">ניהול</span>
+            </button>
+          )}
 
           {/* Theme toggle */}
           <ThemeToggle />

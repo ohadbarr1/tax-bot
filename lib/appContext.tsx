@@ -55,6 +55,11 @@ interface AppContextValue {
   createDraft: (taxYear: number, filingType?: FilingType, filingGoal?: FilingGoal) => string;
   switchDraft: (draftId: string) => void;
   allDrafts: TaxYearDraft[];
+  // ── Save / delete drafts ──────────────────────────────────────────────────
+  /** Mark the current draft as saved with a user-chosen name. */
+  saveDraft: (name: string) => void;
+  /** Delete a draft entirely (cannot delete the current draft). */
+  deleteDraft: (draftId: string) => void;
   // ── Document vault ────────────────────────────────────────────────────────
   addDocument: (meta: VaultDocMeta) => void;
   removeDocument: (id: string) => void;
@@ -397,6 +402,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const saveDraft = (name: string) =>
+    setState((s) => ({
+      ...s,
+      drafts: {
+        ...s.drafts,
+        [s.currentDraftId]: {
+          ...s.drafts[s.currentDraftId],
+          name,
+          saved: true,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    }));
+
+  const deleteDraft = (draftId: string) =>
+    setState((s) => {
+      if (draftId === s.currentDraftId) return s; // cannot delete current
+      const { [draftId]: _, ...rest } = s.drafts;
+      return { ...s, drafts: rest };
+    });
+
   const allDrafts = Object.values(state.drafts ?? {}).sort((a, b) => b.taxYear - a.taxYear);
 
   // ── Document vault ────────────────────────────────────────────────────────
@@ -628,6 +654,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         createDraft,
         switchDraft,
         allDrafts,
+        saveDraft,
+        deleteDraft,
         addDocument,
         removeDocument,
         updateDocumentType,
