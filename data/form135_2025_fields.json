@@ -29,30 +29,38 @@
       "labelPos": { "x": 208.5, "y": 450.3 }
     },
 
+    "idPersonal": {
+      "pg": 0, "x": 398, "y": 671, "sz": 9, "font": "latin-bold",
+      "label": "ID in personal section (green area)",
+      "labelPos": { "x": 473, "y": 668.4 },
+      "notes": "Calibrated: label 'מספר זהות' at (473,668), input box to its left."
+    },
     "firstName": {
-      "pg": 0, "x": 480, "y": 710, "sz": 10, "font": "hebrew",
+      "pg": 0, "x": 435, "y": 647, "sz": 9, "font": "hebrew",
       "label": "031 - First name",
-      "notes": "Estimated from pdftotext. Calibrate visually."
+      "labelPos": { "x": 478, "y": 643.9 },
+      "notes": "Calibrated: label 'שם פרטי' at (478,644), input box to its left."
     },
     "lastName": {
-      "pg": 0, "x": 350, "y": 710, "sz": 10, "font": "hebrew",
+      "pg": 0, "x": 295, "y": 671, "sz": 9, "font": "hebrew",
       "label": "032 - Last name",
-      "notes": "Estimated from pdftotext. Calibrate visually."
+      "labelPos": { "x": 340, "y": 668.4 },
+      "notes": "Calibrated: label 'שם משפחה' at (340,668), input box to its left."
     },
     "city": {
-      "pg": 0, "x": 440, "y": 685, "sz": 9, "font": "hebrew",
+      "pg": 0, "x": 490, "y": 583, "sz": 8, "font": "hebrew",
       "label": "022 - City",
-      "notes": "Estimated from pdftotext. Calibrate visually."
+      "notes": "Estimated: address row between labels@595 and phone@571. Calibrate visually."
     },
     "street": {
-      "pg": 0, "x": 300, "y": 685, "sz": 9, "font": "hebrew",
+      "pg": 0, "x": 380, "y": 583, "sz": 8, "font": "hebrew",
       "label": "023 - Street",
-      "notes": "Estimated from pdftotext. Calibrate visually."
+      "notes": "Estimated: same row as city. Calibrate visually."
     },
     "houseNumber": {
-      "pg": 0, "x": 200, "y": 685, "sz": 9, "font": "latin-bold",
+      "pg": 0, "x": 310, "y": 583, "sz": 8, "font": "latin-bold",
       "label": "024 - House number",
-      "notes": "Estimated. Calibrate visually."
+      "notes": "Estimated: same row as city/street. Calibrate visually."
     },
 
     "grossSalary": {

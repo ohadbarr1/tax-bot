@@ -43,26 +43,38 @@
       "fieldCode": "143"
     },
 
+    "idPersonal": {
+      "pg": 0, "x": 330, "y": 402, "sz": 9, "font": "latin-bold",
+      "label": "ID in personal section (green area)",
+      "labelPos": { "x": 391, "y": 398.9 },
+      "notes": "Calibrated: label 'מספר זהות' at (391,399), input box to its left."
+    },
     "firstName": {
-      "pg": 0, "x": 480, "y": 710, "sz": 10, "font": "hebrew",
+      "pg": 0, "x": 240, "y": 370, "sz": 9, "font": "hebrew",
       "label": "031 - First name",
-      "notes": "Same position strategy as form 135"
+      "labelPos": { "x": 290, "y": 367.1 },
+      "notes": "Calibrated: label 'שם פרטי' at (290,367), input box to its left."
     },
     "lastName": {
-      "pg": 0, "x": 350, "y": 710, "sz": 10, "font": "hebrew",
-      "label": "032 - Last name"
+      "pg": 0, "x": 320, "y": 370, "sz": 9, "font": "hebrew",
+      "label": "032 - Last name",
+      "labelPos": { "x": 369, "y": 367.1 },
+      "notes": "Calibrated: label 'שם משפחה' at (369,367), input box to its left."
     },
     "city": {
-      "pg": 0, "x": 440, "y": 685, "sz": 9, "font": "hebrew",
-      "label": "022 - City"
+      "pg": 0, "x": 440, "y": 318, "sz": 8, "font": "hebrew",
+      "label": "022 - City",
+      "notes": "Estimated: address section near 'כתובת מגורים' at (106,311). Calibrate visually."
     },
     "street": {
-      "pg": 0, "x": 300, "y": 685, "sz": 9, "font": "hebrew",
-      "label": "023 - Street"
+      "pg": 0, "x": 350, "y": 318, "sz": 8, "font": "hebrew",
+      "label": "023 - Street",
+      "notes": "Estimated: same row as city. Calibrate visually."
     },
     "houseNumber": {
-      "pg": 0, "x": 200, "y": 685, "sz": 9, "font": "latin-bold",
-      "label": "024 - House number"
+      "pg": 0, "x": 310, "y": 318, "sz": 8, "font": "latin-bold",
+      "label": "024 - House number",
+      "notes": "Estimated: same row as city/street. Calibrate visually."
     },
 
     "grossSalaryMain": {

@@ -78,18 +78,23 @@ const F: Record<string, FieldSpec> = {
   taxYear:       { pg: 0, x: 193, y: 820, sz: 10, heb: false, bold: true,
                    cover: { x: 191, y: 816, w: 42, h: 14 } },
 
-  // Personal info
+  // Personal info — ID fields (bank section + file number)
   idNumber:      { pg: 0, x: 136.6, y: 634.1, sz:  9, heb: false, bold: true  },
   taxpayerId278: { pg: 0, x: 140.7, y: 157.2, sz:  9, heb: false, bold: true  },
   spouseId277:   { pg: 0, x: 260.0, y: 157.4, sz:  9, heb: false, bold: true  },
   payerId143:    { pg: 0, x: 409.5, y:  40.2, sz:  9, heb: false, bold: true  },
 
-  // Name and address
-  firstName:     { pg: 0, x: 480, y: 710, sz: 10, heb: true  },
-  lastName:      { pg: 0, x: 350, y: 710, sz: 10, heb: true  },
-  city:          { pg: 0, x: 440, y: 685, sz:  9, heb: true  },
-  street:        { pg: 0, x: 300, y: 685, sz:  9, heb: true  },
-  houseNumber:   { pg: 0, x: 200, y: 685, sz:  9, heb: false, bold: true  },
+  // Section ב. פרטים אישיים — calibrated for 2025 template:
+  //   "מספר זהות" label at (391, 399)  → ID input box at x≈330
+  //   "שם משפחה" label at (369, 367)   → name input at x≈320
+  //   "שם פרטי"  label at (290, 367)   → first-name input at x≈240
+  //   Address row: "כתובת מגורים" label at (106, 311)
+  idPersonal:    { pg: 0, x: 330, y: 402, sz:  9, heb: false, bold: true  },
+  firstName:     { pg: 0, x: 240, y: 370, sz:  9, heb: true  },
+  lastName:      { pg: 0, x: 320, y: 370, sz:  9, heb: true  },
+  city:          { pg: 0, x: 440, y: 318, sz:  8, heb: true  },
+  street:        { pg: 0, x: 350, y: 318, sz:  8, heb: true  },
+  houseNumber:   { pg: 0, x: 310, y: 318, sz:  8, heb: false, bold: true  },
 
   // ═══ PAGE 1 — Income sections (3-column layout) ═══════════════════════════
 
@@ -202,6 +207,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       { key: "idNumber",      text: vals["012"],                     spec: F.idNumber      },
       { key: "taxpayerId278", text: vals["012"],                     spec: F.taxpayerId278 },
       { key: "spouseId277",   text: vals["013"],                     spec: F.spouseId277   },
+      // Section ב — personal details (green area)
+      { key: "idPersonal",    text: vals["012"],                     spec: F.idPersonal    },
       { key: "firstName",     text: hebrewForPdf(vals["031"]),       spec: F.firstName     },
       { key: "lastName",      text: hebrewForPdf(vals["032"]),       spec: F.lastName      },
       { key: "city",          text: hebrewForPdf(vals["022"]),       spec: F.city          },

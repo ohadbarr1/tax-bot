@@ -66,10 +66,11 @@
  *   013 (spouse ID) (208.5,450.3) (131.5,453.3)     spouse ID
  *   header year     (195, 817)    (193, 820)        tax year (covered+redrawn)
  *
- * Personal-info rows (section ב. פרטים אישיים) — estimated for 2025 template:
- *   firstName  (שם פרטי):  x=480, y=710  — rightmost column of right half
- *   lastName   (שם משפחה): x=350, y=710  — second column
- *   city/street/house:      y=685         — mailing address sub-section (estimated)
+ * Personal-info rows (section ב. פרטים אישיים) — calibrated for 2025 template:
+ *   idPersonal (מספר זהות): x=398, y=671  — in ID input box (label at 473,668)
+ *   lastName   (שם משפחה):  x=295, y=671  — in name box (label at 340,668)
+ *   firstName  (שם פרטי):   x=435, y=647  — in first-name box (label at 478,644)
+ *   city/street/house:       y=583         — address input row (between labels@595 and phone@571)
  */
 
 import { NextRequest } from "next/server";
@@ -120,18 +121,22 @@ const F: Record<string, FieldSpec> = {
   taxYear:       { pg: 0, x: 193, y: 820, sz: 10, heb: false, bold: true  },
 
   // ── Personal details ───────────────────────────────────────────────────────
-  // ID fields: label 012 at (88.5,450.3), label 013 at (208.5,450.3).
+  // Bank-section ID fields: label 278 at (88.5,450.3), label 277 at (208.5,450.3).
   idNumber:      { pg: 0, x: 11.5, y: 453.3, sz:  9, heb: false, bold: true  },
   spouseId:      { pg: 0, x: 131.5, y: 453.3, sz:  9, heb: false, bold: true  },
 
-  // Name rows — estimated for 2025 template. Calibrate visually.
-  //   Section ב. פרטים אישיים, "בן הזוג הרשום" column.
-  //   Data-entry baseline y=710. Column x: שם פרטי≈480, שם משפחה≈350.
-  firstName:     { pg: 0, x: 480, y: 710, sz: 10, heb: true  },
-  lastName:      { pg: 0, x: 350, y: 710, sz: 10, heb: true  },
-  city:          { pg: 0, x: 440, y: 685, sz:  9, heb: true  },
-  street:        { pg: 0, x: 300, y: 685, sz:  9, heb: true  },
-  houseNumber:   { pg: 0, x: 200, y: 685, sz:  9, heb: false, bold: true  },
+  // Section ב. פרטים אישיים — green area, right column ("בן הזוג הרשום").
+  // Calibrated via pdftotext label extraction + overlay verification:
+  //   "מספר זהות" label at (473, 668.4)  → ID input box at x≈398
+  //   "שם משפחה" label at (340, 668.4)   → name input box at x≈295
+  //   "שם פרטי"  label at (478, 643.9)   → first-name box at x≈435
+  //   Address row between address labels (y≈595) and phone row (y≈571)
+  idPersonal:    { pg: 0, x: 398, y: 671, sz:  9, heb: false, bold: true  },
+  firstName:     { pg: 0, x: 435, y: 647, sz:  9, heb: true  },
+  lastName:      { pg: 0, x: 295, y: 671, sz:  9, heb: true  },
+  city:          { pg: 0, x: 490, y: 583, sz:  8, heb: true  },
+  street:        { pg: 0, x: 380, y: 583, sz:  8, heb: true  },
+  houseNumber:   { pg: 0, x: 310, y: 583, sz:  8, heb: false, bold: true  },
 
   // ── Employment income ─────────────────────────────────────────────────────
   // Main employer column: right box. Label x≈221.8, data drawn at x=144.8.
@@ -216,9 +221,11 @@ export async function POST(req: NextRequest): Promise<Response> {
       // Header
       { key: "taxYear",       text: vals.taxYear,         spec: F.taxYear       },
 
-      // Personal
+      // Personal — bank section IDs
       { key: "idNumber",      text: vals["012"],          spec: F.idNumber      },
       { key: "spouseId",      text: vals["013"],          spec: F.spouseId      },
+      // Personal — section ב (green area)
+      { key: "idPersonal",    text: vals["012"],          spec: F.idPersonal    },
       { key: "firstName",     text: hebrewForPdf(vals["031"]),  spec: F.firstName     },
       { key: "lastName",      text: hebrewForPdf(vals["032"]),  spec: F.lastName      },
       { key: "city",          text: hebrewForPdf(vals["022"]),  spec: F.city          },
