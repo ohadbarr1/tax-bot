@@ -1,11 +1,5 @@
-"use client";
-import { Questionnaire } from "@/components/Questionnaire";
-import { AuthGate } from "@/components/auth/AuthGate";
+import { redirect } from "next/navigation";
 
 export default function QuestionnairePage() {
-  return (
-    <AuthGate>
-      <Questionnaire />
-    </AuthGate>
-  );
+  redirect("/questionnaire/personal");
 }

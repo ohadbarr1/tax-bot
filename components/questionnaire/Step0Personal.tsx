@@ -1,6 +1,7 @@
 "use client";
 
 import { Label, InfoBox } from "./StepShell";
+import { isValidTZ } from "@/lib/validateTZ";
 
 interface BankState {
   bankId: string;
@@ -93,6 +94,12 @@ export default function Step0Personal({
         />
         {idNumber.length > 0 && idNumber.length < 9 && (
           <p className="text-xs text-amber-600">תעודת זהות חייבת להכיל 9 ספרות</p>
+        )}
+        {idNumber.length === 9 && !isValidTZ(idNumber) && (
+          <p className="text-xs text-rose-500 mt-1">מספר תעודת זהות לא תקין — ספרת ביקורת שגויה</p>
+        )}
+        {idNumber.length === 9 && isValidTZ(idNumber) && (
+          <p className="text-xs text-emerald-600 mt-1">&#x2713;</p>
         )}
       </div>
 

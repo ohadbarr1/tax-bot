@@ -79,6 +79,7 @@ import fontkit from "@pdf-lib/fontkit";
 import fs from "fs";
 import path from "path";
 import { buildForm135Fields, hebrewForPdf } from "@/lib/pdfUtils";
+import { isValidTZ } from "@/lib/validateTZ";
 import type { Form135Payload } from "@/types";
 
 // ─── Asset paths ──────────────────────────────────────────────────────────────
@@ -187,6 +188,13 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     if (!taxpayer || !financials) {
       return Response.json({ error: "Missing taxpayer or financials" }, { status: 400 });
+    }
+
+    if (taxpayer.idNumber && !isValidTZ(taxpayer.idNumber)) {
+      return Response.json(
+        { error: "INVALID_TZ", message: "מספר תעודת זהות לא תקין — ספרת ביקורת שגויה" },
+        { status: 400 }
+      );
     }
 
     const calibrate = !!body.calibrate;

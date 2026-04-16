@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { FolderOpen, FileText } from "lucide-react";
 import { DocUploadZone, TYPE_LABELS } from "@/components/documents/DocUploadZone";
+import { SourceDrivenDocCards } from "@/components/documents/SourceDrivenDocCards";
 import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZone";
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
@@ -315,7 +316,21 @@ function DocumentsPageInner() {
         </div>
       )}
 
-      {/* Upload zone */}
+      {/* Source-driven required docs */}
+      {(state.onboarding?.sources?.length ?? 0) > 0 && (
+        <>
+          <div>
+            <h2 className="text-base font-bold text-foreground mb-3">
+              מסמכים נדרשים לפי מקורות הכנסה
+            </h2>
+            <SourceDrivenDocCards />
+          </div>
+          <hr className="border-border" />
+        </>
+      )}
+
+      {/* General upload zone */}
+      <h2 className="text-base font-bold text-foreground">העלאת מסמכים נוספים</h2>
       <DocUploadZone
         docs={filtered}
         sessionUrls={sessionUrls}
