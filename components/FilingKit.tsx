@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Variants } from "framer-motion";
 import {
@@ -15,9 +15,12 @@ import {
   Package,
   Info,
   FolderOpen,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import type { Form135Payload } from "@/types";
+import { determineFormType, FORM_LABELS } from "@/lib/formTypeSelector";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const fadeUp: Variants = {
@@ -55,9 +58,21 @@ export function FilingKit() {
   const { state } = useApp();
   const { taxpayer, financials } = state;
 
+  // ── Form-type determination ───────────────────────────────────────────────
+  const formResult = useMemo(
+    () => determineFormType(taxpayer, financials, state.onboarding?.sources),
+    [taxpayer, financials, state.onboarding?.sources],
+  );
+  const formType = formResult.formType;
+  const formLabel = FORM_LABELS[formType];
+  const [reasonsOpen, setReasonsOpen] = useState(false);
+
   type DownloadState = "idle" | "generating" | "ready" | "error" | "template_missing";
   const [dlState, setDlState]   = useState<DownloadState>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
+
+  const apiEndpoint = formType === "1301" ? "/api/generate/form-1301" : "/api/generate/form-135";
+  const downloadFilename = formType === "1301" ? "form_1301_ready.pdf" : "form_135_ready.pdf";
 
   const handleDownload = async () => {
     setDlState("generating");
@@ -66,7 +81,7 @@ export function FilingKit() {
     try {
       const payload: Form135Payload = { taxpayer, financials };
 
-      const res = await fetch("/api/generate/form-135", {
+      const res = await fetch(apiEndpoint, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(payload),
@@ -87,7 +102,7 @@ export function FilingKit() {
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
       a.href     = url;
-      a.download = "form_135_ready.pdf";
+      a.download = downloadFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -122,6 +137,61 @@ export function FilingKit() {
         </span>
       </div>
 
+      {/* ── Form Type Info Box ── */}
+      <div
+        className={`rounded-xl border px-4 py-3 space-y-2 ${
+          formType === "1301"
+            ? "bg-amber-50 border-amber-200"
+            : "bg-blue-50 border-blue-200"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+                formType === "1301"
+                  ? "bg-amber-200 text-amber-800"
+                  : "bg-blue-200 text-blue-800"
+              }`}
+            >
+              {formLabel.short}
+            </span>
+            <span className="text-sm font-medium text-foreground">
+              {formLabel.full.split(" — ")[1]}
+            </span>
+          </div>
+          <button
+            onClick={() => setReasonsOpen((v) => !v)}
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            {reasonsOpen ? "הסתר" : "פירוט"}
+            {reasonsOpen ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {reasonsOpen && (
+            <motion.ul
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="text-xs text-slate-600 space-y-1 overflow-hidden"
+            >
+              {formResult.reasons.map((reason, i) => (
+                <li key={i} className="flex items-start gap-1.5">
+                  <span className="mt-0.5 text-slate-400">•</span>
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* ── Main Download Card ── */}
       <div className="bg-white dark:bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {/* Top gradient accent */}
@@ -137,10 +207,10 @@ export function FilingKit() {
           <div className="flex items-start gap-4">
             <div className="w-12 h-14 rounded-xl bg-[#0F172A] flex flex-col items-center justify-center flex-shrink-0 shadow-md">
               <span className="text-white text-[9px] font-semibold leading-none">PDF</span>
-              <span className="text-emerald-400 text-xs font-bold leading-none mt-1">135</span>
+              <span className="text-emerald-400 text-xs font-bold leading-none mt-1">{formType}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">טופס 135 — בקשה להחזר מס</p>
+              <p className="text-sm font-semibold text-foreground">{formLabel.full}</p>
               <p className="text-xs text-slate-500 mt-0.5">
                 {taxpayer.fullName.split(" - ")[1]} · שנת מס {financials.taxYears[0]}
               </p>
@@ -188,7 +258,7 @@ export function FilingKit() {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-amber-900">
-                        נדרש: תבנית טופס 135 הרשמית
+                        נדרש: תבנית {formLabel.short} הרשמית
                       </p>
                       <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
                         הגישה ל-PDF הרשמי של רשות המיסים טרם הוגדרה בשרת.
@@ -197,7 +267,7 @@ export function FilingKit() {
                     </div>
                   </div>
                   <div className="rounded-lg bg-amber-100 border border-amber-200 px-3 py-2 text-[11px] font-mono text-amber-800 break-all">
-                    app/public/templates/form135_official.pdf
+                    app/public/templates/form{formType === "1301" ? "1301" : "135"}_2025.pdf
                   </div>
                   <div className="flex gap-2">
                     <a
@@ -208,7 +278,7 @@ export function FilingKit() {
                                  bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
-                      הורד טופס 135 מרשות המיסים
+                      הורד {formLabel.short} מרשות המיסים
                     </a>
                     <button
                       onClick={() => setDlState("idle")}
@@ -243,7 +313,7 @@ export function FilingKit() {
                           className="flex items-center gap-2"
                         >
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          מייצר טופס 135…
+                          מייצר {formLabel.short}…
                         </motion.span>
                       ) : dlState === "ready" ? (
                         <motion.span
@@ -253,7 +323,7 @@ export function FilingKit() {
                           className="flex items-center gap-2"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          הורד שוב — form_135_ready.pdf
+                          הורד שוב — {downloadFilename}
                         </motion.span>
                       ) : dlState === "error" ? (
                         <motion.span key="err" className="flex items-center gap-2">
@@ -263,7 +333,7 @@ export function FilingKit() {
                       ) : (
                         <motion.span key="idle" className="flex items-center gap-2">
                           <FileDown className="w-4 h-4" />
-                          הורד טופס 135 מוכן לחתימה
+                          הורד {formLabel.short} מוכן לחתימה
                         </motion.span>
                       )}
                     </AnimatePresence>

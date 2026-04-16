@@ -29,9 +29,10 @@ import type { TaxPayer, FinancialData } from "@/types";
 const RTL_MARK = "\u200F";
 
 /**
- * Wrap a Hebrew string with a leading RTL mark so that PDF viewers
- * which support Unicode BiDi will render it right-to-left.
- * Characters are kept in logical Unicode order — no character reversal.
+ * Reverse Hebrew characters for visual RTL order in pdf-lib.
+ * pdf-lib's drawText() renders LTR only — it does NOT run the Unicode
+ * BiDi algorithm. We reverse the string so that the visual output
+ * reads right-to-left as expected.
  */
 export function hebrewForPdf(text: string): string {
   if (!text) return "";
@@ -99,6 +100,127 @@ export interface Form135Fields {
   // §6 Summary
   estimatedRefund: string;
   taxYear:         string;
+}
+
+// ─── 3. Form-1301 Field Value Extractor ──────────────────────────────────────
+//
+// The 1301 form is more comprehensive than 135 — it has 4 pages and covers
+// business income, multi-column capital gains, deductions on multiple pages,
+// and bank details on the final page.
+
+export interface Form1301Fields extends Form135Fields {
+  // §2 Employment (multi-employer split)
+  "158_main": string; // Gross salary — main employer
+  "172_2nd": string;  // Gross salary — 2nd employer
+  "068_main": string; // Tax withheld — main employer
+  "069_2nd": string;  // Tax withheld — 2nd employer
+  "258_main": string; // Pension — main employer
+  "272": string;      // Severance
+
+  // §3 Business income
+  "201": string; // Business income — main
+  "301": string; // Business income — 2nd
+
+  // §4 Capital gains (expanded)
+  "060": string; // Capital gain right column
+  "211": string; // Capital gain center column
+  "067": string; // Capital loss
+  "157": string; // Foreign tax withheld
+  "141": string; // Other income
+  "055_1301": string; // Field 055
+
+  // §5 Deductions (page 1)
+  "078": string; // Donations
+  "126": string; // Life insurance
+  "142": string; // Individual pension
+  "335": string; // Total deductions
+
+  // §6 Page 3 deduction fields (duplicated for ITA cross-check)
+  "036_p3": string; // Life insurance (page 3)
+  "045_p3": string; // Pension deduction (page 3)
+  "037_p3": string; // Donations (page 3)
+  "042_p3": string; // Tax code / total tax (page 3)
+
+  // §7 Bank details (page 3)
+  "274": string; // Bank number
+  "273": string; // Branch number
+  "044": string; // Account number
+}
+
+export function buildForm1301Fields(
+  taxpayer: TaxPayer,
+  financials: FinancialData
+): Form1301Fields {
+  // Start with the same base as form 135
+  const base = buildForm135Fields(taxpayer, financials);
+
+  // ── Split employer figures for multi-column layout ─────────────────────
+  const mainEmployer = taxpayer.employers?.find((e) => e.isMainEmployer);
+  const secondaryEmployers = taxpayer.employers?.filter((e) => !e.isMainEmployer) ?? [];
+  const secondaryGross   = secondaryEmployers.reduce((s, e) => s + (e.grossSalary ?? 0), 0);
+  const secondaryTax     = secondaryEmployers.reduce((s, e) => s + (e.taxWithheld ?? 0), 0);
+
+  // ── Deduction totals ──────────────────────────────────────────────────
+  const donations  = taxpayer.personalDeductions
+    ?.filter((d) => d.type === "donation_sec46")
+    .reduce((s, d) => s + d.amount, 0) ?? 0;
+  const lifeIns    = taxpayer.personalDeductions
+    ?.filter((d) => d.type === "life_insurance_sec45a")
+    .reduce((s, d) => s + d.amount, 0) ?? 0;
+  const indPension = taxpayer.personalDeductions
+    ?.filter((d) => d.type === "pension_sec47")
+    .reduce((s, d) => s + d.amount, 0) ?? 0;
+
+  const totalDeductions = donations + lifeIns + indPension;
+
+  // ── Aggregate pension ─────────────────────────────────────────────────
+  const mainPension = mainEmployer?.pensionDeduction ?? 0;
+  const totalPension = taxpayer.employers?.reduce((s, e) => s + (e.pensionDeduction ?? 0), 0) ?? 0;
+  const totalTax     = taxpayer.employers?.reduce((s, e) => s + (e.taxWithheld ?? 0), 0) ?? 0;
+
+  // ── Capital gains ─────────────────────────────────────────────────────
+  const cg = taxpayer.capitalGains;
+
+  return {
+    ...base,
+
+    // Employment — split by employer column
+    "158_main": formatIlsForPdf(mainEmployer?.grossSalary),
+    "172_2nd":  formatIlsForPdf(secondaryGross || undefined),
+    "068_main": formatIlsForPdf(mainEmployer?.taxWithheld),
+    "069_2nd":  formatIlsForPdf(secondaryTax || undefined),
+    "258_main": formatIlsForPdf(mainPension || undefined),
+    "272":      formatIlsForPdf(taxpayer.lifeEvents?.taxableSeverancePay),
+
+    // Business income (not yet modeled in TaxPayer — placeholder)
+    "201": "0",
+    "301": "0",
+
+    // Capital gains — expanded
+    "060": formatIlsForPdf(cg?.totalRealizedProfit),
+    "211": "0", // center column — reserved for future use
+    "067": formatIlsForPdf(cg?.totalRealizedLoss),
+    "157": formatIlsForPdf(cg?.foreignTaxWithheld),
+    "141": formatIlsForPdf(cg?.dividends),
+    "055_1301": formatIlsForPdf(cg?.foreignTaxWithheld),
+
+    // Deductions (page 1)
+    "078": formatIlsForPdf(donations),
+    "126": formatIlsForPdf(lifeIns),
+    "142": formatIlsForPdf(indPension),
+    "335": formatIlsForPdf(totalDeductions),
+
+    // Page 3 deduction fields (same values, different positions)
+    "036_p3": formatIlsForPdf(lifeIns),
+    "045_p3": formatIlsForPdf(totalPension),
+    "037_p3": formatIlsForPdf(donations),
+    "042_p3": formatIlsForPdf(totalTax),
+
+    // Bank details (page 3)
+    "274": taxpayer.bank?.bankId   ?? "",
+    "273": taxpayer.bank?.branch   ?? "",
+    "044": taxpayer.bank?.account  ?? "",
+  };
 }
 
 export function buildForm135Fields(

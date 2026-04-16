@@ -1,0 +1,279 @@
+{
+  "formId": "1301",
+  "year": 2025,
+  "template": "form1301_2025.pdf",
+  "pageSize": { "width": 595.275, "height": 841.89 },
+  "pages": 4,
+  "notes": {
+    "origin": "PDF bottom-left. Coordinates from content-stream label extraction (TT1 font Tm operators).",
+    "dataOffset": "Right column: x = label_x - 77, y = label_y + 3. Center column: x = label_x - 77, y = label_y + 3. Left column: x = label_x - 79, y = label_y + 3.",
+    "columns": "3-column layout: right(x≈320), center(x≈217), left(x≈115)",
+    "fontStrategy": "latin-bold = HelveticaBold for numbers/IDs. hebrew = Assistant-Regular.ttf for Hebrew text."
+  },
+  "fields": {
+
+    "taxYear": {
+      "pg": 0, "x": 193, "y": 820, "sz": 10, "font": "latin-bold",
+      "label": "Tax year header overlay",
+      "cover": { "x": 191, "y": 816, "w": 42, "h": 14 }
+    },
+
+    "idNumber": {
+      "pg": 0, "x": 136.6, "y": 634.1, "sz": 9, "font": "latin-bold",
+      "label": "012 - Taxpayer ID",
+      "labelPos": { "x": 213.6, "y": 631.1 },
+      "fieldCode": "012"
+    },
+    "taxpayerId278": {
+      "pg": 0, "x": 140.7, "y": 157.2, "sz": 9, "font": "latin-bold",
+      "label": "278 - Taxpayer ID (bank section)",
+      "labelPos": { "x": 217.7, "y": 154.2 },
+      "fieldCode": "278"
+    },
+    "spouseId277": {
+      "pg": 0, "x": 260.0, "y": 157.4, "sz": 9, "font": "latin-bold",
+      "label": "277 - Spouse ID (bank section)",
+      "labelPos": { "x": 337.0, "y": 154.4 },
+      "fieldCode": "277"
+    },
+    "payerId143": {
+      "pg": 0, "x": 409.5, "y": 40.2, "sz": 9, "font": "latin-bold",
+      "label": "143 - Payer ID",
+      "labelPos": { "x": 486.5, "y": 37.2 },
+      "fieldCode": "143"
+    },
+
+    "firstName": {
+      "pg": 0, "x": 480, "y": 710, "sz": 10, "font": "hebrew",
+      "label": "031 - First name",
+      "notes": "Same position strategy as form 135"
+    },
+    "lastName": {
+      "pg": 0, "x": 350, "y": 710, "sz": 10, "font": "hebrew",
+      "label": "032 - Last name"
+    },
+    "city": {
+      "pg": 0, "x": 440, "y": 685, "sz": 9, "font": "hebrew",
+      "label": "022 - City"
+    },
+    "street": {
+      "pg": 0, "x": 300, "y": 685, "sz": 9, "font": "hebrew",
+      "label": "023 - Street"
+    },
+    "houseNumber": {
+      "pg": 0, "x": 200, "y": 685, "sz": 9, "font": "latin-bold",
+      "label": "024 - House number"
+    },
+
+    "grossSalaryMain": {
+      "pg": 1, "x": 140.9, "y": 732.3, "sz": 11, "font": "latin-bold",
+      "label": "158 - Gross salary (main employer)",
+      "labelPos": { "x": 217.9, "y": 729.3 },
+      "fieldCode": "158"
+    },
+    "grossSalary2nd": {
+      "pg": 1, "x": 36.8, "y": 732.3, "sz": 11, "font": "latin-bold",
+      "label": "172 - Gross salary (2nd employer)",
+      "labelPos": { "x": 115.8, "y": 729.3 },
+      "fieldCode": "172"
+    },
+    "taxWithheldMain": {
+      "pg": 1, "x": 140.9, "y": 715.3, "sz": 11, "font": "latin-bold",
+      "label": "068 - Tax withheld (main employer)",
+      "labelPos": { "x": 217.9, "y": 712.3 },
+      "fieldCode": "068"
+    },
+    "taxWithheld2nd": {
+      "pg": 1, "x": 36.8, "y": 715.3, "sz": 11, "font": "latin-bold",
+      "label": "069 - Tax withheld (2nd employer)",
+      "labelPos": { "x": 115.8, "y": 712.3 },
+      "fieldCode": "069"
+    },
+    "pensionMain": {
+      "pg": 1, "x": 140.9, "y": 698.6, "sz": 10, "font": "latin-bold",
+      "label": "258 - Pension (main employer)",
+      "labelPos": { "x": 217.9, "y": 695.6 },
+      "fieldCode": "258"
+    },
+    "severance": {
+      "pg": 1, "x": 36.8, "y": 698.6, "sz": 10, "font": "latin-bold",
+      "label": "272 - Severance pay",
+      "labelPos": { "x": 115.8, "y": 695.6 },
+      "fieldCode": "272"
+    },
+
+    "bizIncomeMain": {
+      "pg": 1, "x": 140.5, "y": 606.4, "sz": 11, "font": "latin-bold",
+      "label": "201 - Business income (main)",
+      "labelPos": { "x": 217.5, "y": 603.4 },
+      "fieldCode": "201"
+    },
+    "bizIncome2nd": {
+      "pg": 1, "x": 36.7, "y": 606.4, "sz": 11, "font": "latin-bold",
+      "label": "301 - Business income (2nd)",
+      "labelPos": { "x": 115.7, "y": 603.4 },
+      "fieldCode": "301"
+    },
+
+    "capitalGainRight": {
+      "pg": 1, "x": 242.7, "y": 486.4, "sz": 11, "font": "latin-bold",
+      "label": "060 - Capital gain (right col)",
+      "labelPos": { "x": 319.7, "y": 483.4 },
+      "fieldCode": "060"
+    },
+    "capitalGainCenter": {
+      "pg": 1, "x": 139.9, "y": 486.4, "sz": 11, "font": "latin-bold",
+      "label": "211 - Capital gain (center col)",
+      "labelPos": { "x": 216.9, "y": 483.4 },
+      "fieldCode": "211"
+    },
+    "capitalLoss": {
+      "pg": 1, "x": 242.5, "y": 470.0, "sz": 11, "font": "latin-bold",
+      "label": "067 - Capital loss",
+      "labelPos": { "x": 319.5, "y": 467.0 },
+      "fieldCode": "067"
+    },
+    "foreignTax": {
+      "pg": 1, "x": 242.5, "y": 452.8, "sz": 10, "font": "latin-bold",
+      "label": "157 - Foreign tax withheld",
+      "labelPos": { "x": 319.5, "y": 449.8 },
+      "fieldCode": "157"
+    },
+    "otherIncome": {
+      "pg": 1, "x": 242.5, "y": 418.5, "sz": 10, "font": "latin-bold",
+      "label": "141 - Other income",
+      "labelPos": { "x": 319.5, "y": 415.5 },
+      "fieldCode": "141"
+    },
+    "field055": {
+      "pg": 1, "x": 242.5, "y": 400.3, "sz": 10, "font": "latin-bold",
+      "label": "055 - Field",
+      "labelPos": { "x": 319.5, "y": 397.3 },
+      "fieldCode": "055"
+    },
+
+    "donations": {
+      "pg": 1, "x": 242.9, "y": 349.7, "sz": 10, "font": "latin-bold",
+      "label": "078 - Donations (sec 46)",
+      "labelPos": { "x": 319.9, "y": 346.7 },
+      "fieldCode": "078"
+    },
+    "lifeInsurance": {
+      "pg": 1, "x": 242.9, "y": 332.4, "sz": 10, "font": "latin-bold",
+      "label": "126 - Life insurance (sec 45a)",
+      "labelPos": { "x": 319.9, "y": 329.4 },
+      "fieldCode": "126"
+    },
+    "indPension": {
+      "pg": 1, "x": 243.0, "y": 315.2, "sz": 10, "font": "latin-bold",
+      "label": "142 - Individual pension (sec 47)",
+      "labelPos": { "x": 320.0, "y": 312.2 },
+      "fieldCode": "142"
+    },
+    "field222": {
+      "pg": 1, "x": 242.9, "y": 298.0, "sz": 10, "font": "latin-bold",
+      "label": "222",
+      "labelPos": { "x": 319.9, "y": 295.0 },
+      "fieldCode": "222"
+    },
+    "field225": {
+      "pg": 1, "x": 242.9, "y": 280.8, "sz": 10, "font": "latin-bold",
+      "label": "225",
+      "labelPos": { "x": 319.9, "y": 277.8 },
+      "fieldCode": "225"
+    },
+    "field227": {
+      "pg": 1, "x": 243.0, "y": 263.3, "sz": 10, "font": "latin-bold",
+      "label": "227",
+      "labelPos": { "x": 320.0, "y": 260.3 },
+      "fieldCode": "227"
+    },
+    "totalDeductions": {
+      "pg": 1, "x": 243.0, "y": 246.3, "sz": 10, "font": "latin-bold",
+      "label": "335 - Total deductions",
+      "labelPos": { "x": 320.0, "y": 243.3 },
+      "fieldCode": "335"
+    },
+    "field213": {
+      "pg": 1, "x": 139.7, "y": 210.7, "sz": 10, "font": "latin-bold",
+      "label": "213",
+      "labelPos": { "x": 216.7, "y": 207.7 },
+      "fieldCode": "213"
+    },
+
+    "field020": {
+      "pg": 2, "x": 46.0, "y": 807.3, "sz": 9, "font": "latin-bold",
+      "label": "020",
+      "labelPos": { "x": 46.0, "y": 804.3 },
+      "fieldCode": "020",
+      "notes": "Top of page 2, direct position (no standard offset)"
+    },
+    "field021": {
+      "pg": 2, "x": 45.7, "y": 790.8, "sz": 9, "font": "latin-bold",
+      "label": "021",
+      "labelPos": { "x": 45.7, "y": 787.8 },
+      "fieldCode": "021"
+    },
+    "field260": {
+      "pg": 2, "x": 196.9, "y": 741.8, "sz": 10, "font": "latin-bold",
+      "label": "260",
+      "labelPos": { "x": 273.9, "y": 738.8 },
+      "fieldCode": "260"
+    },
+
+    "lifeInsP3": {
+      "pg": 3, "x": 144.8, "y": 800.4, "sz": 10, "font": "latin-bold",
+      "label": "036 - Life insurance (page 3)",
+      "labelPos": { "x": 221.8, "y": 797.4 },
+      "fieldCode": "036"
+    },
+    "field140": {
+      "pg": 3, "x": 144.8, "y": 783.1, "sz": 10, "font": "latin-bold",
+      "label": "140",
+      "labelPos": { "x": 221.8, "y": 780.1 },
+      "fieldCode": "140"
+    },
+    "pensionDeductionP3": {
+      "pg": 3, "x": 144.8, "y": 764.9, "sz": 10, "font": "latin-bold",
+      "label": "045 - Pension deduction (page 3)",
+      "labelPos": { "x": 221.8, "y": 761.9 },
+      "fieldCode": "045"
+    },
+    "donationsP3": {
+      "pg": 3, "x": 144.8, "y": 713.0, "sz": 10, "font": "latin-bold",
+      "label": "037 - Donations (page 3)",
+      "labelPos": { "x": 221.8, "y": 710.0 },
+      "fieldCode": "037"
+    },
+    "taxCode042": {
+      "pg": 3, "x": 42.0, "y": 522.6, "sz": 10, "font": "latin-bold",
+      "label": "042 - Tax code (page 3)",
+      "labelPos": { "x": 119.0, "y": 519.6 },
+      "fieldCode": "042"
+    },
+    "field274": {
+      "pg": 3, "x": 30.0, "y": 302.9, "sz": 10, "font": "latin-bold",
+      "label": "274 - Bank details",
+      "labelPos": { "x": 107.0, "y": 299.9 },
+      "fieldCode": "274"
+    },
+    "field273": {
+      "pg": 3, "x": 110.2, "y": 301.0, "sz": 10, "font": "latin-bold",
+      "label": "273 - Bank branch",
+      "labelPos": { "x": 187.2, "y": 298.0 },
+      "fieldCode": "273"
+    },
+    "field044": {
+      "pg": 3, "x": 110.2, "y": 269.1, "sz": 10, "font": "latin-bold",
+      "label": "044 - Account number",
+      "labelPos": { "x": 187.2, "y": 266.1 },
+      "fieldCode": "044"
+    },
+    "field088": {
+      "pg": 3, "x": 30.0, "y": 269.1, "sz": 10, "font": "latin-bold",
+      "label": "088",
+      "labelPos": { "x": 107.0, "y": 266.1 },
+      "fieldCode": "088"
+    }
+  }
+}

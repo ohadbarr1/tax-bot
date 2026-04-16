@@ -1,0 +1,138 @@
+{
+  "formId": "135",
+  "year": 2025,
+  "template": "form135_2025.pdf",
+  "pageSize": { "width": 595.275, "height": 841.89 },
+  "notes": {
+    "origin": "PDF bottom-left. Coordinates from content-stream label extraction (TT1 font Tm operators).",
+    "dataOffset": "Right column: x = label_x - 77. Left column: x = label_x - 79. y = label_y + 3.",
+    "rightColumnLabels": "x ~ 221.8 (data at ~144.8)",
+    "leftColumnLabels": "x ~ 119.0 (data at ~40.0)",
+    "fontStrategy": "latin-bold = HelveticaBold for numbers/IDs. hebrew = Assistant-Regular.ttf for Hebrew text."
+  },
+  "fields": {
+    "taxYear": {
+      "pg": 0, "x": 193, "y": 820, "sz": 10, "font": "latin-bold",
+      "label": "Tax year header overlay",
+      "labelPos": { "x": 195, "y": 817 },
+      "cover": { "x": 191, "y": 816, "w": 42, "h": 14 }
+    },
+
+    "idNumber": {
+      "pg": 0, "x": 11.5, "y": 453.3, "sz": 9, "font": "latin-bold",
+      "label": "012 - Taxpayer ID",
+      "labelPos": { "x": 88.5, "y": 450.3 }
+    },
+    "spouseId": {
+      "pg": 0, "x": 131.5, "y": 453.3, "sz": 9, "font": "latin-bold",
+      "label": "013 - Spouse ID",
+      "labelPos": { "x": 208.5, "y": 450.3 }
+    },
+
+    "firstName": {
+      "pg": 0, "x": 480, "y": 710, "sz": 10, "font": "hebrew",
+      "label": "031 - First name",
+      "notes": "Estimated from pdftotext. Calibrate visually."
+    },
+    "lastName": {
+      "pg": 0, "x": 350, "y": 710, "sz": 10, "font": "hebrew",
+      "label": "032 - Last name",
+      "notes": "Estimated from pdftotext. Calibrate visually."
+    },
+    "city": {
+      "pg": 0, "x": 440, "y": 685, "sz": 9, "font": "hebrew",
+      "label": "022 - City",
+      "notes": "Estimated from pdftotext. Calibrate visually."
+    },
+    "street": {
+      "pg": 0, "x": 300, "y": 685, "sz": 9, "font": "hebrew",
+      "label": "023 - Street",
+      "notes": "Estimated from pdftotext. Calibrate visually."
+    },
+    "houseNumber": {
+      "pg": 0, "x": 200, "y": 685, "sz": 9, "font": "latin-bold",
+      "label": "024 - House number",
+      "notes": "Estimated. Calibrate visually."
+    },
+
+    "grossSalary": {
+      "pg": 0, "x": 144.8, "y": 346.0, "sz": 11, "font": "latin-bold",
+      "label": "158 - Gross salary (main employer)",
+      "labelPos": { "x": 221.8, "y": 343.0 },
+      "fieldCode": "158"
+    },
+    "taxWithheld": {
+      "pg": 0, "x": 144.8, "y": 326.9, "sz": 11, "font": "latin-bold",
+      "label": "042 - Tax withheld (main employer)",
+      "labelPos": { "x": 221.8, "y": 323.9 },
+      "fieldCode": "068"
+    },
+    "pension": {
+      "pg": 0, "x": 144.8, "y": 307.9, "sz": 10, "font": "latin-bold",
+      "label": "045 - Pension compensation",
+      "labelPos": { "x": 221.8, "y": 304.9 },
+      "fieldCode": "258"
+    },
+
+    "severance": {
+      "pg": 0, "x": 40.0, "y": 307.9, "sz": 10, "font": "latin-bold",
+      "label": "272 - Severance pay (2nd employer col)",
+      "labelPos": { "x": 119.0, "y": 304.9 },
+      "fieldCode": "272"
+    },
+
+    "capitalGain": {
+      "pg": 0, "x": 144.8, "y": 230.6, "sz": 11, "font": "latin-bold",
+      "label": "256 - Capital gain",
+      "labelPos": { "x": 221.8, "y": 227.6 },
+      "fieldCode": "060"
+    },
+    "capitalLoss": {
+      "pg": 0, "x": 144.8, "y": 211.5, "sz": 11, "font": "latin-bold",
+      "label": "166 - Capital loss",
+      "labelPos": { "x": 221.8, "y": 208.5 },
+      "fieldCode": "067"
+    },
+    "foreignTax": {
+      "pg": 0, "x": 144.8, "y": 192.8, "sz": 10, "font": "latin-bold",
+      "label": "055 - Foreign tax withheld",
+      "labelPos": { "x": 221.8, "y": 189.8 },
+      "fieldCode": "157"
+    },
+
+    "donations": {
+      "pg": 0, "x": 144.8, "y": 136.7, "sz": 10, "font": "latin-bold",
+      "label": "037 - Donations (sec 46)",
+      "labelPos": { "x": 221.8, "y": 133.7 },
+      "fieldCode": "078"
+    },
+    "lifeInsurance": {
+      "pg": 0, "x": 144.8, "y": 118.0, "sz": 10, "font": "latin-bold",
+      "label": "036 - Life insurance (sec 45a)",
+      "labelPos": { "x": 221.8, "y": 115.0 },
+      "fieldCode": "126"
+    },
+    "indPension": {
+      "pg": 0, "x": 144.8, "y": 99.2, "sz": 10, "font": "latin-bold",
+      "label": "135 - Individual pension (sec 47)",
+      "labelPos": { "x": 221.8, "y": 96.2 },
+      "fieldCode": "142"
+    },
+
+    "bankNumber": {
+      "pg": 0, "x": 430, "y": 50, "sz": 10, "font": "latin-bold",
+      "label": "Bank number",
+      "notes": "Bottom section, estimated. Calibrate visually."
+    },
+    "branchNumber": {
+      "pg": 0, "x": 310, "y": 50, "sz": 10, "font": "latin-bold",
+      "label": "Branch number",
+      "notes": "Bottom section, estimated. Calibrate visually."
+    },
+    "accountNumber": {
+      "pg": 0, "x": 160, "y": 50, "sz": 10, "font": "latin-bold",
+      "label": "Account number",
+      "notes": "Bottom section, estimated. Calibrate visually."
+    }
+  }
+}

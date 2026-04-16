@@ -5,7 +5,7 @@
  * ARCHITECTURE NOTES
  * ═══════════════════════════════════════════════════════════════════════
  *
- * The official Form 135 (2024) PDF has ZERO AcroForm fields — it is a
+ * The official Form 135 (2025) PDF has ZERO AcroForm fields — it is a
  * fully static visual document. The ITA delivers a scanned/vector PDF
  * with no interactive widgets. Therefore:
  *
@@ -48,31 +48,28 @@
  * FIELD POSITION MAP  (x,y in PDF points; origin = bottom-left of page)
  * ═══════════════════════════════════════════════════════════════════════
  *
- * Confirmed from content-stream analysis (TT1 font Tm operators):
+ * Confirmed from content-stream analysis (TT1 font Tm operators) — 2025 template:
  *
  *   LABEL           LABEL POS     DATA DRAW POS    NOTES
  *   ─────────────────────────────────────────────────────────────────────
- *   158 (gross)     (222, 335)    (260, 338)        main employer gross
- *   172 (2nd gross) (119, 335)    (127, 338)        secondary employer
- *   068 (tax wthld) (222, 316)    (260, 319)        main employer tax
- *   069 (2nd tax)   (119, 316)    (127, 319)        secondary employer
- *   258 (pension?)  (222, 297)    (260, 300)        pension / comp
- *   272 (severance) (119, 297)    (127, 300)        taxable severance
- *   060 (cap gain)  (222, 207)    (260, 209)        capital gains profit
- *   067 (cap loss)  (222, 189)    (260, 191)        capital losses
- *   157 (fgn tax)   (222, 171)    (260, 173)        foreign withholding
- *   078 (donations) (222, 119)    (260, 121)        Sec 46 donations
- *   126 (life ins)  (222, 101)    (260, 103)        Sec 45a life ins
- *   142 (ind pen)   (222,  83)    (260,  85)        Sec 47 pension
- *   278 (ID)        ( 89, 442)    (100, 444)        taxpayer ID (bank section)
- *   277 (spouse ID) (101, 442)    (250, 444)        spouse ID (bank section)
- *   header year     (195, 805)    (193, 805)        tax year (covered+redrawn)
+ *   158 (gross)     (221.8,343)   (144.8,346)       main employer gross
+ *   068 (tax wthld) (221.8,323.9) (144.8,326.9)     main employer tax
+ *   258 (pension)   (221.8,304.9) (144.8,307.9)     pension / comp
+ *   272 (severance) (119.0,304.9) ( 40.0,307.9)     taxable severance (2nd col)
+ *   060 (cap gain)  (221.8,227.6) (144.8,230.6)     capital gains profit
+ *   067 (cap loss)  (221.8,208.5) (144.8,211.5)     capital losses
+ *   157 (fgn tax)   (221.8,189.8) (144.8,192.8)     foreign withholding
+ *   078 (donations) (221.8,133.7) (144.8,136.7)     Sec 46 donations
+ *   126 (life ins)  (221.8,115.0) (144.8,118.0)     Sec 45a life ins
+ *   142 (ind pen)   (221.8, 96.2) (144.8, 99.2)     Sec 47 pension
+ *   012 (ID)        ( 88.5,450.3) ( 11.5,453.3)     taxpayer ID
+ *   013 (spouse ID) (208.5,450.3) (131.5,453.3)     spouse ID
+ *   header year     (195, 817)    (193, 820)        tax year (covered+redrawn)
  *
- * Personal-info rows (section ב. פרטים אישיים) — calibrated 2025-04-13:
- *   Section "בן הזוג הרשום" (right half, main taxpayer), data baseline y=621.
- *   firstName  (שם פרטי):  x=480, y=621  — rightmost column of right half
- *   lastName   (שם משפחה): x=340, y=621  — second column
- *   city/street/house:      y=548         — mailing address sub-section (tentative)
+ * Personal-info rows (section ב. פרטים אישיים) — estimated for 2025 template:
+ *   firstName  (שם פרטי):  x=480, y=710  — rightmost column of right half
+ *   lastName   (שם משפחה): x=350, y=710  — second column
+ *   city/street/house:      y=685         — mailing address sub-section (estimated)
  */
 
 import { NextRequest } from "next/server";
@@ -87,7 +84,7 @@ import type { Form135Payload } from "@/types";
 
 const TEMPLATE_PATH = path.join(
   process.cwd(),
-  "public", "templates", "form135_official.pdf"
+  "public", "templates", "form135_2025.pdf"
 );
 const FONT_TTF_PATH  = path.join(process.cwd(), "public", "fonts", "Assistant-Regular.ttf");
 const FONT_WOFF_PATH = path.join(process.cwd(), "public", "fonts", "Assistant-Regular.woff2");
@@ -119,45 +116,42 @@ interface FieldSpec {
 
 const F: Record<string, FieldSpec> = {
   // ── Header ─────────────────────────────────────────────────────────────────
-  // "2024" is printed at (195,805). We cover it with white and redraw the year.
-  taxYear:       { pg: 0, x: 193, y: 805, sz: 10, heb: false, bold: true  },
+  // "2025" is printed at (195,817). We cover it with white and redraw the year.
+  taxYear:       { pg: 0, x: 193, y: 820, sz: 10, heb: false, bold: true  },
 
   // ── Personal details ───────────────────────────────────────────────────────
-  // ID fields (bank/refund section): labels 278 at (89,442) and 277 at (101,442).
-  idNumber:      { pg: 0, x: 100, y: 444, sz:  9, heb: false, bold: true  },
-  spouseId:      { pg: 0, x: 250, y: 444, sz:  9, heb: false, bold: true  },
+  // ID fields: label 012 at (88.5,450.3), label 013 at (208.5,450.3).
+  idNumber:      { pg: 0, x: 11.5, y: 453.3, sz:  9, heb: false, bold: true  },
+  spouseId:      { pg: 0, x: 131.5, y: 453.3, sz:  9, heb: false, bold: true  },
 
-  // Name rows — calibrated from calib2.pdf visual inspection (2025-04-13).
+  // Name rows — estimated for 2025 template. Calibrate visually.
   //   Section ב. פרטים אישיים, "בן הזוג הרשום" column.
-  //   Data-entry baseline y=621. Column x: שם פרטי≈480, שם משפחה≈340.
-  firstName:     { pg: 0, x: 480, y: 621, sz: 10, heb: true  },
-  lastName:      { pg: 0, x: 340, y: 621, sz: 10, heb: true  },
-  city:          { pg: 0, x: 420, y: 548, sz:  9, heb: true  },
-  street:        { pg: 0, x: 280, y: 548, sz:  9, heb: true  },
-  houseNumber:   { pg: 0, x: 175, y: 548, sz:  9, heb: false, bold: true  },
+  //   Data-entry baseline y=710. Column x: שם פרטי≈480, שם משפחה≈350.
+  firstName:     { pg: 0, x: 480, y: 710, sz: 10, heb: true  },
+  lastName:      { pg: 0, x: 350, y: 710, sz: 10, heb: true  },
+  city:          { pg: 0, x: 440, y: 685, sz:  9, heb: true  },
+  street:        { pg: 0, x: 300, y: 685, sz:  9, heb: true  },
+  houseNumber:   { pg: 0, x: 200, y: 685, sz:  9, heb: false, bold: true  },
 
   // ── Employment income ─────────────────────────────────────────────────────
-  // Main employer column: right box x=134-235. Field codes (158/042/045) at
-  // x≈222 (near right edge). Data drawn at x=145 — left side of the box,
-  // confirmed via content-stream rect analysis (2025-04-14).
-  grossSalary:   { pg: 0, x: 145, y: 338, sz: 11, heb: false, bold: true  },
-  taxWithheld:   { pg: 0, x: 145, y: 319, sz: 11, heb: false, bold: true  },
-  pension:       { pg: 0, x: 145, y: 300, sz: 10, heb: false, bold: true  },
-  // Secondary employer column: left box x=31-132. Field code "172" at x=119.
-  severance:     { pg: 0, x:  40, y: 300, sz: 10, heb: false, bold: true  },
+  // Main employer column: right box. Label x≈221.8, data drawn at x=144.8.
+  grossSalary:   { pg: 0, x: 144.8, y: 346.0, sz: 11, heb: false, bold: true  },
+  taxWithheld:   { pg: 0, x: 144.8, y: 326.9, sz: 11, heb: false, bold: true  },
+  pension:       { pg: 0, x: 144.8, y: 307.9, sz: 10, heb: false, bold: true  },
+  // Secondary employer column: left box. Label x≈119.0, data at x=40.0.
+  severance:     { pg: 0, x:  40.0, y: 307.9, sz: 10, heb: false, bold: true  },
 
   // ── Capital gains & foreign income ────────────────────────────────────────
-  // Same right box (x=134-235) — single-column for capital gains rows.
-  // y confirmed against rect midpoints: 208.3, 190.65, 173.05.
-  capitalGain:   { pg: 0, x: 145, y: 209, sz: 11, heb: false, bold: true  },
-  capitalLoss:   { pg: 0, x: 145, y: 191, sz: 11, heb: false, bold: true  },
-  foreignTax:    { pg: 0, x: 145, y: 173, sz: 10, heb: false, bold: true  },
+  // Same right box column — capital gains rows.
+  capitalGain:   { pg: 0, x: 144.8, y: 230.6, sz: 11, heb: false, bold: true  },
+  capitalLoss:   { pg: 0, x: 144.8, y: 211.5, sz: 11, heb: false, bold: true  },
+  foreignTax:    { pg: 0, x: 144.8, y: 192.8, sz: 10, heb: false, bold: true  },
 
   // ── Personal deductions ────────────────────────────────────────────────────
-  // Same right box column. y confirmed: 120.1, 102.4, 84.8.
-  donations:     { pg: 0, x: 145, y: 121, sz: 10, heb: false, bold: true  },
-  lifeInsurance: { pg: 0, x: 145, y: 103, sz: 10, heb: false, bold: true  },
-  indPension:    { pg: 0, x: 145, y:  85, sz: 10, heb: false, bold: true  },
+  // Same right box column.
+  donations:     { pg: 0, x: 144.8, y: 136.7, sz: 10, heb: false, bold: true  },
+  lifeInsurance: { pg: 0, x: 144.8, y: 118.0, sz: 10, heb: false, bold: true  },
+  indPension:    { pg: 0, x: 144.8, y:  99.2, sz: 10, heb: false, bold: true  },
 
   // ── Bank details (bottom section) ─────────────────────────────────────────
   bankNumber:    { pg: 0, x: 430, y: 50, sz: 10, heb: false, bold: true  },
@@ -174,7 +168,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json(
       {
         error:        "TEMPLATE_MISSING",
-        message:      "form135_official.pdf not found at public/templates/",
+        message:      "form135_2025.pdf not found at public/templates/",
         instructions: "Download from https://www.gov.il/he/departments/guides/guide-1345",
       },
       { status: 503 }
@@ -263,13 +257,13 @@ export async function POST(req: NextRequest): Promise<Response> {
       const fontSize = spec.sz ?? 10;
 
       // For the tax year: cover existing printed year with a white rectangle.
-      // Rectangle is sized to fully erase the pre-printed "2024" (approx 36×12pt).
+      // Rectangle is sized to fully erase the pre-printed "2025" (approx 42×14pt).
       if (key === "taxYear") {
         page.drawRectangle({
-          x:      spec.x - 2,
-          y:      spec.y - 1,
+          x:      191,
+          y:      816,
           width:  42,
-          height: 13,
+          height: 14,
           color:  rgb(1, 1, 1),
           borderWidth: 0,
         });
