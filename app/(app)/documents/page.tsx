@@ -329,10 +329,10 @@ function DocumentsPageInner() {
         </>
       )}
 
-      {/* General upload zone */}
+      {/* General upload zone — exclude docs already shown in source-driven section */}
       <h2 className="text-base font-bold text-foreground">העלאת מסמכים נוספים</h2>
       <DocUploadZone
-        docs={filtered}
+        docs={filtered.filter((d) => !d.sourceIds?.length)}
         sessionUrls={sessionUrls}
         parseStatuses={parseStatuses}
         parseResults={parseResults}
