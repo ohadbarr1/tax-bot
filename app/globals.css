@@ -37,6 +37,28 @@
   --color-card: var(--card);
   --color-navy: #0F172A;
   --color-emerald-brand: #10B981;
+  /* Kesef Chazara palette */
+  --color-kc-bg: var(--kc-bg);
+  --color-kc-bg-soft: var(--kc-bg-soft);
+  --color-kc-card: var(--kc-card);
+  --color-kc-ink: var(--kc-ink);
+  --color-kc-ink-soft: var(--kc-ink-soft);
+  --color-kc-ink-dim: var(--kc-ink-dim);
+  --color-kc-ink-faint: var(--kc-ink-faint);
+  --color-kc-rule: var(--kc-rule);
+  --color-kc-rule-hi: var(--kc-rule-hi);
+  --color-kc-lime: var(--kc-lime);
+  --color-kc-lime-dark: var(--kc-lime-dark);
+  --color-kc-lime-soft: var(--kc-lime-soft);
+  --color-kc-grape: var(--kc-grape);
+  --color-kc-grape-soft: var(--kc-grape-soft);
+  --color-kc-coral: var(--kc-coral);
+  --color-kc-coral-soft: var(--kc-coral-soft);
+  --color-kc-peach: var(--kc-peach);
+  --color-kc-peach-soft: var(--kc-peach-soft);
+  --color-kc-sky: var(--kc-sky);
+  --color-kc-sky-soft: var(--kc-sky-soft);
+  --font-figtree: var(--font-figtree-raw), var(--font-heebo), system-ui, sans-serif;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -53,43 +75,65 @@
 }
 
 :root {
-  /* Mediterranean Trust palette */
-  --brand-900: #0B3B5C;
-  --brand-700: #0F5A8A;
-  --accent-500: #F59E0B;
-  --accent-100: #FEF3C7;
-  --success-500: #65A30D;
-  --danger-500: #DC2626;
-  --surface-0: #FAFAF9;
-  --ink-950: #0C0A09;
+  /* Kesef Chazara palette — hip, lime-forward, cream canvas */
+  --kc-bg: #FBF9F4;
+  --kc-bg-soft: #F3EFE5;
+  --kc-card: #FFFFFF;
+  --kc-ink: #1A1A1F;
+  --kc-ink-soft: #3A3A42;
+  --kc-ink-dim: #7A7A85;
+  --kc-ink-faint: #B8B8C2;
+  --kc-rule: #ECE7DC;
+  --kc-rule-hi: #DAD4C4;
+  --kc-lime: #C6FF4D;
+  --kc-lime-dark: #A6E022;
+  --kc-lime-soft: #EEFBCF;
+  --kc-grape: #5B3FFF;
+  --kc-grape-soft: #E8E2FF;
+  --kc-coral: #FF6B5B;
+  --kc-coral-soft: #FFE0DC;
+  --kc-peach: #FFAE5A;
+  --kc-peach-soft: #FFEAD2;
+  --kc-sky: #4DCFFF;
+  --kc-sky-soft: #D6F2FF;
 
-  --background: #FAFAF9;
-  --foreground: #0C0A09;
+  /* Remap semantic tokens to KC palette — existing Tailwind classes adopt new look */
+  --brand-900: #1A1A1F;
+  --brand-700: #3A3A42;
+  --accent-500: #A6E022;
+  --accent-100: #EEFBCF;
+  --success-500: #A6E022;
+  --danger-500: #FF6B5B;
+  --surface-0: #FBF9F4;
+  --ink-950: #1A1A1F;
+
+  --background: #FBF9F4;
+  --foreground: #1A1A1F;
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #1A1A1F;
   --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #0B3B5C;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #FEF3C7;
-  --accent-foreground: #0C0A09;
-  --destructive: #DC2626;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #0B3B5C;
-  --radius: 0.75rem;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #0F172A;
+  --popover-foreground: #1A1A1F;
+  --primary: #1A1A1F;
+  --primary-foreground: #C6FF4D;
+  --secondary: #F3EFE5;
+  --secondary-foreground: #1A1A1F;
+  --muted: #F3EFE5;
+  --muted-foreground: #7A7A85;
+  --accent: #EEFBCF;
+  --accent-foreground: #1A1A1F;
+  --destructive: #FF6B5B;
+  --border: #ECE7DC;
+  --input: #ECE7DC;
+  --ring: #1A1A1F;
+  --radius: 0.875rem;
+  --sidebar: #FBF9F4;
+  --sidebar-foreground: #1A1A1F;
+  --sidebar-primary: #1A1A1F;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #0F172A;
+  --sidebar-accent: #F3EFE5;
+  --sidebar-accent-foreground: #1A1A1F;
+  --sidebar-border: #ECE7DC;
+  --sidebar-ring: #1A1A1F;
 
   /* Shadow tokens */
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
@@ -160,4 +204,15 @@
   html {
     @apply font-sans;
   }
+  ::selection { background: var(--kc-lime); color: var(--kc-ink); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--kc-rule-hi); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--kc-ink-faint); }
 }
+
+@keyframes kc-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+.kc-rise { animation: kc-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

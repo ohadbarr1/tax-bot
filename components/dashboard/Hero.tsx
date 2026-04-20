@@ -1,21 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Sparkles, AlertCircle, Scissors, ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import type { TaxPayer, FinancialData } from "@/types";
 
-function formatILS(n: number) {
-  return n.toLocaleString("he-IL", {
-    style: "currency",
-    currency: "ILS",
-    maximumFractionDigits: 0,
-  });
+function formatILSNum(n: number) {
+  return Math.round(n).toLocaleString("he-IL");
 }
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0 },
-};
 
 interface HeroProps {
   financials: FinancialData;
@@ -28,143 +19,176 @@ interface HeroProps {
   onQuestionnaire: () => void;
 }
 
+function useAnimatedCount(target: number, durationMs = 1400) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / durationMs);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setCount(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs]);
+  return count;
+}
+
+function ProgressRing({ pct }: { pct: number }) {
+  const size = 180;
+  const stroke = 14;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setP(pct / 100), 200);
+    return () => clearTimeout(t);
+  }, [pct]);
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--kc-lime)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - p)}
+          style={{ transition: "stroke-dashoffset 1.4s cubic-bezier(0.2, 0.8, 0.2, 1)" }}
+        />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center">
+        <div>
+          <div
+            className="font-extrabold leading-none tracking-[-0.03em]"
+            style={{ fontFamily: "var(--font-figtree)", fontSize: 46 }}
+          >
+            {pct}
+            <span className="text-[22px]" style={{ color: "var(--kc-lime)" }}>
+              %
+            </span>
+          </div>
+          <div className="text-[11px] mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>
+            הושלם
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Hero({
   financials,
   taxpayer,
-  hasOverlap,
   completedActions,
   totalActions,
-  pendingActions,
   onUpload,
   onQuestionnaire,
 }: HeroProps) {
+  const count = useAnimatedCount(financials.estimatedRefund);
+  const pct = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+  const year = financials.taxYears[financials.taxYears.length - 1] ?? 2024;
+  const sourceCount = new Set(financials.insights.map((i) => i.pillar)).size;
+  const pending = totalActions - completedActions;
+
   return (
-    <motion.div variants={fadeUp}>
-      {/* Hero card */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand-900 text-white p-8 md:p-10 shadow-[var(--shadow-card)]">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-          {/* Refund amount */}
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-4 h-4 text-white/60" />
-              <span className="text-white/70 text-sm font-medium">
-                החזר מס משוער
-              </span>
-            </div>
-            <div className="font-numeric text-5xl md:text-6xl font-bold text-accent-500 tabular-nums tracking-tight">
-              {formatILS(financials.estimatedRefund)}
-            </div>
-            <p className="mt-1.5 text-white/60 text-xs">
-              לשנת המס {financials.taxYears[financials.taxYears.length - 1]} ·{" "}
-              {taxpayer.fullName.split(" - ")[1]}
-            </p>
+    <div
+      className="relative overflow-hidden rounded-[32px] px-8 md:px-11 py-10"
+      style={{ background: "var(--kc-ink)", color: "#fff" }}
+    >
+      {/* Decorative blobs */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          top: -60,
+          insetInlineEnd: -40,
+          width: 280,
+          height: 280,
+          background: `radial-gradient(circle, var(--kc-lime) 0%, transparent 70%)`,
+          opacity: 0.45,
+        }}
+      />
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          bottom: -100,
+          insetInlineStart: 40,
+          width: 320,
+          height: 320,
+          background: `radial-gradient(circle, var(--kc-grape) 0%, transparent 70%)`,
+          opacity: 0.3,
+        }}
+      />
 
-            {/* Breakdown chips */}
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {taxpayer.employers.length > 0 && (
-                <span className="rounded-full bg-white/10 text-white/80 text-xs px-3 py-1">
-                  מעסיק
-                </span>
-              )}
-              {financials.hasForeignBroker && (
-                <span className="rounded-full bg-white/10 text-white/80 text-xs px-3 py-1">
-                  שוק הון
-                </span>
-              )}
-              {taxpayer.personalDeductions.length > 0 && (
-                <span className="rounded-full bg-white/10 text-white/80 text-xs px-3 py-1">
-                  ניכויים
-                </span>
-              )}
-              {taxpayer.degrees.length > 0 && (
-                <span className="rounded-full bg-white/10 text-white/80 text-xs px-3 py-1">
-                  נקודות זיכוי
-                </span>
-              )}
-            </div>
-
-            {/* Overlap warning */}
-            {hasOverlap && (
-              <div className="mt-3 inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/30 text-amber-100 text-xs font-medium px-3 py-1.5 rounded-xl">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                חפיפת מעסיקים ללא תיאום מס — נדרשת בדיקה
-              </div>
-            )}
-
-            {/* Severance warning */}
-            {taxpayer.lifeEvents?.pulledSeverancePay && (
-              <div className="mt-2 inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/30 text-amber-100 text-xs font-medium px-3 py-1.5 rounded-xl">
-                <Scissors className="w-3.5 h-3.5 flex-shrink-0" />
-                פיצויים חייבים — מומלץ פריסת מס (סעיף 8ג)
-              </div>
-            )}
+      <div className="relative grid grid-cols-1 md:grid-cols-[1fr_auto] gap-10 items-end">
+        <div>
+          <div
+            className="inline-flex items-center gap-2 text-[12px] font-semibold rounded-full px-3 py-1.5"
+            style={{ background: "rgba(198,255,77,0.15)", color: "var(--kc-lime)" }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--kc-lime)" }} />
+            החזר המס המשוער שלך · {year}
           </div>
 
-          {/* KPI tiles */}
-          <div className="grid grid-cols-2 gap-2.5 min-w-[210px]">
-            {[
-              {
-                label: "שנות מס",
-                value: financials.taxYears.length,
-                sub: financials.taxYears.join(", "),
-              },
-              {
-                label: "מעסיקים",
-                value: taxpayer.employers.length,
-                sub: hasOverlap ? "חפיפה זוהתה" : "ללא חפיפה",
-                alert: hasOverlap,
-              },
-              {
-                label: "ניכויים",
-                value: taxpayer.personalDeductions.length,
-                sub: "סעיפים 45א, 46",
-              },
-              {
-                label: "השלמות",
-                value: `${completedActions}/${totalActions}`,
-                sub: `${pendingActions} ממתינות`,
-                alert: pendingActions > 0,
-              },
-            ].map((kpi) => (
-              <div
-                key={kpi.label}
-                className={`rounded-xl p-3 border ${
-                  kpi.alert
-                    ? "bg-amber-400/15 border-amber-400/25"
-                    : "bg-white/10 border-white/10"
-                }`}
-              >
-                <p className="text-[10px] text-white/50 leading-tight">{kpi.label}</p>
-                <p
-                  className={`text-xl font-bold leading-tight ${
-                    kpi.alert ? "text-amber-300" : "text-white"
-                  }`}
-                >
-                  {kpi.value}
-                </p>
-                <p className="text-[10px] text-white/40">{kpi.sub}</p>
-              </div>
-            ))}
+          <div
+            className="mt-4 flex items-baseline gap-1.5 font-extrabold tracking-[-0.04em] leading-[0.95] tabular-nums"
+            style={{ fontFamily: "var(--font-figtree)", fontSize: "clamp(64px, 10vw, 104px)" }}
+          >
+            <span className="font-bold" style={{ fontSize: "0.52em", color: "var(--kc-lime)" }}>
+              ₪
+            </span>
+            <span>{formatILSNum(count)}</span>
+          </div>
+
+          <div
+            className="mt-4 text-[15px] max-w-[520px] leading-[1.55]"
+            style={{ color: "rgba(255,255,255,0.75)" }}
+          >
+            {taxpayer.fullName?.split(" - ")[1] ? `היי ${taxpayer.fullName.split(" - ")[1]}, ` : ""}
+            זיהינו{" "}
+            <strong className="font-bold" style={{ color: "var(--kc-lime)" }}>
+              {sourceCount} מקורות להחזר
+            </strong>{" "}
+            בתיק שלך. עוד {pending} פעולות קטנות ואתה בהגשה.
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2.5 items-center">
+            <button
+              onClick={onQuestionnaire}
+              className="flex items-center gap-2 px-6 py-3.5 rounded-full font-bold text-[14.5px] transition-transform hover:scale-[1.03]"
+              style={{
+                background: "var(--kc-lime)",
+                color: "var(--kc-ink)",
+                fontFamily: "var(--font-figtree)",
+              }}
+            >
+              בוא נסיים את זה
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onUpload}
+              className="px-5 py-3.5 rounded-full font-semibold text-[14px] text-white"
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.15)",
+              }}
+            >
+              הצג טיוטת 135
+            </button>
           </div>
         </div>
 
-        {/* CTA row */}
-        <div className="mt-6 pt-5 border-t border-white/10 flex flex-wrap gap-2">
-          <button
-            onClick={onUpload}
-            className="flex items-center gap-2 bg-accent-500 hover:bg-amber-400 transition-colors text-ink-950 text-sm font-semibold px-5 py-2.5 rounded-xl"
-          >
-            המשך להעלאת מסמכים
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onQuestionnaire}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-xl"
-          >
-            ערוך שאלון
-          </button>
+        <div className="hidden md:block">
+          <ProgressRing pct={pct} />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

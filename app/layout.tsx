@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Heebo, Inter_Tight, Rubik } from "next/font/google";
+import { Heebo, Inter_Tight, Rubik, Figtree } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -22,6 +22,12 @@ const rubik = Rubik({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+const figtree = Figtree({
+  variable: "--font-figtree-raw",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
   title: "TaxBack IL — החזר מס חכם",
   description: "פלטפורמה לאוטומציה של החזרי מס בישראל",
@@ -36,7 +42,7 @@ export default function RootLayout({
     <html
       lang="he"
       dir="rtl"
-      className={`${heebo.variable} ${interTight.variable} ${rubik.variable} h-full antialiased`}
+      className={`${heebo.variable} ${interTight.variable} ${rubik.variable} ${figtree.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background">
