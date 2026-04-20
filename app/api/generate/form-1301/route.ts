@@ -138,7 +138,8 @@ const F: Record<string, FieldSpec> = {
   donationsP3:       { pg: 3, x: 144.8, y: 713.0, sz: 10, heb: false, bold: true  },
   taxCode042:        { pg: 3, x: 42.0,  y: 522.6, sz: 10, heb: false, bold: true  },
 
-  // Bank details (page 3)
+  // Bank details (page 3) — labels: 274 at (107,300), 273 at (187,298), 044 at (187,266)
+  // data_x = label_x - 77
   bankNumber:        { pg: 3, x: 30.0,  y: 302.9, sz: 10, heb: false, bold: true  },
   branchNumber:      { pg: 3, x: 110.2, y: 301.0, sz: 10, heb: false, bold: true  },
   accountNumber:     { pg: 3, x: 110.2, y: 269.1, sz: 10, heb: false, bold: true  },

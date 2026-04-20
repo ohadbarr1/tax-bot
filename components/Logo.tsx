@@ -7,10 +7,8 @@ export function LogoMark({
   size?: number;
   className?: string;
 }) {
-  const rx = Math.round(size * 0.25);
-  const fontSize = Math.round(size * 0.5625);
-  const cy = Math.round(size * 0.6875);
-
+  const rx = Math.round(size * 0.3);
+  const fontSize = Math.round(size * 0.55);
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -18,16 +16,18 @@ export function LogoMark({
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       className={className}
-      aria-label="TaxBack IL logo mark"
+      aria-label="כסף חזרה"
     >
-      <rect width={size} height={size} rx={rx} fill="#0B3B5C" />
+      <rect width={size} height={size} rx={rx} fill="#1A1A1F" />
       <text
-        x={size / 2}
-        y={cy}
+        x="50%"
+        y="50%"
         textAnchor="middle"
-        fill="white"
+        dominantBaseline="central"
+        fill="#C6FF4D"
         fontSize={fontSize}
-        fontFamily="Arial, sans-serif"
+        fontWeight={800}
+        fontFamily="Figtree, system-ui, sans-serif"
       >
         &#x20AA;
       </text>
@@ -37,11 +37,16 @@ export function LogoMark({
 
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
-      <LogoMark size={32} />
-      <span className="text-sm font-semibold tracking-tight text-foreground">
-        TaxBack{" "}
-        <span style={{ color: "#F59E0B" }}>IL</span>
+    <span
+      className={`inline-flex items-center gap-2.5 ${className ?? ""}`}
+      style={{ fontFamily: "var(--font-figtree)" }}
+    >
+      <LogoMark size={36} />
+      <span
+        className="font-extrabold leading-none tracking-[-0.02em]"
+        style={{ color: "var(--kc-ink)", fontSize: 19 }}
+      >
+        כסף<span style={{ color: "var(--kc-lime-dark)" }}>חזרה</span>
       </span>
     </span>
   );

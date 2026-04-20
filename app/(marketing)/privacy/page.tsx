@@ -7,7 +7,7 @@ export default function PrivacyPage() {
       <p className="text-muted-foreground text-sm">עודכן לאחרונה: ינואר 2025</p>
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">איסוף מידע</h2>
-        <p className="text-muted-foreground leading-relaxed text-sm">TaxBack IL אוספת מידע אישי ופיננסי אך ורק לצורך חישוב החזר המס שלכם. המידע מוצפן בצד הלקוח ואינו נשלח לשרתים חיצוניים ללא הסכמתכם.</p>
+        <p className="text-muted-foreground leading-relaxed text-sm">כסף חזרה אוספת מידע אישי ופיננסי אך ורק לצורך חישוב החזר המס שלכם. המידע מוצפן בצד הלקוח ואינו נשלח לשרתים חיצוניים ללא הסכמתכם.</p>
       </section>
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">שמירת מידע</h2>

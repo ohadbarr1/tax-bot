@@ -16,7 +16,7 @@ export function MarketingNavbar() {
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 flex items-center justify-between">
         {/* RTL: Logo on RIGHT */}
         <div className="flex items-center gap-6 order-last">
-          <Link href="/" aria-label="TaxBack IL">
+          <Link href="/" aria-label="כסף חזרה">
             <Logo />
           </Link>
         </div>

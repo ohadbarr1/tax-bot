@@ -3,7 +3,7 @@ export const metadata: Metadata = { title: "איך זה עובד" };
 export default function HowItWorksPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-16 space-y-12">
-      <h1 className="text-3xl font-bold text-foreground text-center">איך TaxBack IL עובד?</h1>
+      <h1 className="text-3xl font-bold text-foreground text-center">איך כסף חזרה עובד?</h1>
       {[
         { step: "01", title: "ענו על השאלון", body: "שאלון חכם של 3 דקות לאיסוף פרטי ההכנסה, המשפחה, הניכויים ונקודות הזיכוי." },
         { step: "02", title: "העלו מסמכים", body: "העלו טופס 106 מהמעסיק, Activity Statement מהברוקר — ה-OCR שלנו מחלץ את הנתונים אוטומטית." },

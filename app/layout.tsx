@@ -29,8 +29,8 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "TaxBack IL — החזר מס חכם",
-  description: "פלטפורמה לאוטומציה של החזרי מס בישראל",
+  title: "כסף חזרה — החזר המס שלך, באפליקציה",
+  description: "החזר מס לשכירים בישראל — בלי רואה־חשבון, בלי טפסים, ב־12 דקות.",
 };
 
 export default function RootLayout({

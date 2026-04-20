@@ -7,7 +7,7 @@ export default function TermsPage() {
       <p className="text-muted-foreground text-sm">עודכן לאחרונה: ינואר 2025</p>
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">שימוש בשירות</h2>
-        <p className="text-muted-foreground leading-relaxed text-sm">TaxBack IL הינה כלי עזר לחישוב מס ואינה מהווה ייעוץ מס מקצועי. יש להתייעץ עם רואה חשבון מוסמך לפני הגשת כל מסמך לרשות המיסים.</p>
+        <p className="text-muted-foreground leading-relaxed text-sm">כסף חזרה הינה כלי עזר לחישוב מס ואינה מהווה ייעוץ מס מקצועי. יש להתייעץ עם רואה חשבון מוסמך לפני הגשת כל מסמך לרשות המיסים.</p>
       </section>
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">אחריות</h2>

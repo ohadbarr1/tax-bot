@@ -12,7 +12,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <MarketingNavbar />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
-        <p>© 2025 TaxBack IL · <a href="/privacy" className="hover:text-foreground">פרטיות</a> · <a href="/terms" className="hover:text-foreground">תנאי שימוש</a></p>
+        <p>© 2025 כסף חזרה · <a href="/privacy" className="hover:text-foreground">פרטיות</a> · <a href="/terms" className="hover:text-foreground">תנאי שימוש</a></p>
       </footer>
     </div>
   );
