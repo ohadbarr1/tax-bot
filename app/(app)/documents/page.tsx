@@ -3,6 +3,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { FileText } from "lucide-react";
 import { DocUploadZone, TYPE_LABELS } from "@/components/documents/DocUploadZone";
 import { SourceDrivenDocCards } from "@/components/documents/SourceDrivenDocCards";
+import { VaultGroupedView } from "@/components/documents/VaultGroupedView";
+import { useRouter } from "next/navigation";
 import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZone";
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
@@ -30,7 +32,9 @@ export default function DocumentsPage() {
 }
 
 function DocumentsPageInner() {
-  const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, hydrated } = useApp();
+  const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, linkDocumentToProcess, hydrated } = useApp();
+  const router = useRouter();
+  const [viewMode, setViewMode] = useState<"grouped" | "flat">("grouped");
 
   // Session-only blob URLs — never persisted (blob URLs are tab-lifetime only).
   const [sessionUrls, setSessionUrls] = useState<Map<string, string>>(new Map());
@@ -123,6 +127,7 @@ function DocumentsPageInner() {
       file,
       docType === "form106" ? "form-106" : "ibkr",
       file.name,
+      state.currentDraftId,
     );
 
     try {
@@ -326,18 +331,75 @@ function DocumentsPageInner() {
         </>
       )}
 
-      {/* General upload zone — exclude docs already shown in source-driven section */}
-      <h2 className="text-base font-bold text-foreground">העלאת מסמכים נוספים</h2>
-      <DocUploadZone
-        docs={filtered.filter((d) => !d.sourceIds?.length)}
-        sessionUrls={sessionUrls}
-        parseStatuses={parseStatuses}
-        parseResults={parseResults}
-        onAdd={handleAdd}
-        onRemove={handleRemove}
-        onTypeChange={handleTypeChange}
-        onReparse={handleReparse}
-      />
+      {/* Vault view toggle + body */}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+        <h2 className="text-base font-bold text-foreground" style={{ flex: 1 }}>כל המסמכים</h2>
+        <div
+          role="tablist"
+          style={{
+            display: "inline-flex",
+            background: "var(--kc-bg-soft, #f1f1ee)",
+            borderRadius: 99,
+            padding: 3,
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          {(["grouped", "flat"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setViewMode(m)}
+              style={{
+                padding: "5px 12px",
+                borderRadius: 99,
+                border: 0,
+                cursor: "pointer",
+                background: viewMode === m ? "var(--kc-card, #fff)" : "transparent",
+                color: "var(--kc-ink)",
+                boxShadow: viewMode === m ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
+            >
+              {m === "grouped" ? "לפי תהליך" : "רשימה"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {viewMode === "grouped" ? (
+        <VaultGroupedView
+          docs={docs}
+          drafts={state.drafts ?? {}}
+          currentDraftId={state.currentDraftId}
+          onRemove={handleRemove}
+          onOpenProcess={(d) => {
+            const step = d.processContext?.step;
+            if (step === "income" || step === "deductions" || step === "capital-gains") {
+              router.push("/questionnaire");
+            } else if (step === "filing") {
+              router.push("/filing");
+            } else {
+              router.push("/documents");
+            }
+          }}
+          onLink={(d) => {
+            linkDocumentToProcess(d.id, {
+              draftId: state.currentDraftId,
+              processContext: { step: "other", sourceLabel: d.name },
+            });
+          }}
+        />
+      ) : (
+        <DocUploadZone
+          docs={filtered.filter((d) => !d.sourceIds?.length)}
+          sessionUrls={sessionUrls}
+          parseStatuses={parseStatuses}
+          parseResults={parseResults}
+          onAdd={handleAdd}
+          onRemove={handleRemove}
+          onTypeChange={handleTypeChange}
+          onReparse={handleReparse}
+        />
+      )}
 
       {/* Empty state */}
       {docs.length === 0 && (

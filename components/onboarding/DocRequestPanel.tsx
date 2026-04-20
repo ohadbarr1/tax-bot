@@ -73,7 +73,7 @@ interface Props {
 }
 
 export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
-  const { addDocument, updateDocumentStatus, applyMiningResult, updateTaxpayerAndRecalculate } = useApp();
+  const { state, addDocument, updateDocumentStatus, applyMiningResult, updateTaxpayerAndRecalculate } = useApp();
   const docs = docsForSources(sources);
   const [cards, setCards] = useState<Record<string, CardState>>({});
 
@@ -98,7 +98,7 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
       // Persist the raw blob to Cloud Storage in parallel with parsing so it
       // survives a page reload / re-login. Returns null when Firebase is
       // unconfigured — callers treat that as "in-memory only", no failure.
-      const uploadPromise = uploadUserDocument(file, storageKindForType(req.type), file.name);
+      const uploadPromise = uploadUserDocument(file, storageKindForType(req.type), file.name, state.currentDraftId);
 
       try {
         // IBKR activity statements are CSV, not vision-capable — route them

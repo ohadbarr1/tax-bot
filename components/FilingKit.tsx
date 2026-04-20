@@ -70,16 +70,19 @@ export function FilingKit() {
   type DownloadState = "idle" | "generating" | "ready" | "error" | "template_missing";
   const [dlState, setDlState]   = useState<DownloadState>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [calibrate, setCalibrate] = useState(false);
 
   const apiEndpoint = formType === "1301" ? "/api/generate/form-1301" : "/api/generate/form-135";
-  const downloadFilename = formType === "1301" ? "form_1301_ready.pdf" : "form_135_ready.pdf";
+  const downloadFilename = formType === "1301"
+    ? (calibrate ? "form_1301_calibration.pdf" : "form_1301_ready.pdf")
+    : (calibrate ? "form_135_calibration.pdf"  : "form_135_ready.pdf");
 
   const handleDownload = async () => {
     setDlState("generating");
     setErrorMsg("");
 
     try {
-      const payload: Form135Payload = { taxpayer, financials };
+      const payload: Form135Payload & { calibrate?: boolean } = { taxpayer, financials, calibrate };
 
       const res = await fetch(apiEndpoint, {
         method:  "POST",
@@ -290,6 +293,27 @@ export function FilingKit() {
                 </motion.div>
               ) : (
                 <motion.div key="btn">
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: 12,
+                      color: "#475569",
+                      marginBottom: 10,
+                      cursor: "pointer",
+                      userSelect: "none" as const,
+                    }}
+                    title="הוסף שכבת אימות עם מיקומי שדות בצבע אדום — לבדיקה ויזואלית לפני הורדת הטופס הסופי"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={calibrate}
+                      onChange={(e) => setCalibrate(e.target.checked)}
+                      style={{ width: 14, height: 14 }}
+                    />
+                    תצוגת אימות מיקומי שדות (calibration preview)
+                  </label>
                   <button
                     onClick={handleDownload}
                     disabled={dlState === "generating"}

@@ -29,12 +29,12 @@
  * red label (e.g. "→grossSalaryMain") so you can visually verify positions.
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import fs from "fs";
 import path from "path";
-import { buildForm1301Fields, hebrewForPdf } from "@/lib/pdfUtils";
+import { buildForm1301Fields, hebrewForPdf, assertForm1301Consistency } from "@/lib/pdfUtils";
 import { isValidTZ } from "@/lib/validateTZ";
 import type { Form135Payload } from "@/types";
 
@@ -185,7 +185,15 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     const pageCount = pdfDoc.getPageCount();
     if (pageCount < 4) {
-      console.warn(`[form-1301] Template has ${pageCount} pages (expected 4)`);
+      // Hard fail — silent clamp at the draw step previously migrated page-3
+      // data onto page 2 with no warning, producing unreadable 1301 output.
+      return NextResponse.json(
+        {
+          error: "TEMPLATE_INVALID",
+          detail: `Form 1301 template has ${pageCount} pages (expected 4). Replace the template at public/forms/1301-2024.pdf with the full 4-page form.`,
+        },
+        { status: 500 },
+      );
     }
 
     // ── 3. Embed fonts ────────────────────────────────────────────────────────
@@ -205,6 +213,17 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     // ── 4. Build flat field value map ────────────────────────────────────────
     const vals = buildForm1301Fields(taxpayer, financials);
+
+    const issues = assertForm1301Consistency(vals);
+    if (issues.length > 0) {
+      console.warn("[form-1301] page 1/3 deduction mismatch:", issues);
+      if (calibrate) {
+        return NextResponse.json(
+          { error: "DEDUCTION_MISMATCH", issues },
+          { status: 422 },
+        );
+      }
+    }
 
     // ── 5. Build draw-list ───────────────────────────────────────────────────
     // Maps field keys to their text values and coordinate specs.
@@ -266,7 +285,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     for (const { key, text, spec } of draws) {
       if (!text || text === "0") continue; // skip empty / zero values
 
-      const pageIdx = Math.min(spec.pg, pageCount - 1);
+      // Template length is guaranteed ≥ 4 by the check above; use page index
+      // directly so data on page 3 never silently migrates to page 2.
+      const pageIdx = spec.pg;
       const page    = pdfDoc.getPage(pageIdx);
       const font    = spec.heb ? hebrewFont : (spec.bold !== false ? latinBoldFont : latinRegularFont);
       const fontSize = spec.sz ?? 10;
@@ -307,6 +328,53 @@ export async function POST(req: NextRequest): Promise<Response> {
           });
         } catch { /* non-critical */ }
       }
+    }
+
+    // ── 6b. Multi-employer overflow ─────────────────────────────────────────
+    // Page 1 encodes main + aggregated 2nd-employer columns. With 3+ employers
+    // the aggregation hides per-employer breakdown — append a supplementary
+    // sheet that lists each secondary employer individually.
+    const secondaryEmployers = (taxpayer.employers ?? []).filter((e) => !e.isMainEmployer);
+    if (secondaryEmployers.length >= 2) {
+      const overflow = pdfDoc.addPage([595.275, 841.89]);
+      const rows = secondaryEmployers.map((e, i) => ({
+        idx: i + 2,
+        name: e.name ?? "",
+        months: e.monthsWorked ?? 0,
+        gross: e.grossSalary ?? 0,
+        tax: e.taxWithheld ?? 0,
+        pension: e.pensionDeduction ?? 0,
+        pensionFund: e.pensionFundName ?? "",
+      }));
+      const header = hebrewForPdf("פירוט מעסיקים נוספים — נספח לטופס 1301");
+      overflow.drawText(header, { x: 60, y: 800, font: hebrewFont, size: 14, color: rgb(0, 0, 0) });
+      overflow.drawText(
+        `Tax year: ${vals.taxYear}   |   ID: ${vals["012"] || "-"}`,
+        { x: 60, y: 780, font: latinRegularFont, size: 10, color: rgb(0, 0, 0) },
+      );
+      const colHeaders = ["#", "Name", "Months", "Gross (ILS)", "Tax (ILS)", "Pension (ILS)", "Pension Fund"];
+      const colX = [60, 90, 260, 310, 380, 450, 520];
+      colHeaders.forEach((h, ci) => {
+        overflow.drawText(h, { x: colX[ci], y: 745, font: latinBoldFont, size: 9, color: rgb(0, 0, 0) });
+      });
+      rows.forEach((r, ri) => {
+        const y = 725 - ri * 16;
+        overflow.drawText(String(r.idx),            { x: colX[0], y, font: latinBoldFont, size: 9 });
+        overflow.drawText(hebrewForPdf(r.name),     { x: colX[1], y, font: hebrewFont,    size: 9 });
+        overflow.drawText(String(r.months),         { x: colX[2], y, font: latinBoldFont, size: 9 });
+        overflow.drawText(r.gross.toLocaleString(), { x: colX[3], y, font: latinBoldFont, size: 9 });
+        overflow.drawText(r.tax.toLocaleString(),   { x: colX[4], y, font: latinBoldFont, size: 9 });
+        overflow.drawText(r.pension.toLocaleString(), { x: colX[5], y, font: latinBoldFont, size: 9 });
+        overflow.drawText(hebrewForPdf(r.pensionFund), { x: colX[6], y, font: hebrewFont, size: 9 });
+      });
+      const totalGross = rows.reduce((s, r) => s + r.gross, 0);
+      const totalTax = rows.reduce((s, r) => s + r.tax, 0);
+      const totalPension = rows.reduce((s, r) => s + r.pension, 0);
+      const totalsY = 725 - rows.length * 16 - 10;
+      overflow.drawText("Totals:",                      { x: colX[2], y: totalsY, font: latinBoldFont, size: 9 });
+      overflow.drawText(totalGross.toLocaleString(),    { x: colX[3], y: totalsY, font: latinBoldFont, size: 9 });
+      overflow.drawText(totalTax.toLocaleString(),      { x: colX[4], y: totalsY, font: latinBoldFont, size: 9 });
+      overflow.drawText(totalPension.toLocaleString(),  { x: colX[5], y: totalsY, font: latinBoldFont, size: 9 });
     }
 
     // ── 7. Serialize and return ────────────────────────────────────────────

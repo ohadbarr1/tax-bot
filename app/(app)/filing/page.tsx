@@ -273,7 +273,7 @@ export default function FilingPage() {
           </div>
 
           <Link
-            href="/draft"
+            href="/documents"
             style={{
               fontSize: 13,
               color: "var(--kc-ink-dim)",

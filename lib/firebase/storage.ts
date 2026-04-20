@@ -2,6 +2,9 @@
  * firebase/storage.ts — Cloud Storage helpers
  *
  * All uploaded tax documents live under:
+ *   gs://<bucket>/users/{uid}/drafts/{draftId}/documents/{docKind}/{timestamp}_{filename}
+ *
+ * When draftId is omitted (legacy callers), the path falls back to:
  *   gs://<bucket>/users/{uid}/documents/{docKind}/{timestamp}_{filename}
  *
  * `uploadUserDocument` is the single entry point — it grabs the current uid
@@ -38,7 +41,8 @@ export interface UploadResult {
 export async function uploadUserDocument(
   file: File | Blob,
   kind: DocKind,
-  originalName?: string
+  originalName?: string,
+  draftId?: string,
 ): Promise<UploadResult | null> {
   if (typeof window === "undefined") return null;
   if (!isFirebaseConfigured()) return null;
@@ -49,7 +53,8 @@ export async function uploadUserDocument(
   if (!storage || !uid) return null;
 
   const safeName = sanitizeFilename(originalName ?? (file instanceof File ? file.name : "upload"));
-  const path     = `users/${uid}/documents/${kind}/${Date.now()}_${safeName}`;
+  const draftSegment = draftId ? `drafts/${sanitizeSegment(draftId)}/` : "";
+  const path     = `users/${uid}/${draftSegment}documents/${kind}/${Date.now()}_${safeName}`;
   const fileRef  = ref(storage, path);
 
   try {
@@ -91,4 +96,9 @@ function sanitizeFilename(name: string): string {
     .replace(/[\/\\]/g, "_")
     .replace(/[\x00-\x1f]/g, "")
     .slice(0, 200);
+}
+
+/** Safe single-segment id for a storage path (draftId etc.). */
+function sanitizeSegment(s: string): string {
+  return s.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 64);
 }

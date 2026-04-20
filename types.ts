@@ -32,6 +32,10 @@ export interface Employer {
   taxWithheld?: number;
   /** Field 045 — Pension deduction */
   pensionDeduction?: number;
+  /** Pension fund name (for Form 135/1301 §2). */
+  pensionFundName?: string;
+  /** Pension fund ID / registered number. */
+  pensionFundId?: string;
 }
 
 /**
@@ -64,6 +68,14 @@ export interface PersonalDeduction {
     | 'alimony_sec9a';
   amount: number; // ILS
   providerName: string;
+  /**
+   * Pension classification per Israeli tax code §9A (מענק / קצבה / אחר).
+   * Applies when type is pension_sec47 / provident_fund_sec47 / self_employed_pension_sec47.
+   *  - "grant"   (מענק)   — lump-sum payout
+   *  - "monthly" (קצבה)   — recurring pension annuity
+   *  - "other"             — anything else (study fund rollovers, etc.)
+   */
+  pensionClassification?: "grant" | "monthly" | "other";
 }
 
 /** Significant life / employment events that trigger additional tax logic */
@@ -99,6 +111,27 @@ export interface CapitalGainsData {
   totalRealizedLoss: number;     // Field 166 — ILS
   foreignTaxWithheld: number;    // Field 055 — ILS
   dividends?: number;            // ILS-converted dividend income (taxed at 25%)
+  /** Prior-year carried-forward capital loss (ILS). Applied against current-year gains. */
+  carriedForwardLoss?: number;
+  /** ISO-3166-alpha-2 code of primary foreign source country (e.g. "US"). Used on Form 1301/1322. */
+  foreignSourceCountry?: string;
+}
+
+/** Self-employed / business income (Schedule C-equivalent).
+ *  Used for Form 1301 fields 201 (main) and 301 (secondary). All ILS. */
+export interface BusinessIncome {
+  /** Gross revenue from the main business activity. */
+  mainRevenue?: number;
+  /** Deductible expenses against main business activity. */
+  mainExpenses?: number;
+  /** Gross revenue from a secondary business activity, if any. */
+  secondaryRevenue?: number;
+  /** Deductible expenses against secondary business activity. */
+  secondaryExpenses?: number;
+  /** Short description of the main business activity (for attachment page). */
+  mainDescription?: string;
+  /** Short description of secondary business activity. */
+  secondaryDescription?: string;
 }
 
 /** The full payload sent to POST /api/generate/form-135 */
@@ -130,6 +163,8 @@ export interface TaxPayer {
   address?: Address;
   bank?: BankDetails;
   capitalGains?: CapitalGainsData;
+  /** Self-employed / business income (Form 1301 §3). */
+  businessIncome?: BusinessIncome;
   // ── P3: extended credit-point eligibility ────────────────────────────────
   /** Year of IDF discharge — eligible for 2.0 pts for 3 years post-discharge (male) / 1.75 (female) */
   dischargeYear?: number;
@@ -246,6 +281,40 @@ export interface VaultDocMeta {
   parsedPayload?: VaultDocParsedPayload;
   /** Last mining error (user-facing, Hebrew). */
   miningError?: string;
+  /**
+   * Draft this document belongs to. Added in Phase 2 vault redesign.
+   * Legacy docs (pre-Phase-2) may not have this set — migration backfills on load.
+   */
+  draftId?: string;
+  /** Denormalized tax year from draft, for fast filtering in vault UI. */
+  taxYear?: number;
+  /** Process / form context this doc was uploaded for. */
+  processContext?: DocProcessContext;
+  /** Optional form IDs this doc feeds (e.g. ["form135","form1301"]). */
+  relatedFormIds?: DocFormTarget[];
+}
+
+export type DocProcessStep =
+  | "onboarding"
+  | "income"
+  | "deductions"
+  | "capital-gains"
+  | "filing"
+  | "other";
+
+export type DocFormTarget =
+  | "form135"
+  | "form1301"
+  | "form161"
+  | "form1322"
+  | "form867"
+  | "form1214";
+
+export interface DocProcessContext {
+  step: DocProcessStep;
+  formTarget?: DocFormTarget;
+  /** User-visible label, e.g. "Employer #2 Form 106" or "IBKR 2024 activity". */
+  sourceLabel?: string;
 }
 
 // ─── Income Sources (new onboarding paradigm) ────────────────────────────────

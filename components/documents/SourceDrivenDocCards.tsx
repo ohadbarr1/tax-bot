@@ -198,7 +198,7 @@ export function SourceDrivenDocCards() {
       addDocument(meta);
       setUpload(req.type, { kind: "uploading", fileName: file.name });
 
-      const uploadPromise = uploadUserDocument(file, storageKindForType(req.type), file.name);
+      const uploadPromise = uploadUserDocument(file, storageKindForType(req.type), file.name, state.currentDraftId);
 
       try {
         if (req.type === "ibkr") {

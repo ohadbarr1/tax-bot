@@ -152,6 +152,7 @@ export function FileDropzone() {
         file,
         category === "IBKR" ? "ibkr" : "form-106",
         file.name,
+        state.currentDraftId,
       );
 
       try {

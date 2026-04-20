@@ -65,6 +65,10 @@ interface AppContextValue {
   removeDocument: (id: string) => void;
   updateDocumentType: (id: string, type: VaultDocType) => void;
   updateDocumentStatus: (id: string, status: VaultDocStatus, patch?: Partial<VaultDocMeta>) => void;
+  linkDocumentToProcess: (
+    id: string,
+    ctx: { draftId?: string; processContext?: import("@/types").DocProcessContext; relatedFormIds?: import("@/types").DocFormTarget[] },
+  ) => void;
   // ── Onboarding (new paradigm) ─────────────────────────────────────────────
   setIncomeSources: (sources: IncomeSourceId[]) => void;
   markSourcesSelected: () => void;
@@ -163,6 +167,19 @@ function migrateLegacyState(stored: unknown): AppState {
   if (!migrated.advisorHistory) migrated.advisorHistory = {};
   if (!migrated.documents) migrated.documents = [];
   if (!migrated.provenance) migrated.provenance = {};
+
+  // Phase 2 vault migration: backfill draftId + taxYear on legacy documents.
+  // Pre-Phase-2 docs floated free — map them to the current draft so the vault
+  // redesign can group them. processContext stays undefined (shown as "unlinked").
+  if (migrated.documents.length > 0 && migrated.currentDraftId && migrated.drafts) {
+    const currentDraft = migrated.drafts[migrated.currentDraftId];
+    const currentTaxYear = currentDraft?.taxYear;
+    migrated.documents = migrated.documents.map((d) => ({
+      ...d,
+      draftId: d.draftId ?? migrated.currentDraftId,
+      taxYear: d.taxYear ?? currentTaxYear,
+    }));
+  }
   if (!migrated.onboarding) {
     migrated.onboarding = { sources: [], sourcesSelected: false, detailsConfirmed: false };
   }
@@ -428,10 +445,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Document vault ────────────────────────────────────────────────────────
 
   const addDocument = (meta: VaultDocMeta) =>
-    setState((s) => ({
-      ...s,
-      documents: [...(s.documents ?? []), meta],
-    }));
+    setState((s) => {
+      const draftId = meta.draftId ?? s.currentDraftId;
+      const taxYear = meta.taxYear ?? s.drafts?.[draftId]?.taxYear;
+      return {
+        ...s,
+        documents: [...(s.documents ?? []), { ...meta, draftId, taxYear }],
+      };
+    });
 
   const removeDocument = (id: string) =>
     setState((s) => {
@@ -445,6 +466,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         documents: (s.documents ?? []).filter((d) => d.id !== id),
       };
     });
+
+  /**
+   * Link a previously-uploaded (pre-Phase-2) document to a process context.
+   * Used by "Link to…" action on legacy docs in the vault.
+   */
+  const linkDocumentToProcess = (
+    id: string,
+    ctx: { draftId?: string; processContext?: import("@/types").DocProcessContext; relatedFormIds?: import("@/types").DocFormTarget[] },
+  ) =>
+    setState((s) => ({
+      ...s,
+      documents: (s.documents ?? []).map((d) => {
+        if (d.id !== id) return d;
+        const draftId = ctx.draftId ?? d.draftId ?? s.currentDraftId;
+        const taxYear = s.drafts?.[draftId]?.taxYear ?? d.taxYear;
+        return {
+          ...d,
+          draftId,
+          taxYear,
+          processContext: ctx.processContext ?? d.processContext,
+          relatedFormIds: ctx.relatedFormIds ?? d.relatedFormIds,
+        };
+      }),
+    }));
 
   const updateDocumentType = (id: string, type: VaultDocType) =>
     setState((s) => ({
@@ -660,6 +705,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         removeDocument,
         updateDocumentType,
         updateDocumentStatus,
+        linkDocumentToProcess,
         setIncomeSources,
         markSourcesSelected,
         markDetailsConfirmed,

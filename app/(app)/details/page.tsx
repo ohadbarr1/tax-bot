@@ -148,7 +148,7 @@ function DetailsViewInner() {
           </div>
         </div>
         <Link
-          href="/onboarding"
+          href="/questionnaire"
           style={{
             position: "relative",
             background: "var(--kc-lime)",

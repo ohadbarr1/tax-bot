@@ -100,6 +100,14 @@ export interface Form135Fields {
   // §6 Summary
   estimatedRefund: string;
   taxYear:         string;
+
+  // §7 Extended (Phase 3 — currently not rendered to PDF; emitted so callers can
+  // validate / cross-check and so future overlay positions can pull them.)
+  pensionFundName: string;
+  pensionFundId: string;
+  carriedForwardLoss: string;
+  foreignSourceCountry: string;
+  spouseGrossSalary: string;
 }
 
 // ─── 3. Form-1301 Field Value Extractor ──────────────────────────────────────
@@ -192,9 +200,21 @@ export function buildForm1301Fields(
     "258_main": formatIlsForPdf(mainPension || undefined),
     "272":      formatIlsForPdf(taxpayer.lifeEvents?.taxableSeverancePay),
 
-    // Business income (not yet modeled in TaxPayer — placeholder)
-    "201": "0",
-    "301": "0",
+    // Business income (net = revenue − expenses, floored at 0)
+    "201": formatIlsForPdf(
+      Math.max(
+        0,
+        (taxpayer.businessIncome?.mainRevenue ?? 0) -
+          (taxpayer.businessIncome?.mainExpenses ?? 0),
+      ) || undefined,
+    ),
+    "301": formatIlsForPdf(
+      Math.max(
+        0,
+        (taxpayer.businessIncome?.secondaryRevenue ?? 0) -
+          (taxpayer.businessIncome?.secondaryExpenses ?? 0),
+      ) || undefined,
+    ),
 
     // Capital gains — expanded
     "060": formatIlsForPdf(cg?.totalRealizedProfit),
@@ -221,6 +241,24 @@ export function buildForm1301Fields(
     "273": taxpayer.bank?.branch   ?? "",
     "044": taxpayer.bank?.account  ?? "",
   };
+}
+
+/**
+ * Cross-check that Form 1301 page-3 deduction totals match page-1 sums.
+ * ITA scans both pages; a mismatch is rejected at intake. Returns a list of
+ * mismatches (empty when OK) so callers can fail loud in calibration mode.
+ */
+export function assertForm1301Consistency(
+  fields: Form1301Fields,
+): { field: string; p1: string; p3: string }[] {
+  const issues: { field: string; p1: string; p3: string }[] = [];
+  if (fields["126"] !== fields["036_p3"]) {
+    issues.push({ field: "life_insurance", p1: fields["126"], p3: fields["036_p3"] });
+  }
+  if (fields["078"] !== fields["037_p3"]) {
+    issues.push({ field: "donations", p1: fields["078"], p3: fields["037_p3"] });
+  }
+  return issues;
 }
 
 export function buildForm135Fields(
@@ -294,5 +332,56 @@ export function buildForm135Fields(
     // Summary
     estimatedRefund: formatIlsForPdf(financials.estimatedRefund),
     taxYear:         String(financials.taxYears?.[0] ?? new Date().getFullYear() - 1),
+
+    // Extended (Phase 3)
+    pensionFundName: taxpayer.employers?.find((e) => e.isMainEmployer)?.pensionFundName ?? "",
+    pensionFundId:   taxpayer.employers?.find((e) => e.isMainEmployer)?.pensionFundId ?? "",
+    carriedForwardLoss: formatIlsForPdf(cg?.carriedForwardLoss),
+    foreignSourceCountry: cg?.foreignSourceCountry ?? "",
+    spouseGrossSalary: taxpayer.maritalStatus === "married" && taxpayer.spouseHasIncome
+      ? formatIlsForPdf((taxpayer as unknown as { spouseGrossSalary?: number }).spouseGrossSalary)
+      : "",
   };
+}
+
+/**
+ * Phase 3 — bbox collision detection for calibration-mode PDF overlays.
+ *
+ * pdf-lib draws text at arbitrary (x,y) without overlap detection. When a
+ * caller knows the approximate text width (via `font.widthOfTextAtSize`) and
+ * height, this helper flags any pair of fields whose bounding boxes overlap.
+ *
+ * Callers pass an array of {id, page, x, y, width, height}. Returns the list
+ * of overlapping pairs — an empty array means the layout is clean.
+ */
+export interface FieldBBox {
+  id: string;
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface FieldOverlap {
+  a: string;
+  b: string;
+  page: number;
+}
+
+export function detectFieldCollisions(fields: FieldBBox[]): FieldOverlap[] {
+  const overlaps: FieldOverlap[] = [];
+  for (let i = 0; i < fields.length; i++) {
+    const a = fields[i];
+    for (let j = i + 1; j < fields.length; j++) {
+      const b = fields[j];
+      if (a.page !== b.page) continue;
+      if (a.x + a.width  <= b.x) continue;
+      if (b.x + b.width  <= a.x) continue;
+      if (a.y + a.height <= b.y) continue;
+      if (b.y + b.height <= a.y) continue;
+      overlaps.push({ a: a.id, b: b.id, page: a.page });
+    }
+  }
+  return overlaps;
 }
