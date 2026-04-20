@@ -60,7 +60,7 @@ export default function FilingPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 1fr)",
           gap: 20,
         }}
       >

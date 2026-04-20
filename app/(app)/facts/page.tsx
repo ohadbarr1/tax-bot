@@ -52,7 +52,7 @@ export default function FactsPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
         {stats.map((s) => (
           <div
             key={s.label}
@@ -153,7 +153,7 @@ export default function FactsPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
+      <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <div style={{ background: "var(--kc-card)", borderRadius: 24, padding: 24, border: "1px solid var(--kc-rule)" }}>
           <div
             style={{

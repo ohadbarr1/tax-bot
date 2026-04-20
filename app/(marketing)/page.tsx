@@ -155,7 +155,7 @@ function LandingHero() {
         <h1
           style={{
             fontFamily: KC.display,
-            fontSize: "clamp(56px, 10vw, 132px)",
+            fontSize: 132,
             lineHeight: 0.92,
             letterSpacing: "-0.055em",
             fontWeight: 800,
@@ -186,8 +186,8 @@ function LandingHero() {
           style={{
             marginTop: 32,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: 40,
+            gridTemplateColumns: "1.1fr 1fr",
+            gap: 60,
             alignItems: "end",
           }}
         >
@@ -270,7 +270,7 @@ function LandingHero() {
           style={{
             marginTop: 72,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 0,
             background: KC.ink,
             borderRadius: 24,
@@ -401,7 +401,7 @@ function LandingHow() {
             <h2
               style={{
                 fontFamily: KC.display,
-                fontSize: "clamp(40px, 6vw, 72px)",
+                fontSize: 72,
                 lineHeight: 0.95,
                 letterSpacing: "-0.04em",
                 fontWeight: 800,
@@ -432,7 +432,7 @@ function LandingHow() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(3, 1fr)",
             gap: 18,
           }}
         >
@@ -525,7 +525,7 @@ function LandingRefundCalculator() {
           borderRadius: 32,
           padding: 56,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gridTemplateColumns: "1fr 1.1fr",
           gap: 60,
           position: "relative",
           overflow: "hidden",
@@ -559,7 +559,7 @@ function LandingRefundCalculator() {
           <h2
             style={{
               fontFamily: KC.display,
-              fontSize: "clamp(36px, 5vw, 54px)",
+              fontSize: 54,
               lineHeight: 0.98,
               letterSpacing: "-0.035em",
               fontWeight: 800,
@@ -642,7 +642,7 @@ function LandingRefundCalculator() {
           <div
             style={{
               fontFamily: KC.display,
-              fontSize: "clamp(72px, 12vw, 128px)",
+              fontSize: 128,
               lineHeight: 0.92,
               letterSpacing: "-0.045em",
               fontWeight: 800,
@@ -776,7 +776,7 @@ function LandingSocialProof() {
           <h2
             style={{
               fontFamily: KC.display,
-              fontSize: "clamp(36px, 5.5vw, 64px)",
+              fontSize: 64,
               lineHeight: 0.95,
               letterSpacing: "-0.035em",
               fontWeight: 800,
@@ -814,7 +814,7 @@ function LandingSocialProof() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 16,
           }}
         >
@@ -871,12 +871,12 @@ function LandingFAQ() {
   return (
     <section id="faq" style={{ padding: "100px 40px" }}>
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 80, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 80, alignItems: "start" }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: KC.inkDim, letterSpacing: "0.08em", marginBottom: 12 }}>
               ← שאלות נפוצות
             </div>
-            <h2 style={{ fontFamily: KC.display, fontSize: "clamp(36px, 4.5vw, 52px)", lineHeight: 0.95, letterSpacing: "-0.035em", fontWeight: 800, margin: 0 }}>
+            <h2 style={{ fontFamily: KC.display, fontSize: 52, lineHeight: 0.95, letterSpacing: "-0.035em", fontWeight: 800, margin: 0 }}>
               שאלות. תשובות.
             </h2>
             <p style={{ marginTop: 18, fontSize: 15, color: KC.inkSoft, lineHeight: 1.6 }}>
@@ -956,7 +956,7 @@ function LandingFooterCTA() {
           <div
             style={{
               fontFamily: KC.display,
-              fontSize: "clamp(48px, 8vw, 88px)",
+              fontSize: 88,
               lineHeight: 0.95,
               letterSpacing: "-0.04em",
               fontWeight: 800,
@@ -1008,11 +1008,11 @@ function LandingFooter() {
           maxWidth: 1280,
           margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gridTemplateColumns: "2fr 1fr 1fr 1fr",
           gap: 60,
         }}
       >
-        <div style={{ gridColumn: "span 2", minWidth: 260 }}>
+        <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
             <div
               style={{
