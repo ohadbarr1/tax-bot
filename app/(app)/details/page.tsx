@@ -4,24 +4,6 @@ import { Shield } from "lucide-react";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { useApp } from "@/lib/appContext";
 
-function Chip({ label, color }: { label: string; color: string }) {
-  return (
-    <span
-      style={{
-        fontSize: 11.5,
-        fontWeight: 600,
-        padding: "4px 10px",
-        borderRadius: 99,
-        background: "rgba(255,255,255,0.12)",
-        color,
-        border: `1px solid ${color}33`,
-      }}
-    >
-      ✓ {label}
-    </span>
-  );
-}
-
 export default function DetailsPage() {
   return (
     <AuthGate>
@@ -33,13 +15,13 @@ export default function DetailsPage() {
 function DetailsViewInner() {
   const { state } = useApp();
   const t = state.taxpayer;
-  const displayName = t.fullName || `${t.firstName || ""} ${t.lastName || ""}`.trim() || "דוד כהן";
-  const initial = displayName.trim()[0] || "ד";
-  const idMasked = t.idNumber ? "•••••••" + t.idNumber.slice(-2) : "•••••••27";
-  const tzSuffix = t.idNumber ? t.idNumber.slice(-2) : "27";
+  const displayName = (t.fullName || `${t.firstName || ""} ${t.lastName || ""}`.trim()).trim();
+  const initial = displayName.trim()[0] || "?";
+  const idMasked = t.idNumber ? "•••••••" + t.idNumber.slice(-2) : "";
+  const tzSuffix = t.idNumber ? t.idNumber.slice(-2) : "";
   const addr = t.address?.city
     ? `${t.address.street || ""} ${t.address.houseNumber || ""}, ${t.address.city}`.trim()
-    : "ביאליק 42, רמת גן";
+    : "";
   const maritalLabel =
     t.maritalStatus === "married"
       ? `נשוי · ${(t.children || []).length} ילדים`
@@ -49,18 +31,26 @@ function DetailsViewInner() {
           ? "אלמן"
           : "רווק";
   const bankLabel = t.bank?.bankName
-    ? `${t.bank.bankName} · חשבון •••${(t.bank.account || "").slice(-3) || "412"}`
-    : "לאומי · חשבון •••412";
+    ? `${t.bank.bankName} · חשבון •••${(t.bank.account || "").slice(-3)}`
+    : "";
+
+  const EMPTY = "—";
+  const birthLabel = t.birthDate
+    ? new Date(t.birthDate).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" })
+    : EMPTY;
+  const phoneLabel = t.phone
+    ? t.phone.replace(/^(\d{3})(\d+)(\d{4})$/, "$1-•••-$3")
+    : EMPTY;
 
   const fields = [
-    { label: "שם מלא", value: displayName, edit: false },
-    { label: "תעודת זהות", value: idMasked, edit: false },
-    { label: "תאריך לידה", value: "14 ביולי 1988", edit: false },
-    { label: "טלפון", value: "050-•••-4829", edit: true },
-    { label: "אימייל", value: "david.cohen@gmail.com", edit: true },
-    { label: "כתובת", value: addr, edit: true },
+    { label: "שם מלא", value: displayName || EMPTY, edit: false },
+    { label: "תעודת זהות", value: idMasked || EMPTY, edit: false },
+    { label: "תאריך לידה", value: birthLabel, edit: true },
+    { label: "טלפון", value: phoneLabel, edit: true },
+    { label: "אימייל", value: t.email || EMPTY, edit: true },
+    { label: "כתובת", value: addr || EMPTY, edit: true },
     { label: "מצב משפחתי", value: maritalLabel, edit: true },
-    { label: "בנק להחזר", value: bankLabel, edit: true },
+    { label: "בנק להחזר", value: bankLabel || EMPTY, edit: true },
   ];
 
   return (
@@ -136,15 +126,10 @@ function DetailsViewInner() {
               lineHeight: 1.1,
             }}
           >
-            {displayName} · <span style={{ color: "var(--kc-lime)" }}>ת״ז ••{tzSuffix}</span>
-          </div>
-          <div style={{ fontSize: 13.5, color: "rgba(255,255,255,0.7)", marginTop: 8 }}>
-            לקוח מאז ינואר 2024 · 3 שנים אחורה זכאיות להחזר
-          </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 14, flexWrap: "wrap" }}>
-            <Chip label="מאומת" color="var(--kc-lime)" />
-            <Chip label="חתום דיגיטלית" color="var(--kc-grape)" />
-            <Chip label="ייפוי כוח חתום" color="var(--kc-sky)" />
+            {displayName || "משתמש חדש"}
+            {tzSuffix && (
+              <> · <span style={{ color: "var(--kc-lime)" }}>ת״ז ••{tzSuffix}</span></>
+            )}
           </div>
         </div>
         <Link

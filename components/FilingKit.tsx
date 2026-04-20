@@ -132,13 +132,22 @@ export function FilingKit() {
       className="space-y-5"
     >
       {/* ── Header ── */}
-      <div className="flex items-center gap-2">
-        <Package className="w-4 h-4 text-emerald-500" />
-        <h2 className="text-base font-semibold text-foreground">תיק הגשה</h2>
-        <span className="bg-emerald-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">
-          מוכן
-        </span>
-      </div>
+      {(() => {
+        const ready = financials.estimatedRefund > 0 && !!taxpayer.idNumber;
+        return (
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-emerald-500" />
+            <h2 className="text-base font-semibold text-foreground">תיק הגשה</h2>
+            <span
+              className={`text-white text-xs font-medium px-2 py-0.5 rounded-full ${
+                ready ? "bg-emerald-500" : "bg-slate-400"
+              }`}
+            >
+              {ready ? "מוכן" : "בהכנה"}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* ── Form Type Info Box ── */}
       <div

@@ -7,30 +7,37 @@ const fmt = (n: number) => "₪" + Math.round(n).toLocaleString("he-IL");
 
 export default function FilingPage() {
   const { state } = useApp();
-  const refund = state.financials.estimatedRefund || 24680;
+  const refund = state.financials.estimatedRefund ?? 0;
   const fee = Math.round(refund * 0.06);
   const net = refund - fee;
   const bankAcc = state.taxpayer.bank?.account
     ? `•••${state.taxpayer.bank.account.slice(-3)}`
-    : "•••412";
-  const bankName = state.taxpayer.bank?.bankName || "לאומי";
+    : "";
+  const bankName = state.taxpayer.bank?.bankName ?? "";
 
   const actionItems = state.financials.actionItems || [];
   const remainingCount = actionItems.filter((a) => !a.completed).length;
   const docs = state.documents || [];
   const missing = docs.filter((d) => d.status === "pending_upload" || d.status === "failed").length;
 
+  const idVerified = Boolean(state.taxpayer.idNumber && state.taxpayer.fullName);
+  const questionnaireCompleted = Boolean(state.questionnaire?.completed);
+  const hasCalc = Boolean(state.financials.calculationResult);
+  const docsStatus = docs.length === 0
+    ? "טרם הועלו קבצים"
+    : `${docs.length} קבצים · ${missing > 0 ? `חסר ${missing}` : "מלא"}`;
+  const questionnaireDetail = questionnaireCompleted
+    ? "הושלם"
+    : remainingCount > 0
+      ? `${remainingCount} שאלות נותרו`
+      : "טרם התחיל";
   const steps = [
-    { label: "זיהוי ואימות", detail: "ת״ז · חתימה דיגיטלית", done: true, active: false },
-    { label: "מסמכים", detail: `${docs.length} קבצים · ${missing > 0 ? `חסר ${missing}` : "מלא"}`, done: missing === 0 && docs.length > 0, active: false },
-    { label: "שאלון", detail: `${remainingCount} שאלות נותרו`, done: remainingCount === 0, active: remainingCount > 0 },
-    { label: "חישוב סופי", detail: "הסוכן מריץ recompute", done: false, active: false },
-    { label: "חתימה והגשה", detail: "שולח ל-135 במס הכנסה", done: false, active: false },
+    { label: "זיהוי ואימות", detail: "ת״ז · חתימה דיגיטלית", done: idVerified, active: !idVerified },
+    { label: "מסמכים", detail: docsStatus, done: missing === 0 && docs.length > 0, active: false },
+    { label: "שאלון", detail: questionnaireDetail, done: questionnaireCompleted, active: !questionnaireCompleted && idVerified },
+    { label: "חישוב סופי", detail: "הסוכן מריץ recompute", done: hasCalc, active: questionnaireCompleted && !hasCalc },
+    { label: "חתימה והגשה", detail: "שולח ל-135 במס הכנסה", done: false, active: hasCalc },
   ];
-  // If everything before is done, make חישוב active
-  if (steps[2].done && !steps[3].done) {
-    steps[3].active = true;
-  }
 
   const summary = [
     { label: "החזר משוער", value: fmt(refund), color: "var(--kc-lime)" },
@@ -117,8 +124,7 @@ export default function FilingPage() {
               עוד חתימה אחת והחזר בדרך
             </div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 10, lineHeight: 1.55, maxWidth: 440 }}>
-              ברגע שתחתום, נשלח את הטופס ישירות למחשב של מס הכנסה. ברוב המקרים הכסף מגיע תוך 21–45 יום לחשבון {bankName}{" "}
-              שלך.
+              ברגע שתחתום, נשלח את הטופס ישירות למחשב של מס הכנסה. ברוב המקרים הכסף מגיע תוך 21–45 יום {bankName ? `לחשבון ${bankName} שלך` : "לחשבון הבנק שלך"}.
             </div>
 
             <div style={{ marginTop: 26 }}>
@@ -245,7 +251,9 @@ export default function FilingPage() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--kc-ink)" }}>
-                הכסף יגיע לחשבון {bankName} {bankAcc}
+                {bankName
+                  ? `הכסף יגיע לחשבון ${bankName} ${bankAcc}`
+                  : "הוסף פרטי בנק כדי לקבל את ההחזר ישירות"}
               </div>
               <div style={{ fontSize: 12, color: "var(--kc-ink-soft)", marginTop: 2 }}>צפוי בין 21–45 יום</div>
             </div>

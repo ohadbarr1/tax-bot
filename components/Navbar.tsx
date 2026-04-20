@@ -131,13 +131,15 @@ export function Navbar() {
           ) : (
             <button className="flex items-center gap-2 ps-3 border-s border-border">
               <div className="w-8 h-8 rounded-full bg-brand-900 flex items-center justify-center">
-                <span className="text-white text-xs font-semibold">{initials || "OB"}</span>
+                <span className="text-white text-xs font-semibold">{initials || "?"}</span>
               </div>
               <div className="hidden sm:flex flex-col items-start">
                 <span className="text-xs font-medium text-foreground leading-tight">
-                  {taxpayer.fullName.split(" - ")[1] || taxpayer.fullName}
+                  {taxpayer.fullName ? (taxpayer.fullName.split(" - ")[1] || taxpayer.fullName) : "משתמש חדש"}
                 </span>
-                <span className="text-xs text-slate-500">{taxpayer.profession}</span>
+                {taxpayer.profession && (
+                  <span className="text-xs text-slate-500">{taxpayer.profession}</span>
+                )}
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>

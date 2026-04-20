@@ -3,13 +3,14 @@
 import { Check } from "lucide-react";
 
 export function Timeline({ completed, total }: { completed: number; total: number }) {
-  const pct = total > 0 ? completed / total : 0;
+  const started = total > 0;
+  const pct = started ? completed / total : 0;
   const steps = [
-    { label: "פתחנו לך תיק", date: "התחלה", done: true },
-    { label: "טופס 106 · הועלה", date: "אחרי פברואר", done: pct >= 0.2 },
-    { label: "נקודות זיכוי · חושבו", date: "אחרי מרץ", done: pct >= 0.4 },
-    { label: "שאלון אישי", date: "עכשיו", done: pct >= 0.7, active: pct < 0.7 },
-    { label: "הגשה ל-135", date: "בקרוב", done: pct >= 1 },
+    { label: "פתחנו לך תיק", date: "התחלה", done: started },
+    { label: "טופס 106 · הועלה", date: "", done: pct >= 0.2 },
+    { label: "נקודות זיכוי · חושבו", date: "", done: pct >= 0.4 },
+    { label: "שאלון אישי", date: pct < 0.7 ? "עכשיו" : "", done: pct >= 0.7, active: started && pct < 0.7 },
+    { label: "הגשה ל-135", date: pct < 1 ? "בקרוב" : "", done: pct >= 1 },
   ];
   return (
     <div
@@ -62,9 +63,11 @@ export function Timeline({ completed, total }: { completed: number; total: numbe
               >
                 {s.label}
               </div>
-              <div className="text-[12px] mt-0.5" style={{ color: "var(--kc-ink-dim)" }}>
-                {s.date}
-              </div>
+              {s.date && (
+                <div className="text-[12px] mt-0.5" style={{ color: "var(--kc-ink-dim)" }}>
+                  {s.date}
+                </div>
+              )}
             </div>
           </div>
         ))}

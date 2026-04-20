@@ -150,6 +150,12 @@ export interface TaxPayer {
   firstName?: string;
   lastName?: string;
   fullName: string;
+  /** Contact phone (user-entered). */
+  phone?: string;
+  /** Contact email (user-entered). */
+  email?: string;
+  /** ISO date-of-birth, user-entered. */
+  birthDate?: string;
   profession: string;
   maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
   spouseHasIncome?: boolean;

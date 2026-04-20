@@ -53,15 +53,14 @@ export function Sidebar() {
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const remaining = Math.max(0, total - completed);
 
-  const fullName = state.taxpayer.fullName || "דוד כהן";
-  const displayName = fullName.split(" - ")[1] || fullName;
-  const initials =
-    displayName
-      .split(" ")
-      .filter((w) => w.length > 0)
-      .slice(0, 1)
-      .map((w) => w[0])
-      .join("") || "ד";
+  const fullName = (state.taxpayer.fullName ?? "").trim();
+  const displayName = fullName ? (fullName.split(" - ")[1] || fullName) : "";
+  const initials = displayName
+    .split(" ")
+    .filter((w) => w.length > 0)
+    .slice(0, 1)
+    .map((w) => w[0])
+    .join("");
 
   return (
     <>
@@ -159,11 +158,11 @@ export function Sidebar() {
               background: `linear-gradient(135deg, var(--kc-coral), var(--kc-peach))`,
             }}
           >
-            {initials}
+            {initials || "?"}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13.5px] font-semibold leading-[1.2]" style={{ color: "var(--kc-ink)" }}>
-              {displayName}
+              {displayName || "משתמש חדש"}
             </div>
             <div className="text-[11px] leading-[1.2] mt-0.5" style={{ color: "var(--kc-ink-dim)" }}>
               חשבון חינמי
