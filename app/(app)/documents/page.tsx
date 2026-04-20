@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { FolderOpen, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { DocUploadZone, TYPE_LABELS } from "@/components/documents/DocUploadZone";
 import { SourceDrivenDocCards } from "@/components/documents/SourceDrivenDocCards";
 import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZone";
@@ -259,19 +259,16 @@ function DocumentsPageInner() {
     );
   }
 
+  const missingCount = docs.filter((d) => d.status === "pending_upload" || d.status === "failed").length;
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="kc-rise" style={{ maxWidth: 960, margin: "0 auto", padding: "8px 40px 80px" }}>
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-brand-900 rounded-xl flex items-center justify-center">
-          <FolderOpen className="w-5 h-5 text-white" />
-        </div>
+      <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", marginTop: 16, marginBottom: 26, gap: 16, flexWrap: "wrap" }}>
         <div>
-          <h1 className="text-xl font-bold text-foreground">כספת מסמכים</h1>
-          <p className="text-sm text-muted-foreground">
-            {docs.length} מסמכים
-            {docs.length > 0 && " · נשמרים אוטומטית"}
-          </p>
+          <div style={{ fontSize: 13, color: "var(--kc-ink-dim)", fontWeight: 500 }}>המסמכים שלך</div>
+          <div style={{ fontFamily: "var(--font-figtree)", fontSize: 44, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--kc-ink)", marginTop: 4, lineHeight: 1 }}>
+            {docs.length} מסמכים{missingCount > 0 ? ` · חסר ${missingCount}` : ""}
+          </div>
         </div>
       </div>
 

@@ -1,17 +1,12 @@
-import type { Metadata } from "next";
+"use client";
 import { MarketingNavbar } from "@/components/MarketingNavbar";
-
-export const metadata: Metadata = {
-  title: { default: "TaxBack IL — החזר מס חכם", template: "%s | TaxBack IL" },
-  description: "פלטפורמה לאוטומציה של החזרי מס בישראל. מקסמו את ההחזר שלכם בקלות.",
-  openGraph: {
-    siteName: "TaxBack IL",
-    locale: "he_IL",
-    type: "website",
-  },
-};
+import { usePathname } from "next/navigation";
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? "/";
+  // Landing page ships its own nav + footer (KC design)
+  if (pathname === "/") return <>{children}</>;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <MarketingNavbar />

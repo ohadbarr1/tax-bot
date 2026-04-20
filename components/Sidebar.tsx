@@ -18,7 +18,7 @@ const NAV_ITEMS = [
 
 function WordMark() {
   return (
-    <div className="flex items-center gap-2.5 px-2">
+    <Link href="/" className="flex items-center gap-2.5 px-2" style={{ textDecoration: "none" }}>
       <div
         className="w-[38px] h-[38px] rounded-[14px] grid place-items-center font-extrabold text-[20px] -rotate-6"
         style={{
@@ -40,7 +40,7 @@ function WordMark() {
           החזר המס שלך, באפליקציה
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
