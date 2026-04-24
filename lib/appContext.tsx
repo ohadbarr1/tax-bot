@@ -76,11 +76,10 @@ interface AppContextValue {
   /** Wipe the current in-progress onboarding draft back to a fresh slate. */
   discardCurrentDraft: () => void;
   /**
-   * Nuclear reset: wipe Firestore, in-memory state, and force a churn of the
-   * anonymous auth uid so a shared browser profile doesn't leak prior-tester
-   * data into the next visitor's session. Used by the sidebar "נקה נתונים"
-   * button (T2). Returns when the in-memory reset is queued — the signOut +
-   * anon re-sign-in happens async but onAuthStateChanged will re-hydrate.
+   * Nuclear reset: wipe the current user's Firestore doc and snap in-memory
+   * state back to INITIAL_STATE. Keeps the anonymous auth uid intact so the
+   * user stays signed-in and can immediately use auth-gated pages. Used by
+   * the sidebar "נקה נתונים" button (T2).
    */
   resetAllData: () => Promise<void>;
   // ── Provenance / prefill ──────────────────────────────────────────────────
@@ -224,7 +223,7 @@ function migrateLegacyState(stored: unknown): AppState {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [hydrated, setHydrated] = useState(false);
-  const { configured, ready, user, signOut: authSignOut } = useAuth();
+  const { configured, ready, user } = useAuth();
   const uid = user?.uid ?? null;
 
   // ── Hydrate from Firestore whenever the signed-in user changes ──────────
@@ -563,22 +562,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetAllData = useCallback(async () => {
-    // Order matters: wipe Firestore first so if the user reloads mid-reset the
-    // prior data is gone, then reset memory so the UI snaps to empty, then
-    // sign out — the AppProvider's `uid` effect will detect the churn and
-    // re-hydrate the empty state on the new anon uid.
+    // Wipe Firestore first so a mid-reset reload can't rehydrate from the
+    // prior doc, then clear memory so the UI snaps to empty. We intentionally
+    // keep the anon uid — signing out here would strand the session in
+    // !user land (onAuthStateChanged's re-anon path can fail silently on
+    // popup-blocker / quota / persistence hang), which locks auth-gated pages.
     try {
       await clearState();
     } catch (err) {
       console.warn("[resetAllData] clearState failed:", err);
     }
     setState(INITIAL_STATE);
-    try {
-      await authSignOut();
-    } catch (err) {
-      console.warn("[resetAllData] signOut failed:", err);
-    }
-  }, [authSignOut]);
+  }, []);
 
   const markDetailsConfirmed = () =>
     setState((s) => ({
