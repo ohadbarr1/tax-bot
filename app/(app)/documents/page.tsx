@@ -266,7 +266,7 @@ function DocumentsPageInner() {
 
   const missingCount = docs.filter((d) => d.status === "pending_upload" || d.status === "failed").length;
   return (
-    <div className="kc-rise" style={{ maxWidth: 960, margin: "0 auto", padding: "8px 40px 80px" }}>
+    <div className="kc-rise max-w-[960px] mx-auto px-5 md:px-10 pt-2 pb-20">
       {/* Header */}
       <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", marginTop: 16, marginBottom: 26, gap: 16, flexWrap: "wrap" }}>
         <div>

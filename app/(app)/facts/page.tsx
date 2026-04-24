@@ -33,7 +33,7 @@ export default function FactsPage() {
   const maxMonthly = monthlyTax ? Math.max(...monthlyTax) || 1 : 1;
 
   return (
-    <div className="kc-rise" style={{ padding: "8px 40px 80px" }}>
+    <div className="kc-rise px-5 md:px-10 pt-2 pb-20">
       <div style={{ marginTop: 16, marginBottom: 24 }}>
         <div style={{ fontSize: 13, color: "var(--kc-ink-dim)", fontWeight: 500 }}>תמונת מצב · {taxYear}</div>
         <div
@@ -51,7 +51,7 @@ export default function FactsPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         {stats.map((s) => (
           <div
             key={s.label}

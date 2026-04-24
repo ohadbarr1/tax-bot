@@ -15,8 +15,14 @@ export default function DetailsPage() {
 function DetailsViewInner() {
   const { state } = useApp();
   const t = state.taxpayer;
-  const displayName = (t.fullName || `${t.firstName || ""} ${t.lastName || ""}`.trim()).trim();
-  const initial = displayName.trim()[0] || "?";
+  // Prefer firstName/lastName (what the questionnaire writes) over fullName
+  // (legacy "english - hebrew" format from pre-split users).
+  const fromParts = `${t.firstName || ""} ${t.lastName || ""}`.trim();
+  const displayName = fromParts || (t.fullName || "").trim();
+  const initial =
+    t.firstName && t.lastName
+      ? t.firstName[0] + t.lastName[0]
+      : displayName[0] || "?";
   const idMasked = t.idNumber ? "•••••••" + t.idNumber.slice(-2) : "";
   const tzSuffix = t.idNumber ? t.idNumber.slice(-2) : "";
   const addr = t.address?.city

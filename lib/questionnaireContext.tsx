@@ -33,10 +33,16 @@ interface QuestionnaireContextValue {
   // Step 1 — family
   maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseIncome: boolean;
+  spouseFirstName: string;
+  spouseLastName: string;
+  spouseIdNumber: string;
   paysAlimony: boolean;
   children: Child[];
   setMaritalStatus: (v: "single" | "married" | "divorced" | "widowed") => void;
   setSpouseIncome: (v: boolean) => void;
+  setSpouseFirstName: (v: string) => void;
+  setSpouseLastName: (v: string) => void;
+  setSpouseIdNumber: (v: string) => void;
   setPaysAlimony: (v: boolean) => void;
   setChildren: (v: Child[]) => void;
 
@@ -137,6 +143,17 @@ export function QuestionnaireProvider({
   const [maritalStatus, setMaritalStatus] = useState(taxpayer.maritalStatus);
   const [spouseIncome, setSpouseIncome] = useState(
     taxpayer.spouseHasIncome ?? false,
+  );
+  const [spouseFirstName, setSpouseFirstName] = useState(
+    taxpayer.spouse?.firstName ?? "",
+  );
+  const [spouseLastName, setSpouseLastName] = useState(
+    taxpayer.spouse?.lastName ?? "",
+  );
+  // spouse.idNumber is the new canonical field; spouseId is the legacy
+  // mirror still consumed by pdfUtils. Hydrate from either.
+  const [spouseIdNumber, setSpouseIdNumber] = useState(
+    taxpayer.spouse?.idNumber ?? taxpayer.spouseId ?? "",
   );
   const [paysAlimony, setPaysAlimony] = useState(taxpayer.paysAlimony ?? false);
   const [children, setChildren] = useState<Child[]>(taxpayer.children);
@@ -263,14 +280,28 @@ export function QuestionnaireProvider({
   // ── Finish ──────────────────────────────────────────────────────────────────
 
   const handleFinish = () => {
+    const isMarried = maritalStatus === "married";
+    const spousePayload = isMarried
+      ? {
+          firstName: spouseFirstName,
+          lastName: spouseLastName,
+          idNumber: spouseIdNumber,
+        }
+      : undefined;
     updateTaxpayer({
       firstName,
       lastName,
+      // T8 safety: also populate fullName so legacy code paths that read it
+      // (e.g. the Hero greeting, admin export) don't have to reconstruct.
+      fullName: [firstName, lastName].filter(Boolean).join(" ").trim(),
       idNumber,
       address,
       bank,
       maritalStatus,
       spouseHasIncome: spouseIncome,
+      // T9: write spouse identity + keep spouseId in sync for PDF stamping.
+      spouse: spousePayload,
+      spouseId: isMarried ? spouseIdNumber : undefined,
       paysAlimony,
       children,
       degrees,
@@ -311,10 +342,16 @@ export function QuestionnaireProvider({
       setBank,
       maritalStatus,
       spouseIncome,
+      spouseFirstName,
+      spouseLastName,
+      spouseIdNumber,
       paysAlimony,
       children,
       setMaritalStatus,
       setSpouseIncome,
+      setSpouseFirstName,
+      setSpouseLastName,
+      setSpouseIdNumber,
       setPaysAlimony,
       setChildren,
       hasDegree,
@@ -372,6 +409,9 @@ export function QuestionnaireProvider({
       bank,
       maritalStatus,
       spouseIncome,
+      spouseFirstName,
+      spouseLastName,
+      spouseIdNumber,
       paysAlimony,
       children,
       hasDegree,

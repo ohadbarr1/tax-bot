@@ -4,14 +4,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2 } from "lucide-react";
 import type { Child } from "@/types";
 import { Label, InfoBox, SuccessBox, TogglePair } from "./StepShell";
+import { isValidTZ } from "@/lib/validateTZ";
 
 interface Props {
   maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseIncome: boolean;
+  spouseFirstName: string;
+  spouseLastName: string;
+  spouseIdNumber: string;
   paysAlimony: boolean;
   children: Child[];
   onMaritalStatusChange: (v: "single" | "married" | "divorced" | "widowed") => void;
   onSpouseIncomeChange: (v: boolean) => void;
+  onSpouseFirstNameChange: (v: string) => void;
+  onSpouseLastNameChange: (v: string) => void;
+  onSpouseIdNumberChange: (v: string) => void;
   onPaysAlimonyChange: (v: boolean) => void;
   onChildrenChange: (v: Child[]) => void;
 }
@@ -19,13 +26,21 @@ interface Props {
 export default function Step1Personal({
   maritalStatus,
   spouseIncome,
+  spouseFirstName,
+  spouseLastName,
+  spouseIdNumber,
   paysAlimony,
   children,
   onMaritalStatusChange,
   onSpouseIncomeChange,
+  onSpouseFirstNameChange,
+  onSpouseLastNameChange,
+  onSpouseIdNumberChange,
   onPaysAlimonyChange,
   onChildrenChange,
 }: Props) {
+  const inputClass =
+    "w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]";
   return (
     <>
       <div>
@@ -67,13 +82,69 @@ export default function Step1Personal({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden space-y-2"
+            className="overflow-hidden space-y-4"
           >
-            <Label>האם לבן/בת הזוג יש הכנסה?</Label>
-            <TogglePair value={spouseIncome} onChange={onSpouseIncomeChange} />
-            {!spouseIncome && (
-              <InfoBox>ייתכן שתהיה זכאי לנקודת זיכוי בגין בן/בת זוג שאינו עובד.</InfoBox>
-            )}
+            {/* T9: spouse identity — Form 1301 requires name + TZ of the
+                "בן/בת הזוג הרשום"; Form 135 at minimum wants the TZ. */}
+            <div className="space-y-3">
+              <Label>פרטי בן/בת הזוג</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-500 block">שם פרטי</label>
+                  <input
+                    type="text"
+                    value={spouseFirstName}
+                    onChange={(e) => onSpouseFirstNameChange(e.target.value)}
+                    placeholder="לדוגמה: שרה"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-500 block">שם משפחה</label>
+                  <input
+                    type="text"
+                    value={spouseLastName}
+                    onChange={(e) => onSpouseLastNameChange(e.target.value)}
+                    placeholder="לדוגמה: ישראלי"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-500 block">תעודת זהות</label>
+                <input
+                  type="text"
+                  value={spouseIdNumber}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 9);
+                    onSpouseIdNumberChange(val);
+                  }}
+                  placeholder="9 ספרות"
+                  maxLength={9}
+                  inputMode="numeric"
+                  className={inputClass}
+                />
+                {spouseIdNumber.length > 0 && spouseIdNumber.length < 9 && (
+                  <p className="text-xs text-amber-600">תעודת זהות חייבת להכיל 9 ספרות</p>
+                )}
+                {spouseIdNumber.length === 9 && !isValidTZ(spouseIdNumber) && (
+                  <p className="text-xs text-rose-500 mt-1">
+                    מספר תעודת זהות לא תקין — ספרת ביקורת שגויה
+                  </p>
+                )}
+                {spouseIdNumber.length === 9 && isValidTZ(spouseIdNumber) && (
+                  <p className="text-xs text-emerald-600 mt-1">&#x2713;</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>האם לבן/בת הזוג יש הכנסה?</Label>
+              <TogglePair value={spouseIncome} onChange={onSpouseIncomeChange} />
+              {!spouseIncome && (
+                <InfoBox>ייתכן שתהיה זכאי לנקודת זיכוי בגין בן/בת זוג שאינו עובד.</InfoBox>
+              )}
+            </div>
           </motion.div>
         )}
         {maritalStatus === "divorced" && (

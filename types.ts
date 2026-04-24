@@ -146,7 +146,15 @@ export interface TaxPayer {
   id: string;
   /** e.g. "123456789" */
   idNumber?: string;
+  /** Spouse's ID number. Prefer `spouse.idNumber` on new data; this field is
+   *  the historical field consumed by PDF stamping and kept as a mirror. */
   spouseId?: string;
+  /** Spouse identity for married filers (Form 1301 "בן/בת הזוג הרשום"). */
+  spouse?: {
+    firstName?: string;
+    lastName?: string;
+    idNumber?: string;
+  };
   firstName?: string;
   lastName?: string;
   fullName: string;

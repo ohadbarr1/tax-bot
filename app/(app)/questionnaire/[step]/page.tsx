@@ -63,10 +63,16 @@ export default function StepPage({
           <Step1Personal
             maritalStatus={ctx.maritalStatus}
             spouseIncome={ctx.spouseIncome}
+            spouseFirstName={ctx.spouseFirstName}
+            spouseLastName={ctx.spouseLastName}
+            spouseIdNumber={ctx.spouseIdNumber}
             paysAlimony={ctx.paysAlimony}
             children={ctx.children}
             onMaritalStatusChange={ctx.setMaritalStatus}
             onSpouseIncomeChange={ctx.setSpouseIncome}
+            onSpouseFirstNameChange={ctx.setSpouseFirstName}
+            onSpouseLastNameChange={ctx.setSpouseLastName}
+            onSpouseIdNumberChange={ctx.setSpouseIdNumber}
             onPaysAlimonyChange={ctx.setPaysAlimony}
             onChildrenChange={ctx.setChildren}
           />

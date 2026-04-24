@@ -84,7 +84,7 @@ export default function FilingPage() {
         ];
 
   return (
-    <div className="kc-rise" style={{ padding: "8px 40px 80px" }}>
+    <div className="kc-rise px-5 md:px-10 pt-2 pb-20">
       <div style={{ marginTop: 16, marginBottom: 24 }}>
         <div style={{ fontSize: 13, color: "var(--kc-ink-dim)", fontWeight: 500 }}>הגשה · שלב אחרון</div>
         <div
@@ -102,13 +102,7 @@ export default function FilingPage() {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 1fr)",
-          gap: 20,
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-5">
         <div
           style={{
             background: "var(--kc-ink)",
