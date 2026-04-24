@@ -1,6 +1,24 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+/**
+ * Returns true once the viewport is at least `breakpoint` CSS pixels wide.
+ * Defaults to `false` on first render (and on the server) so SSR emits a
+ * mobile-first layout and hydration matches. Listens to `matchMedia` so the
+ * layout flips on resize without a reload.
+ */
+function useIsAtLeast(breakpoint: number): boolean {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${breakpoint}px)`);
+    const update = () => setOn(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [breakpoint]);
+  return on;
+}
 
 const KC = {
   bg: "var(--kc-bg)",
@@ -53,7 +71,7 @@ function LandingNav() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "18px 40px",
+        padding: "18px clamp(16px, 5vw, 40px)",
         background: "rgba(251,249,244,0.85)",
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
@@ -117,8 +135,9 @@ function LandingNav() {
 }
 
 function LandingHero() {
+  const isMd = useIsAtLeast(768);
   return (
-    <section style={{ padding: "72px 40px 40px", position: "relative", overflow: "hidden" }}>
+    <section style={{ padding: "clamp(40px, 10vw, 72px) clamp(16px, 5vw, 40px) 40px", position: "relative", overflow: "hidden" }}>
       <div
         style={{
           position: "absolute",
@@ -155,7 +174,7 @@ function LandingHero() {
         <h1
           style={{
             fontFamily: KC.display,
-            fontSize: 132,
+            fontSize: "clamp(48px, 12vw, 132px)",
             lineHeight: 0.92,
             letterSpacing: "-0.055em",
             fontWeight: 800,
@@ -186,8 +205,8 @@ function LandingHero() {
           style={{
             marginTop: 32,
             display: "grid",
-            gridTemplateColumns: "1.1fr 1fr",
-            gap: 60,
+            gridTemplateColumns: isMd ? "1.1fr 1fr" : "1fr",
+            gap: isMd ? 60 : 28,
             alignItems: "end",
           }}
         >
@@ -270,7 +289,7 @@ function LandingHero() {
           style={{
             marginTop: 72,
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: isMd ? "repeat(4, 1fr)" : "repeat(2, 1fr)",
             gap: 0,
             background: KC.ink,
             borderRadius: 24,
@@ -292,7 +311,7 @@ function LandingStat({ value, label, dim }: { value: string; label: string; dim?
   return (
     <div
       style={{
-        padding: "28px 28px",
+        padding: "clamp(20px, 4vw, 28px)",
         background: dim ? "rgba(255,255,255,0.03)" : "transparent",
         borderInlineStart: `1px solid rgba(255,255,255,0.08)`,
       }}
@@ -300,7 +319,7 @@ function LandingStat({ value, label, dim }: { value: string; label: string; dim?
       <div
         style={{
           fontFamily: KC.display,
-          fontSize: 38,
+          fontSize: "clamp(26px, 5vw, 38px)",
           fontWeight: 800,
           letterSpacing: "-0.03em",
           lineHeight: 1,
@@ -339,7 +358,7 @@ function LandingMarquee() {
           gap: 32,
           whiteSpace: "nowrap",
           fontFamily: KC.display,
-          fontSize: 28,
+          fontSize: "clamp(18px, 4.5vw, 28px)",
           fontWeight: 600,
           width: "max-content",
         }}
@@ -356,6 +375,7 @@ function LandingMarquee() {
 }
 
 function LandingHow() {
+  const isMd = useIsAtLeast(768);
   const steps = [
     {
       n: "01",
@@ -383,7 +403,7 @@ function LandingHow() {
     },
   ];
   return (
-    <section style={{ padding: "100px 40px" }}>
+    <section style={{ padding: "clamp(60px, 10vw, 100px) clamp(16px, 5vw, 40px)" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", marginBottom: 56, flexWrap: "wrap", gap: 24 }}>
           <div>
@@ -401,7 +421,7 @@ function LandingHow() {
             <h2
               style={{
                 fontFamily: KC.display,
-                fontSize: 72,
+                fontSize: "clamp(40px, 9vw, 72px)",
                 lineHeight: 0.95,
                 letterSpacing: "-0.04em",
                 fontWeight: 800,
@@ -432,7 +452,7 @@ function LandingHow() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: isMd ? "repeat(3, 1fr)" : "1fr",
             gap: 18,
           }}
         >
@@ -501,6 +521,7 @@ function LandingHow() {
 }
 
 function LandingRefundCalculator() {
+  const isMd = useIsAtLeast(768);
   const [salary, setSalary] = useState(14000);
   const [years, setYears] = useState(3);
   const [flags, setFlags] = useState<Record<string, boolean>>({ kids: true, donation: false, switch: true, unpaid: false });
@@ -516,17 +537,17 @@ function LandingRefundCalculator() {
   const total = per * years;
 
   return (
-    <section style={{ padding: "40px 40px 100px" }}>
+    <section style={{ padding: "40px clamp(16px, 5vw, 40px) clamp(60px, 10vw, 100px)" }}>
       <div
         style={{
           maxWidth: 1280,
           margin: "0 auto",
           background: KC.ink,
           borderRadius: 32,
-          padding: 56,
+          padding: "clamp(28px, 5vw, 56px)",
           display: "grid",
-          gridTemplateColumns: "1fr 1.1fr",
-          gap: 60,
+          gridTemplateColumns: isMd ? "1fr 1.1fr" : "1fr",
+          gap: isMd ? 60 : 36,
           position: "relative",
           overflow: "hidden",
         }}
@@ -559,7 +580,7 @@ function LandingRefundCalculator() {
           <h2
             style={{
               fontFamily: KC.display,
-              fontSize: 54,
+              fontSize: "clamp(34px, 7vw, 54px)",
               lineHeight: 0.98,
               letterSpacing: "-0.035em",
               fontWeight: 800,
@@ -642,7 +663,7 @@ function LandingRefundCalculator() {
           <div
             style={{
               fontFamily: KC.display,
-              fontSize: 128,
+              fontSize: "clamp(64px, 14vw, 128px)",
               lineHeight: 0.92,
               letterSpacing: "-0.045em",
               fontWeight: 800,
@@ -762,6 +783,8 @@ function LandingSlider({
 }
 
 function LandingSocialProof() {
+  const isMd = useIsAtLeast(768);
+  const isLg = useIsAtLeast(1024);
   const quotes = [
     { sum: "₪4,210", text: "שינוי עבודה באמצע שנה. חשבתי שאני צריך רואה חשבון. 14 דקות בסה״כ ובחשבון.", who: "יעל א׳ · מעצבת, ת״א", yr: "2023" },
     { sum: "₪6,880", text: "3 שנים אחורה מגיע לי. לא האמנתי עד שהכסף נכנס. באמת. 3 שנים.", who: "מוחמד ח׳ · טכנאי, חיפה", yr: "2021–2023" },
@@ -770,13 +793,13 @@ function LandingSocialProof() {
   ];
   const avatarColors = [KC.lime, KC.grape, KC.coral, KC.peach];
   return (
-    <section style={{ padding: "100px 40px", background: KC.bgSoft }}>
+    <section style={{ padding: "clamp(60px, 10vw, 100px) clamp(16px, 5vw, 40px)", background: KC.bgSoft }}>
       <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap", gap: 24 }}>
           <h2
             style={{
               fontFamily: KC.display,
-              fontSize: 64,
+              fontSize: "clamp(38px, 8vw, 64px)",
               lineHeight: 0.95,
               letterSpacing: "-0.035em",
               fontWeight: 800,
@@ -814,7 +837,7 @@ function LandingSocialProof() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateColumns: isLg ? "repeat(4, 1fr)" : isMd ? "repeat(2, 1fr)" : "1fr",
             gap: 16,
           }}
         >
@@ -859,6 +882,7 @@ function LandingSocialProof() {
 }
 
 function LandingFAQ() {
+  const isMd = useIsAtLeast(768);
   const [open, setOpen] = useState<number>(0);
   const faqs = [
     { q: "זה באמת חינם אם לא מגיע לי החזר?", a: "כן. אנחנו לוקחים 15% מהסכום שמתקבל בחשבון שלך בפועל. אם לא התקבל דבר — לא שילמת דבר. אין דמי הרשמה, אין דמי ביטול, אין הפתעות." },
@@ -869,14 +893,14 @@ function LandingFAQ() {
     { q: "המידע שלי מאובטח?", a: "החיבור למס הכנסה הוא דרך MyGov, בדיוק כמו בכל שירות ממשלתי. המידע שלך מוצפן, אנחנו לא שומרים סיסמאות, ולא משתפים נתונים עם אף צד שלישי. מאושרים ע״י רשות האבטחה." },
   ];
   return (
-    <section id="faq" style={{ padding: "100px 40px" }}>
+    <section id="faq" style={{ padding: "clamp(60px, 10vw, 100px) clamp(16px, 5vw, 40px)" }}>
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 80, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMd ? "1fr 2fr" : "1fr", gap: isMd ? 80 : 32, alignItems: "start" }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: KC.inkDim, letterSpacing: "0.08em", marginBottom: 12 }}>
               ← שאלות נפוצות
             </div>
-            <h2 style={{ fontFamily: KC.display, fontSize: 52, lineHeight: 0.95, letterSpacing: "-0.035em", fontWeight: 800, margin: 0 }}>
+            <h2 style={{ fontFamily: KC.display, fontSize: "clamp(34px, 7vw, 52px)", lineHeight: 0.95, letterSpacing: "-0.035em", fontWeight: 800, margin: 0 }}>
               שאלות. תשובות.
             </h2>
             <p style={{ marginTop: 18, fontSize: 15, color: KC.inkSoft, lineHeight: 1.6 }}>
@@ -928,14 +952,14 @@ function LandingFAQ() {
 
 function LandingFooterCTA() {
   return (
-    <section style={{ padding: "40px 40px 100px" }}>
+    <section style={{ padding: "40px clamp(16px, 5vw, 40px) clamp(60px, 10vw, 100px)" }}>
       <div
         style={{
           maxWidth: 1280,
           margin: "0 auto",
           background: KC.lime,
           borderRadius: 32,
-          padding: "80px 56px",
+          padding: "clamp(44px, 8vw, 80px) clamp(24px, 6vw, 56px)",
           position: "relative",
           overflow: "hidden",
         }}
@@ -956,7 +980,7 @@ function LandingFooterCTA() {
           <div
             style={{
               fontFamily: KC.display,
-              fontSize: 88,
+              fontSize: "clamp(44px, 10vw, 88px)",
               lineHeight: 0.95,
               letterSpacing: "-0.04em",
               fontWeight: 800,
@@ -996,20 +1020,21 @@ function LandingFooterCTA() {
 }
 
 function LandingFooter() {
+  const isMd = useIsAtLeast(768);
   const cols: [string, string[]][] = [
     ["מוצר", ["איך זה עובד", "מחירים", "למי זה מתאים", "אבטחה"]],
     ["חברה", ["עלינו", "בלוג", "קריירה", "שותפויות"]],
     ["משפטי", ["תנאי שימוש", "פרטיות", "רישיון יועץ מס", "צור קשר"]],
   ];
   return (
-    <footer style={{ background: KC.ink, color: KC.card, padding: "60px 40px 32px" }}>
+    <footer style={{ background: KC.ink, color: KC.card, padding: "60px clamp(16px, 5vw, 40px) 32px" }}>
       <div
         style={{
           maxWidth: 1280,
           margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: "2fr 1fr 1fr 1fr",
-          gap: 60,
+          gridTemplateColumns: isMd ? "2fr 1fr 1fr 1fr" : "1fr 1fr",
+          gap: isMd ? 60 : 32,
         }}
       >
         <div>
