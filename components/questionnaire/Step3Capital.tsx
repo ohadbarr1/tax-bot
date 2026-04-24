@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Label, WarnBox, TogglePair } from "./StepShell";
+import { useApp } from "@/lib/appContext";
 
 const BROKERS = ["Interactive Brokers", "Charles Schwab", "Tastytrade", "אחר"];
 
@@ -22,6 +23,15 @@ export default function Step3Capital({
   onPortfolioLocationChange,
   onSelectedBrokerChange,
 }: Props) {
+  const { state } = useApp();
+  // T4: heuristic default for portfolio location when the user flips to yes.
+  // If onboarding declared foreign investments/income, assume foreign_broker;
+  // otherwise default to local_broker so the reveal panel doesn't look empty.
+  const onboardingSources = state.onboarding?.sources ?? [];
+  const defaultLocation: "local_broker" | "foreign_broker" =
+    onboardingSources.includes("foreign") || onboardingSources.includes("investments")
+      ? "foreign_broker"
+      : "local_broker";
   return (
     <>
       <div>
@@ -33,7 +43,18 @@ export default function Step3Capital({
 
       <div className="space-y-2">
         <Label>האם סחרת בשוק ההון באופן עצמאי?</Label>
-        <TogglePair value={investsCapital} onChange={onInvestsCapitalChange} />
+        <TogglePair
+          value={investsCapital}
+          onChange={(v) => {
+            onInvestsCapitalChange(v);
+            // T4: on "yes" pre-select the most likely portfolio location so
+            // the reveal panel has something highlighted — users who missed
+            // the radio group reported feeling like nothing happened.
+            if (v && portfolioLocation === null) {
+              onPortfolioLocationChange(defaultLocation);
+            }
+          }}
+        />
       </div>
 
       <AnimatePresence>

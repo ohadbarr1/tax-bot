@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Label, InfoBox } from "./StepShell";
 import { isValidTZ } from "@/lib/validateTZ";
 
@@ -29,6 +30,69 @@ interface Props {
   onBankChange: (v: BankState) => void;
 }
 
+/**
+ * T6: Hebrew IME keystrokes were getting dropped on address fields because
+ * every keystroke rebuilt the entire `address` object (and thus the parent
+ * context memo), which caused React to re-render with a new prop identity on
+ * the `<input>` mid-composition. A Hebrew composition event that spans two
+ * renders loses the in-flight partial character.
+ *
+ * Fix: <ComposableTextInput> holds a private useState per field, commits to
+ * the parent on onChange for non-IME typing, and DEFERS parent propagation
+ * until `compositionend` for IME composition. Focus stays on the native DOM
+ * node across parent re-renders because the input's `value` prop is locally
+ * owned, not driven by a remote object reference.
+ */
+function ComposableTextInput({
+  value,
+  onChange,
+  placeholder,
+  className,
+  inputMode,
+  maxLength,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+  inputMode?: "text" | "numeric" | "decimal";
+  maxLength?: number;
+}) {
+  const [local, setLocal] = useState(value);
+  const composingRef = useRef(false);
+
+  // Sync down when the parent pushes a new value AND we're not mid-composition.
+  // Gating on composingRef prevents an IME half-committed state from being
+  // stomped by a stale parent value.
+  useEffect(() => {
+    if (!composingRef.current) setLocal(value);
+  }, [value]);
+
+  return (
+    <input
+      type="text"
+      value={local}
+      onChange={(e) => {
+        setLocal(e.target.value);
+        if (!composingRef.current) onChange(e.target.value);
+      }}
+      onCompositionStart={() => {
+        composingRef.current = true;
+      }}
+      onCompositionEnd={(e) => {
+        composingRef.current = false;
+        const next = (e.target as HTMLInputElement).value;
+        setLocal(next);
+        onChange(next);
+      }}
+      placeholder={placeholder}
+      className={className}
+      inputMode={inputMode}
+      maxLength={maxLength}
+    />
+  );
+}
+
 export default function Step0Personal({
   firstName,
   lastName,
@@ -44,6 +108,20 @@ export default function Step0Personal({
   const inputClass =
     "w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]";
 
+  // Local refs to the latest address so per-field setters don't go stale.
+  const addressRef = useRef(address);
+  useEffect(() => { addressRef.current = address; }, [address]);
+
+  const setAddressField = (key: keyof AddressState) => (v: string) => {
+    onAddressChange({ ...addressRef.current, [key]: v });
+  };
+
+  const bankRef = useRef(bank);
+  useEffect(() => { bankRef.current = bank; }, [bank]);
+  const setBankField = (key: keyof BankState) => (v: string) => {
+    onBankChange({ ...bankRef.current, [key]: v });
+  };
+
   return (
     <>
       <div>
@@ -57,20 +135,18 @@ export default function Step0Personal({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>שם פרטי</Label>
-          <input
-            type="text"
+          <ComposableTextInput
             value={firstName}
-            onChange={(e) => onFirstNameChange(e.target.value)}
+            onChange={onFirstNameChange}
             placeholder="לדוגמה: ישראל"
             className={inputClass}
           />
         </div>
         <div className="space-y-1.5">
           <Label>שם משפחה</Label>
-          <input
-            type="text"
+          <ComposableTextInput
             value={lastName}
-            onChange={(e) => onLastNameChange(e.target.value)}
+            onChange={onLastNameChange}
             placeholder="לדוגמה: ישראלי"
             className={inputClass}
           />
@@ -108,10 +184,9 @@ export default function Step0Personal({
         <p className="text-sm font-semibold text-[#0F172A]">כתובת מגורים</p>
         <div className="space-y-1.5">
           <Label>עיר</Label>
-          <input
-            type="text"
+          <ComposableTextInput
             value={address.city}
-            onChange={(e) => onAddressChange({ ...address, city: e.target.value })}
+            onChange={setAddressField("city")}
             placeholder="לדוגמה: תל אביב"
             className={inputClass}
           />
@@ -119,20 +194,18 @@ export default function Step0Personal({
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-2 space-y-1.5">
             <Label>רחוב</Label>
-            <input
-              type="text"
+            <ComposableTextInput
               value={address.street}
-              onChange={(e) => onAddressChange({ ...address, street: e.target.value })}
+              onChange={setAddressField("street")}
               placeholder="שם הרחוב"
               className={inputClass}
             />
           </div>
           <div className="space-y-1.5">
             <Label>מספר בית</Label>
-            <input
-              type="text"
+            <ComposableTextInput
               value={address.houseNumber}
-              onChange={(e) => onAddressChange({ ...address, houseNumber: e.target.value })}
+              onChange={setAddressField("houseNumber")}
               placeholder="12"
               className={inputClass}
             />
@@ -163,10 +236,9 @@ export default function Step0Personal({
           </div>
           <div className="space-y-1.5">
             <Label>שם הבנק</Label>
-            <input
-              type="text"
+            <ComposableTextInput
               value={bank.bankName}
-              onChange={(e) => onBankChange({ ...bank, bankName: e.target.value })}
+              onChange={setBankField("bankName")}
               placeholder="בנק הפועלים"
               className={inputClass}
             />

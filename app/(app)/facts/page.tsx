@@ -1,11 +1,13 @@
 "use client";
 import { useApp } from "@/lib/appContext";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 
 const fmt = (n: number) => "₪" + Math.round(n).toLocaleString("he-IL");
 const EMPTY = "—";
 
 export default function FactsPage() {
   const { state } = useApp();
+  const taxYear = state.financials.taxYears?.[0] ?? currentTaxYear();
   const employers = state.taxpayer.employers || [];
   const annualIncome = employers.reduce((s, e) => s + (e.grossSalary || 0) * (e.monthsWorked || 12) / 12, 0);
   const taxPaid = employers.reduce((s, e) => s + (e.taxWithheld || 0) * (e.monthsWorked || 12) / 12, 0);
@@ -33,7 +35,7 @@ export default function FactsPage() {
   return (
     <div className="kc-rise" style={{ padding: "8px 40px 80px" }}>
       <div style={{ marginTop: 16, marginBottom: 24 }}>
-        <div style={{ fontSize: 13, color: "var(--kc-ink-dim)", fontWeight: 500 }}>תמונת מצב · 2024</div>
+        <div style={{ fontSize: 13, color: "var(--kc-ink-dim)", fontWeight: 500 }}>תמונת מצב · {taxYear}</div>
         <div
           style={{
             fontFamily: "var(--font-figtree)",

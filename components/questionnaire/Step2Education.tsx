@@ -38,7 +38,25 @@ export default function Step2Education({
 
       <div className="space-y-2">
         <Label>האם סיימת תואר אקדמי או תעודה מקצועית מוכרת?</Label>
-        <TogglePair value={hasDegree} onChange={onHasDegreeChange} />
+        {/* T4: when the user flips to "yes" we seed a BA row with the current
+            year so the reveal panel isn't visually empty — previously the
+            "הוסף תואר" link was easy to miss and users bounced to the next
+            step with zero degrees captured. */}
+        <TogglePair
+          value={hasDegree}
+          onChange={(v) => {
+            onHasDegreeChange(v);
+            if (v && degrees.length === 0) {
+              onDegreesChange([
+                {
+                  type: "BA",
+                  institution: "",
+                  completionYear: new Date().getFullYear(),
+                },
+              ]);
+            }
+          }}
+        />
       </div>
 
       <AnimatePresence>
