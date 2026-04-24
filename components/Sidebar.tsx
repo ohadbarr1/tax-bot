@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
-  Home, User, ClipboardList, FolderOpen, PieChart, FileText,
+  Home, User, ClipboardList, FolderOpen, PieChart, FileText, RotateCcw,
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { cn } from "@/lib/utils";
@@ -46,21 +47,40 @@ function WordMark() {
 
 export function Sidebar() {
   const pathname = usePathname() ?? "";
-  const { state } = useApp();
+  const { state, resetAllData } = useApp();
   const financials = state.financials;
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const completed = financials.actionItems.filter((a) => a.completed).length;
   const total = financials.actionItems.length;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const remaining = Math.max(0, total - completed);
 
+  // T8: derive sidebar display name preferring first/last from questionnaire,
+  // falling back to the legacy fullName "english - hebrew" format for users
+  // whose state was migrated from the pre-split schema.
+  const firstName = (state.taxpayer.firstName ?? "").trim();
+  const lastName = (state.taxpayer.lastName ?? "").trim();
   const fullName = (state.taxpayer.fullName ?? "").trim();
-  const displayName = fullName ? (fullName.split(" - ")[1] || fullName) : "";
-  const initials = displayName
-    .split(" ")
-    .filter((w) => w.length > 0)
-    .slice(0, 1)
-    .map((w) => w[0])
-    .join("");
+  const fromParts = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const displayName = fromParts || (fullName ? (fullName.split(" - ")[1] || fullName) : "");
+  // Take first letter of firstName + first letter of lastName when both exist;
+  // otherwise fall back to the first letter of whatever display name we have.
+  const initials = (() => {
+    if (firstName && lastName) return firstName[0] + lastName[0];
+    if (displayName) return displayName.split(/\s+/)[0]?.[0] ?? "";
+    return "";
+  })();
+
+  const handleReset = async () => {
+    setResetting(true);
+    try {
+      await resetAllData();
+    } finally {
+      setResetting(false);
+      setResetOpen(false);
+    }
+  };
 
   return (
     <>
@@ -169,7 +189,57 @@ export function Sidebar() {
             </div>
           </div>
         </div>
+
+        {/* T2: visible escape hatch so a shared browser can nuke the prior
+            anonymous session's Firestore state and churn the uid. */}
+        <button
+          type="button"
+          onClick={() => setResetOpen(true)}
+          className="flex items-center gap-2 px-2 py-2 mt-1 rounded-[12px] text-[12.5px] font-medium transition-colors hover:bg-[var(--kc-bg-soft)]"
+          style={{ color: "var(--kc-ink-dim)" }}
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          נקה נתונים
+        </button>
       </aside>
+
+      {resetOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          dir="rtl"
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !resetting) setResetOpen(false);
+          }}
+        >
+          <div className="bg-card border border-border rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
+            <h2 className="text-lg font-bold text-foreground">ניקוי כל הנתונים?</h2>
+            <p className="text-sm text-muted-foreground">
+              פעולה זו תמחק את כל המסמכים, הטיוטות, והתשובות הקשורות למשתמש
+              האנונימי הזה. הנתונים נמחקים גם מהענן. לא ניתן לבטל.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setResetOpen(false)}
+                disabled={resetting}
+                className="py-2 px-4 rounded-xl border border-border bg-background hover:bg-muted transition-colors disabled:opacity-60"
+              >
+                ביטול
+              </button>
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={resetting}
+                className="py-2 px-4 rounded-xl bg-[var(--kc-coral)] text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                {resetting ? "מנקה..." : "נקה הכל"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile bottom tab bar */}
       <nav

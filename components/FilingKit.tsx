@@ -21,6 +21,7 @@ import {
 import { useApp } from "@/lib/appContext";
 import type { Form135Payload } from "@/types";
 import { determineFormType, FORM_LABELS } from "@/lib/formTypeSelector";
+import { refundHeadline } from "@/lib/refundDisplay";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const fadeUp: Variants = {
@@ -118,11 +119,14 @@ export function FilingKit() {
     }
   };
 
-  const formattedRefund = financials.estimatedRefund.toLocaleString("he-IL", {
-    style: "currency",
-    currency: "ILS",
-    maximumFractionDigits: 0,
-  });
+  const refundHead = refundHeadline(financials.estimatedRefund);
+  const formattedRefund =
+    refundHead.sign +
+    refundHead.amountAbs.toLocaleString("he-IL", {
+      style: "currency",
+      currency: "ILS",
+      maximumFractionDigits: 0,
+    });
 
   return (
     <motion.div
@@ -244,10 +248,13 @@ export function FilingKit() {
                   ))}
               </div>
             </div>
-            {/* Estimated refund */}
+            {/* Estimated refund / tax due */}
             <div className="flex-shrink-0 text-end">
-              <p className="text-[10px] text-slate-400">החזר משוער</p>
-              <p className="text-lg font-extrabold text-emerald-500 tabular-nums leading-tight">
+              <p className="text-[10px] text-slate-400">{refundHead.labelCompact}</p>
+              <p
+                className="text-lg font-extrabold tabular-nums leading-tight"
+                style={{ color: refundHead.colorToken }}
+              >
                 {formattedRefund}
               </p>
             </div>

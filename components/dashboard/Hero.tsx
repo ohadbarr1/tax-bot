@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { TaxPayer, FinancialData } from "@/types";
+import { refundHeadline } from "@/lib/refundDisplay";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 
 function formatILSNum(n: number) {
   return Math.round(n).toLocaleString("he-IL");
@@ -15,7 +17,14 @@ interface HeroProps {
   completedActions: number;
   totalActions: number;
   pendingActions: number;
-  onUpload: () => void;
+  /** Fires the 135/1301 PDF download. Disabled when the button is disabled. */
+  onDownloadDraft: () => void;
+  /** True while a download request is in flight; button shows loading copy. */
+  downloading?: boolean;
+  /** Disable the download CTA (e.g. no idNumber yet). */
+  downloadDisabled?: boolean;
+  /** Tooltip explaining why the download CTA is disabled. */
+  downloadDisabledReason?: string;
   onQuestionnaire: () => void;
 }
 
@@ -89,12 +98,17 @@ export function Hero({
   taxpayer,
   completedActions,
   totalActions,
-  onUpload,
+  onDownloadDraft,
+  downloading = false,
+  downloadDisabled = false,
+  downloadDisabledReason,
   onQuestionnaire,
 }: HeroProps) {
-  const count = useAnimatedCount(financials.estimatedRefund);
+  const headline = refundHeadline(financials.estimatedRefund);
+  // Animate the absolute value so the count tween doesn't flip sign midair.
+  const count = useAnimatedCount(headline.amountAbs);
   const pct = totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
-  const year = financials.taxYears[financials.taxYears.length - 1] ?? 2024;
+  const year = financials.taxYears[financials.taxYears.length - 1] ?? currentTaxYear();
   const sourceCount = new Set(financials.insights.map((i) => i.pillar)).size;
   const pending = totalActions - completedActions;
 
@@ -131,20 +145,34 @@ export function Hero({
         <div>
           <div
             className="inline-flex items-center gap-2 text-[12px] font-semibold rounded-full px-3 py-1.5"
-            style={{ background: "rgba(198,255,77,0.15)", color: "var(--kc-lime)" }}
+            style={{
+              background:
+                headline.tone === "debt"
+                  ? "rgba(231,111,81,0.18)"
+                  : headline.tone === "refund"
+                    ? "rgba(198,255,77,0.15)"
+                    : "rgba(255,255,255,0.12)",
+              color: headline.colorToken,
+            }}
           >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--kc-lime)" }} />
-            החזר המס המשוער שלך · {year}
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: headline.colorToken }}
+            />
+            {headline.label} · {year}
           </div>
 
           <div
             className="mt-4 flex items-baseline gap-1.5 font-extrabold tracking-[-0.04em] leading-[0.95] tabular-nums"
             style={{ fontFamily: "var(--font-figtree)", fontSize: "clamp(64px, 10vw, 104px)" }}
           >
-            <span className="font-bold" style={{ fontSize: "0.52em", color: "var(--kc-lime)" }}>
+            <span className="font-bold" style={{ fontSize: "0.52em", color: headline.colorToken }}>
               ₪
             </span>
-            <span>{formatILSNum(count)}</span>
+            <span style={{ color: headline.tone === "debt" ? headline.colorToken : undefined }}>
+              {headline.sign}
+              {formatILSNum(count)}
+            </span>
           </div>
 
           <div
@@ -173,14 +201,16 @@ export function Hero({
               <ArrowLeft className="w-4 h-4" />
             </button>
             <button
-              onClick={onUpload}
-              className="px-5 py-3.5 rounded-full font-semibold text-[14px] text-white"
+              onClick={onDownloadDraft}
+              disabled={downloadDisabled || downloading}
+              title={downloadDisabled ? downloadDisabledReason : undefined}
+              className="px-5 py-3.5 rounded-full font-semibold text-[14px] text-white disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: "rgba(255,255,255,0.08)",
                 border: "1px solid rgba(255,255,255,0.15)",
               }}
             >
-              הצג טיוטת 135
+              {downloading ? "מייצר 135..." : "הצג טיוטת 135"}
             </button>
           </div>
         </div>

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
+import { downloadGeneratedForm } from "@/lib/pdfDownload";
 import type { InsightPillar, TaxInsight } from "@/types";
 import { Hero } from "./Hero";
 import { PillarGrid } from "./PillarGrid";
@@ -23,9 +25,33 @@ const PILLAR_ORDER: InsightPillar[] = [
 ];
 
 export default function Dashboard() {
-  const { state, setView, updateFinancials, allDrafts } = useApp();
+  const { state, updateFinancials, allDrafts } = useApp();
   const { financials, taxpayer } = state;
   const router = useRouter();
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const downloadDisabled = !taxpayer.idNumber;
+  const downloadDisabledReason = downloadDisabled
+    ? "השלם פרטים אישיים לפני הורדה"
+    : undefined;
+
+  const handleDownloadDraft = async () => {
+    if (downloadDisabled || downloading) return;
+    setDownloading(true);
+    setDownloadError(null);
+    const result = await downloadGeneratedForm(taxpayer, financials, {
+      selectedSources: state.onboarding?.sources,
+    });
+    setDownloading(false);
+    if (result.kind === "error") {
+      setDownloadError(result.message);
+    } else if (result.kind === "template_missing") {
+      setDownloadError(
+        `נדרש להעלות את התבנית הרשמית של טופס ${result.formType} לשרת. פנה לצוות התמיכה.`,
+      );
+    }
+  };
 
   const extractedYears = new Set(
     allDrafts.filter((d) => d.financials.calculationResult).map((d) => d.taxYear)
@@ -57,9 +83,25 @@ export default function Dashboard() {
         completedActions={completedActions}
         totalActions={totalActions}
         pendingActions={pendingActions}
-        onUpload={() => setView("upload")}
+        onDownloadDraft={handleDownloadDraft}
+        downloading={downloading}
+        downloadDisabled={downloadDisabled}
+        downloadDisabledReason={downloadDisabledReason}
         onQuestionnaire={() => router.push("/questionnaire")}
       />
+      {downloadError && (
+        <div
+          role="alert"
+          className="rounded-xl border text-sm px-4 py-3"
+          style={{
+            background: "rgba(231,111,81,0.08)",
+            borderColor: "rgba(231,111,81,0.3)",
+            color: "var(--kc-coral)",
+          }}
+        >
+          {downloadError}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
         <IncomeBreakdown taxpayer={taxpayer} financials={financials} />

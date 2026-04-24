@@ -1,19 +1,45 @@
 "use client";
-import Link from "next/link";
-import { Check, Zap } from "lucide-react";
+import { useState } from "react";
+import { Check, Zap, FileDown, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
+import { downloadGeneratedForm } from "@/lib/pdfDownload";
+import { refundHeadline } from "@/lib/refundDisplay";
 
 const fmt = (n: number) => "₪" + Math.round(n).toLocaleString("he-IL");
 
 export default function FilingPage() {
   const { state } = useApp();
   const refund = state.financials.estimatedRefund ?? 0;
-  const fee = Math.round(refund * 0.06);
-  const net = refund - fee;
+  const headline = refundHeadline(refund);
+  // When the user owes ITA (refund <= 0), no service fee applies and the
+  // net === balance-due. When they're owed money, the 6% fee comes off the top.
+  const fee = headline.hasRefund ? Math.round(refund * 0.06) : 0;
+  const net = headline.hasRefund ? refund - fee : refund;
   const bankAcc = state.taxpayer.bank?.account
     ? `•••${state.taxpayer.bank.account.slice(-3)}`
     : "";
   const bankName = state.taxpayer.bank?.bankName ?? "";
+  const taxpayer = state.taxpayer;
+  const financials = state.financials;
+
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const downloadDisabled = !taxpayer.idNumber;
+
+  const handleDownload = async () => {
+    if (downloadDisabled || downloading) return;
+    setDownloading(true);
+    setDownloadError(null);
+    const result = await downloadGeneratedForm(taxpayer, financials, {
+      selectedSources: state.onboarding?.sources,
+    });
+    setDownloading(false);
+    if (result.kind === "error") setDownloadError(result.message);
+    else if (result.kind === "template_missing")
+      setDownloadError(`נדרש להעלות את התבנית הרשמית של טופס ${result.formType} לשרת.`);
+  };
+
+  const signDisabled = !headline.hasRefund || downloadDisabled;
 
   const actionItems = state.financials.actionItems || [];
   const remainingCount = actionItems.filter((a) => !a.completed).length;
@@ -39,11 +65,23 @@ export default function FilingPage() {
     { label: "חתימה והגשה", detail: "שולח ל-135 במס הכנסה", done: false, active: hasCalc },
   ];
 
-  const summary = [
-    { label: "החזר משוער", value: fmt(refund), color: "var(--kc-lime)" },
-    { label: "עמלת השירות", value: fmt(fee), sub: "6% מההחזר", color: "var(--kc-ink)" },
-    { label: "נטו אליך", value: fmt(net), color: "var(--kc-grape)" },
-  ];
+  const summary = headline.hasRefund
+    ? [
+        { label: "החזר משוער", value: fmt(refund), color: "var(--kc-lime)" },
+        { label: "עמלת השירות", value: fmt(fee), sub: "6% מההחזר", color: "var(--kc-ink)" },
+        { label: "נטו אליך", value: fmt(net), color: "var(--kc-grape)" },
+      ]
+    : headline.tone === "debt"
+      ? [
+          { label: "יתרת מס לתשלום", value: fmt(headline.amountAbs), color: "var(--kc-coral)" },
+          { label: "עמלת השירות", value: "לא חלה", sub: "אין עמלה על יתרת חוב", color: "var(--kc-ink-dim)" },
+          { label: "סכום לתשלום", value: fmt(headline.amountAbs), color: "var(--kc-coral)" },
+        ]
+      : [
+          { label: "החזר משוער", value: "—", color: "var(--kc-ink-dim)" },
+          { label: "עמלת השירות", value: "לא חלה", color: "var(--kc-ink-dim)" },
+          { label: "סכום נטו", value: "—", color: "var(--kc-ink-dim)" },
+        ];
 
   return (
     <div className="kc-rise" style={{ padding: "8px 40px 80px" }}>
@@ -121,10 +159,18 @@ export default function FilingPage() {
                 lineHeight: 1.2,
               }}
             >
-              עוד חתימה אחת והחזר בדרך
+              {headline.hasRefund
+                ? "עוד חתימה אחת והחזר בדרך"
+                : headline.tone === "debt"
+                  ? "טיוטה מראה יתרת חוב"
+                  : "הטיוטה טרם שלמה"}
             </div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 10, lineHeight: 1.55, maxWidth: 440 }}>
-              ברגע שתחתום, נשלח את הטופס ישירות למחשב של מס הכנסה. ברוב המקרים הכסף מגיע תוך 21–45 יום {bankName ? `לחשבון ${bankName} שלך` : "לחשבון הבנק שלך"}.
+              {headline.hasRefund
+                ? `ברגע שתחתום, נשלח את הטופס ישירות למחשב של מס הכנסה. ברוב המקרים הכסף מגיע תוך 21–45 יום ${bankName ? `לחשבון ${bankName} שלך` : "לחשבון הבנק שלך"}.`
+                : headline.tone === "debt"
+                  ? "לפי הנתונים כרגע, נוכה מהמעסיק פחות מהחבות בפועל. בדוק את הנתונים לפני הגשה — התשלום מבוצע ישירות מול רשות המיסים."
+                  : "השלם שאלון, מסמכים וחישוב סופי כדי לראות אם מגיע לך החזר."}
             </div>
 
             <div style={{ marginTop: 26 }}>
@@ -227,71 +273,155 @@ export default function FilingPage() {
             </div>
           </div>
 
-          <div
-            style={{
-              background: "var(--kc-lime-soft)",
-              borderRadius: 22,
-              padding: 22,
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-            }}
-          >
+          {headline.hasRefund ? (
             <div
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                background: "var(--kc-lime)",
-                display: "grid",
-                placeItems: "center",
+                background: "var(--kc-lime-soft)",
+                borderRadius: 22,
+                padding: 22,
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
               }}
             >
-              <Zap size={20} style={{ color: "var(--kc-ink)" }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--kc-ink)" }}>
-                {bankName
-                  ? `הכסף יגיע לחשבון ${bankName} ${bankAcc}`
-                  : "הוסף פרטי בנק כדי לקבל את ההחזר ישירות"}
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "var(--kc-lime)",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <Zap size={20} style={{ color: "var(--kc-ink)" }} />
               </div>
-              <div style={{ fontSize: 12, color: "var(--kc-ink-soft)", marginTop: 2 }}>צפוי בין 21–45 יום</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--kc-ink)" }}>
+                  {bankName
+                    ? `הכסף יגיע לחשבון ${bankName} ${bankAcc}`
+                    : "הוסף פרטי בנק כדי לקבל את ההחזר ישירות"}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--kc-ink-soft)", marginTop: 2 }}>צפוי בין 21–45 יום</div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div
+              style={{
+                background: "var(--kc-coral-soft)",
+                borderRadius: 22,
+                padding: 22,
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+              }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "var(--kc-coral)",
+                  display: "grid",
+                  placeItems: "center",
+                  color: "#fff",
+                  fontWeight: 800,
+                  fontFamily: "var(--font-figtree)",
+                  fontSize: 20,
+                }}
+              >
+                ₪
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--kc-ink)" }}>
+                  {headline.tone === "debt"
+                    ? "יתרה לתשלום לרשות המיסים"
+                    : "אין החזר צפוי בטיוטה הנוכחית"}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--kc-ink-soft)", marginTop: 2 }}>
+                  {headline.tone === "debt"
+                    ? "התשלום מבוצע ישירות מול רשות המיסים, לא דרך כסף חזרה"
+                    : "השלם את השאלון והמסמכים כדי לראות חישוב סופי"}
+                </div>
+              </div>
+            </div>
+          )}
 
           <button
+            onClick={signDisabled ? undefined : () => { /* signing flow — see Round 2 plan */ }}
+            disabled={signDisabled}
+            title={
+              !headline.hasRefund
+                ? "אין מה להגיש — הטיוטה הנוכחית לא מזכה בהחזר"
+                : downloadDisabled
+                  ? "השלם פרטים אישיים לפני חתימה"
+                  : undefined
+            }
             style={{
               all: "unset",
-              cursor: "pointer",
+              cursor: signDisabled ? "not-allowed" : "pointer",
               textAlign: "center",
-              background: "var(--kc-ink)",
-              color: "var(--kc-lime)",
+              background: signDisabled ? "rgba(26,26,31,0.45)" : "var(--kc-ink)",
+              color: signDisabled ? "rgba(255,255,255,0.6)" : "var(--kc-lime)",
               padding: "18px 24px",
               borderRadius: 22,
               fontSize: 16,
               fontWeight: 800,
               fontFamily: "var(--font-figtree)",
               letterSpacing: "-0.01em",
+              opacity: signDisabled ? 0.7 : 1,
             }}
           >
-            ✍️ חתום והגש עכשיו
+            {signDisabled && !headline.hasRefund ? "אין מה להגיש עדיין" : "חתום והגש עכשיו"}
           </button>
           <div style={{ fontSize: 12, color: "var(--kc-ink-dim)", textAlign: "center", lineHeight: 1.55 }}>
             בלחיצה על חתום אתה מאשר את הצהרת מגיש · ניתן לבטל תוך 14 יום
           </div>
 
-          <Link
-            href="/documents"
+          <button
+            onClick={handleDownload}
+            disabled={downloadDisabled || downloading}
+            title={downloadDisabled ? "השלם פרטים אישיים לפני הורדה" : undefined}
             style={{
+              all: "unset",
+              cursor: downloadDisabled || downloading ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
               fontSize: 13,
               color: "var(--kc-ink-dim)",
               textAlign: "center",
               textDecoration: "underline",
               marginTop: 6,
+              opacity: downloadDisabled || downloading ? 0.6 : 1,
             }}
           >
-            הצג טיוטת 135 המלאה
-          </Link>
+            {downloading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                מייצר טיוטה...
+              </>
+            ) : (
+              <>
+                <FileDown size={14} />
+                הצג טיוטת 135 המלאה
+              </>
+            )}
+          </button>
+          {downloadError && (
+            <div
+              role="alert"
+              style={{
+                fontSize: 12,
+                color: "var(--kc-coral)",
+                textAlign: "center",
+                marginTop: 2,
+              }}
+            >
+              {downloadError}
+            </div>
+          )}
         </div>
       </div>
     </div>

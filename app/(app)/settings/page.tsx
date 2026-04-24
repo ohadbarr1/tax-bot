@@ -249,7 +249,8 @@ function ResetQuestionnaireModal({
       <div className="bg-card border border-border rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
         <h2 className="text-lg font-bold text-foreground">איפוס שאלון?</h2>
         <p className="text-sm text-muted-foreground">
-          פעולה זו תאפס את התשובות והפרטים בטיוטה הנוכחית. מסמכים שהעלית יישמרו.
+          פעולה זו תאפס את התשובות, המסמכים, וההיסטוריה של הטיוטה הנוכחית.
+          לא ניתן לבטל.
         </p>
         <div className="flex items-center justify-end gap-2">
           <button

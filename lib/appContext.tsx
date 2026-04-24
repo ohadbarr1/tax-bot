@@ -27,7 +27,7 @@ import type {
 import { INITIAL_STATE } from "./initialState";
 import { currentTaxYear } from "./currentTaxYear";
 import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
-import { saveState, loadState } from "./db";
+import { saveState, loadState, clearState } from "./db";
 import { deleteUserDocument } from "./firebase/storage";
 import { useAuth } from "./firebase/authContext";
 import { carryForwardFromPriorDraft } from "./yoyCarryover";
@@ -75,6 +75,14 @@ interface AppContextValue {
   markDetailsConfirmed: () => void;
   /** Wipe the current in-progress onboarding draft back to a fresh slate. */
   discardCurrentDraft: () => void;
+  /**
+   * Nuclear reset: wipe Firestore, in-memory state, and force a churn of the
+   * anonymous auth uid so a shared browser profile doesn't leak prior-tester
+   * data into the next visitor's session. Used by the sidebar "נקה נתונים"
+   * button (T2). Returns when the in-memory reset is queued — the signOut +
+   * anon re-sign-in happens async but onAuthStateChanged will re-hydrate.
+   */
+  resetAllData: () => Promise<void>;
   // ── Provenance / prefill ──────────────────────────────────────────────────
   applyMiningResult: (docId: string, sourceLabel: string, fields: MinedField[]) => void;
   markFieldUserConfirmed: (fieldPath: string) => void;
@@ -216,7 +224,7 @@ function migrateLegacyState(stored: unknown): AppState {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(INITIAL_STATE);
   const [hydrated, setHydrated] = useState(false);
-  const { configured, ready, user } = useAuth();
+  const { configured, ready, user, signOut: authSignOut } = useAuth();
   const uid = user?.uid ?? null;
 
   // ── Hydrate from Firestore whenever the signed-in user changes ──────────
@@ -517,7 +525,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), sourcesSelected: true },
     }));
 
-  const discardCurrentDraft = () =>
+  // Expanded in T2 to also wipe documents, advisor history, and provenance so
+  // stale analyzed-doc metadata from a prior tester doesn't bleed into the
+  // next session. Firestore is cleared too — `onAuthStateChanged` will
+  // re-hydrate the empty state on next run.
+  const discardCurrentDraft = () => {
     setState((s) => {
       const draftId = s.currentDraftId;
       const taxYear = s.financials.taxYears[0] ?? currentTaxYear();
@@ -528,20 +540,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         taxpayer: freshTaxpayer,
         financials: freshFinancials,
         provenance: {},
+        documents: [],
+        advisorHistory: {},
         onboarding: { sources: [], sourcesSelected: false, detailsConfirmed: false },
         questionnaire: { step: 1, completed: false },
         drafts: {
-          ...s.drafts,
           [draftId]: {
-            ...s.drafts[draftId],
+            id: draftId,
+            taxYear,
+            status: "draft",
+            questionnaire: { step: 1, completed: false },
             taxpayer: freshTaxpayer,
             financials: freshFinancials,
-            questionnaire: { step: 1, completed: false },
+            createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },
         },
       };
     });
+    // Fire-and-forget — clearState is itself resilient to no-uid / unconfigured.
+    void clearState();
+  };
+
+  const resetAllData = useCallback(async () => {
+    // Order matters: wipe Firestore first so if the user reloads mid-reset the
+    // prior data is gone, then reset memory so the UI snaps to empty, then
+    // sign out — the AppProvider's `uid` effect will detect the churn and
+    // re-hydrate the empty state on the new anon uid.
+    try {
+      await clearState();
+    } catch (err) {
+      console.warn("[resetAllData] clearState failed:", err);
+    }
+    setState(INITIAL_STATE);
+    try {
+      await authSignOut();
+    } catch (err) {
+      console.warn("[resetAllData] signOut failed:", err);
+    }
+  }, [authSignOut]);
 
   const markDetailsConfirmed = () =>
     setState((s) => ({
@@ -710,6 +747,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         markSourcesSelected,
         markDetailsConfirmed,
         discardCurrentDraft,
+        resetAllData,
         applyMiningResult,
         markFieldUserConfirmed,
         undoFieldMining,
