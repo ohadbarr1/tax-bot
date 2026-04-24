@@ -8,7 +8,9 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "forms:rebuild-maps": "node scripts/build-field-map.mjs --all",
+    "forms:smoke": "node scripts/smoke-generate.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",

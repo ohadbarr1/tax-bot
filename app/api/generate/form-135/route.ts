@@ -1,321 +1,217 @@
 /**
- * POST /api/generate/form-135 — Static PDF Overlay Architecture
+ * POST /api/generate/form-135 — Field-code-mapped PDF overlay
  *
  * ═══════════════════════════════════════════════════════════════════════
- * ARCHITECTURE NOTES
+ * ARCHITECTURE (per 135_1301 generation task.md)
  * ═══════════════════════════════════════════════════════════════════════
  *
- * The official Form 135 (2025) PDF has ZERO AcroForm fields — it is a
- * fully static visual document. The ITA delivers a scanned/vector PDF
- * with no interactive widgets. Therefore:
+ * Form 135 (2025) is a 4-page static PDF with zero AcroForm widgets but
+ * a real text layer. Every input box is anchored by a 3-digit numeric
+ * "field code" printed next to it (158, 042, 272, 012, 274 …). Those codes
+ * are the official Rashut HaMisim (שדה) identifiers and are stable across
+ * tax years.
  *
- *   WRONG: PDFDocument.load(template) → form.getTextField(name)  [no fields]
- *   RIGHT: PDFDocument.load(template) → page.drawText(value, {x,y})
- *
- * Field positions were determined by analysing the raw PDF content streams:
- *   - TT1-font text (numeric labels like "158", "272") was extracted with
- *     their Tm-operator (x,y) positions.
- *   - Data is drawn just to the RIGHT of each label in PDF coordinates
- *     (label is at the bottom-left corner of its input box).
+ * Coordinates are NOT hardcoded here. They come from `templates/maps/
+ * 135_2025.json`, generated once by `scripts/build-field-map.mjs` by
+ * scanning the blank template with pdfjs-dist for 3-digit tokens minus
+ * a denylist of form/section references. Rebuild when templates change.
  *
  * ═══════════════════════════════════════════════════════════════════════
- * FONT STRATEGY
+ * FONT + RTL STRATEGY
  * ═══════════════════════════════════════════════════════════════════════
  *
- * Two fonts are used:
- *   1. Assistant-Regular.ttf  — Hebrew text (names, addresses, labels)
- *      Must be subset:false to embed full glyph set.
- *   2. StandardFonts.Helvetica — Numbers, IDs, amounts
- *      Hebrew-subset fonts lack digits → renders as "1111". Helvetica fixes this.
+ * Two fonts embed:
+ *   1. Assistant-Regular.ttf    → Hebrew text (names, addresses)
+ *   2. StandardFonts.HelveticaBold → Numeric (digits missing from Hebrew subset)
+ *
+ * Hebrew strings pass through `hebrewForPdf()` which pre-reverses glyphs
+ * (pdf-lib runs no BiDi algorithm). Numbers render LTR, right-aligned
+ * inside each value-box to match Israeli form convention.
  *
  * ═══════════════════════════════════════════════════════════════════════
- * RTL STRATEGY
- * ═══════════════════════════════════════════════════════════════════════
- *
- * drawText() in pdf-lib does NOT run the Unicode BiDi algorithm.
- * Hebrew text must be stored in LOGICAL order with a leading U+200F mark.
- * hebrewForPdf() from pdfUtils.ts handles this.
- * Numbers are NEVER reversed.
- *
- * ═══════════════════════════════════════════════════════════════════════
- * CALIBRATION MODE
- * ═══════════════════════════════════════════════════════════════════════
- *
- * Add ?calibrate=1 to the POST body to overlay each field with a label
- * (e.g. "→158") drawn in red so you can visually verify positions.
- *
- * ═══════════════════════════════════════════════════════════════════════
- * FIELD POSITION MAP  (x,y in PDF points; origin = bottom-left of page)
- * ═══════════════════════════════════════════════════════════════════════
- *
- * Confirmed from content-stream analysis (TT1 font Tm operators) — 2025 template:
- *
- *   LABEL           LABEL POS     DATA DRAW POS    NOTES
- *   ─────────────────────────────────────────────────────────────────────
- *   158 (gross)     (221.8,343)   (144.8,346)       main employer gross
- *   068 (tax wthld) (221.8,323.9) (144.8,326.9)     main employer tax
- *   258 (pension)   (221.8,304.9) (144.8,307.9)     pension / comp
- *   272 (severance) (119.0,304.9) ( 40.0,307.9)     taxable severance (2nd col)
- *   060 (cap gain)  (221.8,227.6) (144.8,230.6)     capital gains profit
- *   067 (cap loss)  (221.8,208.5) (144.8,211.5)     capital losses
- *   157 (fgn tax)   (221.8,189.8) (144.8,192.8)     foreign withholding
- *   078 (donations) (221.8,133.7) (144.8,136.7)     Sec 46 donations
- *   126 (life ins)  (221.8,115.0) (144.8,118.0)     Sec 45a life ins
- *   142 (ind pen)   (221.8, 96.2) (144.8, 99.2)     Sec 47 pension
- *   012 (ID)        ( 88.5,450.3) ( 11.5,453.3)     taxpayer ID
- *   013 (spouse ID) (208.5,450.3) (131.5,453.3)     spouse ID
- *   header year     (195, 817)    (193, 820)        tax year (covered+redrawn)
- *
- * Personal-info rows (section ב. פרטים אישיים) — calibrated for 2025 template:
- *   idPersonal (מספר זהות): x=398, y=671  — in ID input box (label at 473,668)
- *   lastName   (שם משפחה):  x=295, y=671  — in name box (label at 340,668)
- *   firstName  (שם פרטי):   x=435, y=647  — in first-name box (label at 478,644)
- *   city/street/house:       y=583         — address input row (between labels@595 and phone@571)
+ * CALIBRATION MODE — pass { "calibrate": true } in the body to overlay a
+ * red `→code` label above each stamped value for visual verification.
  */
 
 import { NextRequest } from "next/server";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import fs from "fs";
 import path from "path";
 import { buildForm135Fields, hebrewForPdf } from "@/lib/pdfUtils";
 import { isValidTZ } from "@/lib/validateTZ";
+import { loadFieldMap, findField, type FieldMap } from "@/lib/fieldMap";
 import type { Form135Payload } from "@/types";
 
-// ─── Asset paths ──────────────────────────────────────────────────────────────
+const FORM_ID       = "135_2025";
+const TEMPLATE_PATH = path.join(process.cwd(), "public/templates/form135_2025.pdf");
+const FONT_TTF      = path.join(process.cwd(), "public/fonts/Assistant-Regular.ttf");
+const FONT_WOFF     = path.join(process.cwd(), "public/fonts/Assistant-Regular.woff2");
 
-const TEMPLATE_PATH = path.join(
-  process.cwd(),
-  "public", "templates", "form135_2025.pdf"
-);
-const FONT_TTF_PATH  = path.join(process.cwd(), "public", "fonts", "Assistant-Regular.ttf");
-const FONT_WOFF_PATH = path.join(process.cwd(), "public", "fonts", "Assistant-Regular.woff2");
+const TEXT_COLOR = rgb(0.05, 0.2, 0.7); // readable navy blue
+const CAL_COLOR  = rgb(0.9, 0, 0);
 
-// ─── Field coordinate map ─────────────────────────────────────────────────────
-//
-// Each entry: { pg: page index (0-based), x, y: text baseline, sz: font size }
-// "heb": true  → render with Hebrew font (Assistant)
-// "heb": false → render with Helvetica (numbers, IDs)
+// ── Draw-list spec: each entry references a field code from the scanned map ──
 
-interface FieldSpec {
-  pg: number;
-  x: number;
-  y: number;
-  sz?: number;
-  heb?: boolean;
-  /** Use bold latin font (HelveticaBold). Ignored when heb:true. Default true for numeric fields. */
-  bold?: boolean;
+interface FieldDraw {
+  key:    string;        // logical name for logs + calibration labels
+  text:   string;        // pre-formatted value (caller applied hebrewForPdf / toLocaleString)
+  code:   string;        // 3-digit code in templates/maps/135_2025.json
+  column?: string | null;
+  size?:  number;
+  heb?:   boolean;
+  /** Align text: "right" (numbers, RTL), "left" (Hebrew text flows naturally). */
+  align?: "right" | "left";
 }
 
-// ─── Field coordinate map ────────────────────────────────────────────────────
-//
-// Font sizing strategy:
-//   • Key income/tax fields (158, 042, 045, capital gains): sz 11, bold
-//   • Secondary numeric fields (deductions, bank):          sz 10, bold
-//   • ID numbers, house number:                             sz  9, bold
-//   • Hebrew text fields (names, city, street):             sz 10, regular (TTF)
-//   • Tax year header overlay:                              sz 10, bold
-
-const F: Record<string, FieldSpec> = {
-  // ── Header ─────────────────────────────────────────────────────────────────
-  // "2025" is printed at (195,817). We cover it with white and redraw the year.
-  taxYear:       { pg: 0, x: 193, y: 820, sz: 10, heb: false, bold: true  },
-
-  // ── Personal details ───────────────────────────────────────────────────────
-  // Bank-section ID fields: label 278 at (88.5,450.3), label 277 at (208.5,450.3).
-  idNumber:      { pg: 0, x: 11.5, y: 453.3, sz:  9, heb: false, bold: true  },
-  spouseId:      { pg: 0, x: 131.5, y: 453.3, sz:  9, heb: false, bold: true  },
-
-  // Section ב. פרטים אישיים — green area, right column ("בן הזוג הרשום").
-  // Calibrated via pdftotext label extraction + overlay verification:
-  //   "מספר זהות" label at (473, 668.4)  → ID input box at x≈398
-  //   "שם משפחה" label at (340, 668.4)   → name input box at x≈295
-  //   "שם פרטי"  label at (478, 643.9)   → first-name box at x≈435
-  //   Address row between address labels (y≈595) and phone row (y≈571)
-  idPersonal:    { pg: 0, x: 398, y: 671, sz:  9, heb: false, bold: true  },
-  firstName:     { pg: 0, x: 435, y: 647, sz:  9, heb: true  },
-  lastName:      { pg: 0, x: 295, y: 671, sz:  9, heb: true  },
-  city:          { pg: 0, x: 490, y: 583, sz:  8, heb: true  },
-  street:        { pg: 0, x: 380, y: 583, sz:  8, heb: true  },
-  houseNumber:   { pg: 0, x: 310, y: 583, sz:  8, heb: false, bold: true  },
-
-  // ── Employment income ─────────────────────────────────────────────────────
-  // Main employer column: right box. Label x≈221.8, data drawn at x=144.8.
-  grossSalary:   { pg: 0, x: 144.8, y: 346.0, sz: 11, heb: false, bold: true  },
-  taxWithheld:   { pg: 0, x: 144.8, y: 326.9, sz: 11, heb: false, bold: true  },
-  pension:       { pg: 0, x: 144.8, y: 307.9, sz: 10, heb: false, bold: true  },
-  // Secondary employer column: left box. Label x≈119.0, data at x=40.0.
-  severance:     { pg: 0, x:  40.0, y: 307.9, sz: 10, heb: false, bold: true  },
-
-  // ── Capital gains & foreign income ────────────────────────────────────────
-  // Same right box column — capital gains rows.
-  capitalGain:   { pg: 0, x: 144.8, y: 230.6, sz: 11, heb: false, bold: true  },
-  capitalLoss:   { pg: 0, x: 144.8, y: 211.5, sz: 11, heb: false, bold: true  },
-  foreignTax:    { pg: 0, x: 144.8, y: 192.8, sz: 10, heb: false, bold: true  },
-
-  // ── Personal deductions ────────────────────────────────────────────────────
-  // Same right box column.
-  donations:     { pg: 0, x: 144.8, y: 136.7, sz: 10, heb: false, bold: true  },
-  lifeInsurance: { pg: 0, x: 144.8, y: 118.0, sz: 10, heb: false, bold: true  },
-  indPension:    { pg: 0, x: 144.8, y:  99.2, sz: 10, heb: false, bold: true  },
-
-  // ── Bank details (bottom section) ─────────────────────────────────────────
-  bankNumber:    { pg: 0, x: 430, y: 50, sz: 10, heb: false, bold: true  },
-  branchNumber:  { pg: 0, x: 310, y: 50, sz: 10, heb: false, bold: true  },
-  accountNumber: { pg: 0, x: 160, y: 50, sz: 10, heb: false, bold: true  },
-};
-
-// ─── Route handler ────────────────────────────────────────────────────────────
+// ── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<Response> {
-
-  // ── Gate ──────────────────────────────────────────────────────────────────
   if (!fs.existsSync(TEMPLATE_PATH)) {
     return Response.json(
-      {
-        error:        "TEMPLATE_MISSING",
-        message:      "form135_2025.pdf not found at public/templates/",
-        instructions: "Download from https://www.gov.il/he/departments/guides/guide-1345",
-      },
-      { status: 503 }
+      { error: "TEMPLATE_MISSING", message: "form135_2025.pdf not found at public/templates/" },
+      { status: 503 },
     );
   }
 
   try {
-    // ── 1. Parse body ────────────────────────────────────────────────────────
     const body = (await req.json()) as Form135Payload & { calibrate?: boolean };
     const { taxpayer, financials } = body;
 
     if (!taxpayer || !financials) {
       return Response.json({ error: "Missing taxpayer or financials" }, { status: 400 });
     }
-
     if (taxpayer.idNumber && !isValidTZ(taxpayer.idNumber)) {
       return Response.json(
         { error: "INVALID_TZ", message: "מספר תעודת זהות לא תקין — ספרת ביקורת שגויה" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const calibrate = !!body.calibrate;
 
-    // ── 2. Load template ──────────────────────────────────────────────────────
-    const templateBytes = fs.readFileSync(TEMPLATE_PATH);
-    const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
-
-    // ── 3. Embed fonts ────────────────────────────────────────────────────────
+    // ── Load template + field map ─────────────────────────────────────────────
+    const map: FieldMap = loadFieldMap(FORM_ID);
+    const pdfDoc = await PDFDocument.load(fs.readFileSync(TEMPLATE_PATH), { ignoreEncryption: true });
     pdfDoc.registerFontkit(fontkit);
 
-    // Hebrew font — prefer TTF (47KB, full glyph set), fall back to woff2.
-    // The woff2 files are ~4KB skeleton subsets — only TTF has all glyphs.
-    const fontPath  = fs.existsSync(FONT_TTF_PATH) ? FONT_TTF_PATH : FONT_WOFF_PATH;
-    const fontBytes = fs.readFileSync(fontPath);
-    const hebrewFont = await pdfDoc.embedFont(fontBytes, { subset: false });
+    const fontPath    = fs.existsSync(FONT_TTF) ? FONT_TTF : FONT_WOFF;
+    const hebrewFont  = await pdfDoc.embedFont(fs.readFileSync(fontPath), { subset: false });
+    const latinBold   = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const latinReg    = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // HelveticaBold for all numeric values — bold digits are easier to read
-    // on the form and avoids "1111" glyph-missing issue from Hebrew subset fonts.
-    const latinBoldFont    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    // Regular Helvetica kept only for calibration labels (sz 6)
-    const latinRegularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    console.log(
+      `[form-135] template=${path.basename(TEMPLATE_PATH)} pages=${pdfDoc.getPageCount()} ` +
+      `map_codes=${Object.keys(map.fields).length} calibrate=${calibrate}`,
+    );
 
-    console.log(`[form-135] Font: ${path.basename(fontPath)} (Hebrew) + HelveticaBold (numeric), pages: ${pdfDoc.getPageCount()}, calibrate: ${calibrate}`);
-
-    // ── 4. Build flat field value map ────────────────────────────────────────
+    // ── Build value set ───────────────────────────────────────────────────────
     const vals = buildForm135Fields(taxpayer, financials);
 
-    // ── 5. Build draw-list ───────────────────────────────────────────────────
-    // { fieldKey, text, spec }
-    const draws: { key: string; text: string; spec: FieldSpec }[] = [
-      // Header
-      { key: "taxYear",       text: vals.taxYear,         spec: F.taxYear       },
+    // Draw-list — each field references the official ITA code. Coordinates
+    // resolve from the auto-generated map at draw time.
+    const draws: FieldDraw[] = [
+      // Personal section (page 2)
+      { key: "idPersonal",  text: vals["012"],                code: "012", size: 10, align: "right" },
+      { key: "firstName",   text: hebrewForPdf(vals["031"]),  code: "031", size: 10, heb: true, align: "left" },
+      { key: "lastName",    text: hebrewForPdf(vals["032"]),  code: "032", size: 10, heb: true, align: "left" },
+      { key: "city",        text: hebrewForPdf(vals["022"]),  code: "022", size: 10, heb: true, align: "left" },
+      { key: "street",      text: hebrewForPdf(vals["023"]),  code: "023", size: 10, heb: true, align: "left" },
+      { key: "houseNumber", text: vals["024"],                code: "024", size: 10, align: "right" },
 
-      // Personal — bank section IDs
-      { key: "idNumber",      text: vals["012"],          spec: F.idNumber      },
-      { key: "spouseId",      text: vals["013"],          spec: F.spouseId      },
-      // Personal — section ב (green area)
-      { key: "idPersonal",    text: vals["012"],          spec: F.idPersonal    },
-      { key: "firstName",     text: hebrewForPdf(vals["031"]),  spec: F.firstName     },
-      { key: "lastName",      text: hebrewForPdf(vals["032"]),  spec: F.lastName      },
-      { key: "city",          text: hebrewForPdf(vals["022"]),  spec: F.city          },
-      { key: "street",        text: hebrewForPdf(vals["023"]),  spec: F.street        },
-      { key: "houseNumber",   text: vals["024"],          spec: F.houseNumber   },
+      // Employment — page 1 (right column = main employer)
+      { key: "grossSalary", text: vals["158"],                code: "158", size: 11, align: "right" },
+      { key: "taxWithheld", text: vals["042"],                code: "068", size: 11, align: "right" },
+      { key: "pension",     text: vals["045"],                code: "258", size: 10, align: "right" },
+      // Severance — left column (2nd employer)
+      { key: "severance",   text: vals["272"],                code: "272", size: 10, align: "right" },
 
-      // Employment
-      { key: "grossSalary",   text: vals["158"],          spec: F.grossSalary   },
-      { key: "taxWithheld",   text: vals["042"],          spec: F.taxWithheld   },
-      { key: "pension",       text: vals["045"],          spec: F.pension       },
-      { key: "severance",     text: vals["272"],          spec: F.severance     },
+      // Capital gains — page 1
+      { key: "capitalGain", text: vals["256"],                code: "060", size: 11, align: "right" },
+      { key: "capitalLoss", text: vals["166"],                code: "067", size: 11, align: "right" },
+      { key: "foreignTax",  text: vals["055"],                code: "157", size: 10, align: "right" },
 
-      // Capital gains
-      { key: "capitalGain",   text: vals["256"],          spec: F.capitalGain   },
-      { key: "capitalLoss",   text: vals["166"],          spec: F.capitalLoss   },
-      { key: "foreignTax",    text: vals["055"],          spec: F.foreignTax    },
+      // Deductions — page 1
+      { key: "donations",     text: vals["037"],              code: "078", size: 10, align: "right" },
+      { key: "lifeInsurance", text: vals["036"],              code: "126", size: 10, align: "right" },
+      { key: "indPension",    text: vals["135"],              code: "142", size: 10, align: "right" },
 
-      // Deductions
-      { key: "donations",     text: vals["037"],          spec: F.donations     },
-      { key: "lifeInsurance", text: vals["036"],          spec: F.lifeInsurance },
-      { key: "indPension",    text: vals["135"],          spec: F.indPension    },
+      // Summary totals (page 2)
+      { key: "taxWithheldSummary", text: vals["042"],         code: "042", size: 10, align: "right" },
+      { key: "pensionSummary",     text: vals["045"],         code: "045", size: 10, align: "right" },
+      { key: "donationsSummary",   text: vals["037"],         code: "037", size: 10, align: "right" },
+      { key: "lifeInsSummary",     text: vals["036"],         code: "036", size: 10, align: "right" },
 
-      // Bank
-      { key: "bankNumber",    text: vals.bank_number,     spec: F.bankNumber    },
-      { key: "branchNumber",  text: vals.branch_number,   spec: F.branchNumber  },
-      { key: "accountNumber", text: vals.account_number,  spec: F.accountNumber },
+      // Bank (page 2)
+      { key: "bankNumber",    text: vals.bank_number,         code: "274", size: 10, align: "right" },
+      { key: "branchNumber",  text: vals.branch_number,       code: "273", size: 10, align: "right" },
+      { key: "accountNumber", text: vals.account_number,      code: "044", size: 10, align: "right" },
     ];
 
-    // ── 6. Draw all fields ───────────────────────────────────────────────────
-    for (const { key, text, spec } of draws) {
-      if (!text || text === "0") continue; // skip empty / zero values
+    const pageHeight = map.page_size.height;
+    const drawn: { key: string; code: string; page: number }[] = [];
+    const missing: string[] = [];
 
-      const page     = pdfDoc.getPage(spec.pg);
-      // Hebrew fields → TTF font. Numeric: bold by default (spec.bold !== false).
-      const font     = spec.heb ? hebrewFont : (spec.bold !== false ? latinBoldFont : latinRegularFont);
-      const fontSize = spec.sz ?? 10;
+    for (const d of draws) {
+      if (!d.text || d.text === "0") continue;
 
-      // For the tax year: cover existing printed year with a white rectangle.
-      // Rectangle is sized to fully erase the pre-printed "2025" (approx 42×14pt).
-      if (key === "taxYear") {
-        page.drawRectangle({
-          x:      191,
-          y:      816,
-          width:  42,
-          height: 14,
-          color:  rgb(1, 1, 1),
-          borderWidth: 0,
-        });
+      const field = findField(map, d.code, d.column);
+      if (!field) {
+        missing.push(`${d.key}(${d.code})`);
+        continue;
+      }
+
+      // pdf-lib page index is 0-based; scanner pages are 1-based
+      const page   = pdfDoc.getPage(field.page - 1);
+      const font: PDFFont = d.heb ? hebrewFont : latinBold;
+      const size   = d.size ?? 10;
+
+      // Convert value_box (top-left origin) → pdf-lib (bottom-left) baseline
+      const yBaseline = pageHeight - field.value_box.y_bottom + 2;
+
+      // Right-align numeric text inside the value box; left-align Hebrew
+      let x = field.value_box.x_left + 2;
+      if ((d.align ?? "right") === "right") {
+        const width = font.widthOfTextAtSize(d.text, size);
+        x = field.value_box.x_right - width - 2;
       }
 
       try {
-        page.drawText(text, {
-          x:     spec.x,
-          y:     spec.y,
-          font,
-          size:  fontSize,
-          color: rgb(0, 0, 0),
-        });
+        page.drawText(d.text, { x, y: yBaseline, font, size, color: TEXT_COLOR });
+        drawn.push({ key: d.key, code: d.code, page: field.page });
       } catch (e) {
-        console.warn(`[form-135] ⚠ field "${key}": ${e instanceof Error ? e.message : e}`);
+        console.warn(`[form-135] field "${d.key}"(${d.code}): ${e instanceof Error ? e.message : e}`);
       }
 
-      // Calibration overlay — draw a small red label to identify each field
       if (calibrate) {
         try {
-          page.drawText(`→${key}`, {
-            x:     spec.x,
-            y:     spec.y + 11,
-            font:  latinRegularFont,
-            size:  6,
-            color: rgb(0.9, 0, 0),
+          page.drawText(`→${d.key}:${d.code}`, {
+            x:    field.value_box.x_left,
+            y:    yBaseline + size + 1,
+            font: latinReg,
+            size: 6,
+            color: CAL_COLOR,
           });
         } catch { /* non-critical */ }
       }
     }
 
-    // ── 7. Serialize and return ────────────────────────────────────────────
+    // ── Tax-year header overlay (not in field-code map — cover + redraw) ──────
+    if (vals.taxYear) {
+      const page1 = pdfDoc.getPage(0);
+      page1.drawRectangle({ x: 191, y: 816, width: 42, height: 14, color: rgb(1, 1, 1), borderWidth: 0 });
+      page1.drawText(vals.taxYear, {
+        x: 193, y: 820, font: latinBold, size: 10, color: TEXT_COLOR,
+      });
+    }
+
+    // ── Serialize ─────────────────────────────────────────────────────────────
     const pdfBytes = await pdfDoc.save();
     const buffer   = Buffer.from(pdfBytes.buffer as ArrayBuffer);
 
     const mode = calibrate ? "calibration" : "final";
-    console.log(`[form-135] ✓ Generated (${mode}) — ${buffer.byteLength} bytes`);
+    console.log(`[form-135] ${mode} ${buffer.byteLength}B — drawn=${drawn.length} missing=${missing.length}`);
+    if (missing.length) console.log(`[form-135] codes not in map: ${missing.join(", ")}`);
 
     return new Response(buffer, {
       status: 200,
@@ -324,7 +220,9 @@ export async function POST(req: NextRequest): Promise<Response> {
         "Content-Disposition": `attachment; filename="form_135_${mode}.pdf"`,
         "Content-Length":      String(buffer.byteLength),
         "Cache-Control":       "no-store",
-        "X-PDF-Mode":          "overlay",
+        "X-PDF-Mode":          "overlay-field-mapped",
+        "X-PDF-Drawn":         String(drawn.length),
+        "X-PDF-Missing":       String(missing.length),
       },
     });
 
@@ -332,7 +230,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     console.error("[form-135] Generation failed:", err);
     return Response.json(
       { error: "PDF_GENERATION_FAILED", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
