@@ -165,7 +165,6 @@ export function withRateLimit<H extends (req: NextRequest, ctx?: unknown) => Pro
 
 interface UserCtx {
   uid: string;
-  [k: string]: unknown;
 }
 
 export function withRateLimitForUser<C extends UserCtx>(

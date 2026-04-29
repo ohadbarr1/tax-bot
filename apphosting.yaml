@@ -50,3 +50,17 @@ env:
   - variable: ANTHROPIC_API_KEY
     secret: ANTHROPIC_API_KEY
     availability: [RUNTIME]
+
+  # ── Upstash Redis (rate limiting, closes audit F-2 / F1.2.1) ─────────────
+  # Stored in Google Cloud Secret Manager. Set via:
+  #   firebase apphosting:secrets:set UPSTASH_REDIS_REST_URL
+  #   firebase apphosting:secrets:set UPSTASH_REDIS_REST_TOKEN
+  # Both are RUNTIME-only — the build step never reads them. When unset,
+  # `lib/api/withRateLimit.ts` falls back to a no-op + warning so dev/test
+  # environments work without provisioning Upstash. See DEPLOY.md.
+  - variable: UPSTASH_REDIS_REST_URL
+    secret: UPSTASH_REDIS_REST_URL
+    availability: [RUNTIME]
+  - variable: UPSTASH_REDIS_REST_TOKEN
+    secret: UPSTASH_REDIS_REST_TOKEN
+    availability: [RUNTIME]

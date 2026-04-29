@@ -72,6 +72,7 @@ describe("Route manifest", () => {
         "/admin/files",
         "/admin/users",
         "/admin/users/[uid]",
+        "/contact",
         "/dashboard",
         "/details",
         "/documents",

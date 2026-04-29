@@ -25,9 +25,15 @@ import type { Form106ParseResponse } from "@/types";
 import path from "path";
 import { extractForm106Fields } from "@/lib/form106Parser";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@/lib/uploadLimits";
+import { withUser } from "@/lib/api/withUser";
+import { withRateLimitForUser } from "@/lib/api/withRateLimit";
+import {
+  Form106UploadMetaSchema,
+  form106ExtensionAccepted,
+} from "@/lib/api/schemas/parse";
 
-// Accepted MIME types
-const ACCEPTED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".tiff", ".tif"];
+// Accepted MIME types now live in lib/api/schemas/parse.ts
+// (form106ExtensionAccepted helper).
 
 // Field extraction lives in `lib/form106Parser.ts` — handles both line-per-
 // field (Phoenix/Hilan) and columnar (university "תוסף 106") layouts and is
@@ -93,11 +99,19 @@ async function runImageOcr(fileBuffer: Buffer): Promise<string> {
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
-export async function POST(
-  request: NextRequest
+async function handle(
+  request: NextRequest,
 ): Promise<NextResponse<Form106ParseResponse>> {
   // 1. Extract file from multipart
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "פורמט הבקשה אינו תקין." },
+      { status: 400 },
+    );
+  }
   const file = formData.get("file") as File | null;
 
   if (!file) {
@@ -110,10 +124,33 @@ export async function POST(
     );
   }
 
-  // 2. Validate extension
-  const fileName = file.name.toLowerCase();
-  const isAccepted = ACCEPTED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
-  if (!isAccepted) {
+  // 2. Validate metadata via Zod (size + name length)
+  const metaParsed = Form106UploadMetaSchema.safeParse({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
+  if (!metaParsed.success) {
+    if (file.size === 0) {
+      return NextResponse.json(
+        { success: false, error: "הקובץ שהועלה ריק. אנא נסה שוב עם קובץ תקין." },
+        { status: 400 },
+      );
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { success: false, error: `הקובץ חורג מהמגבלה של ${MAX_UPLOAD_LABEL}.` },
+        { status: 413 },
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: "מטא-נתוני הקובץ אינם תקינים." },
+      { status: 400 },
+    );
+  }
+
+  // 3. Validate extension
+  if (!form106ExtensionAccepted(file.name)) {
     return NextResponse.json(
       {
         success: false,
@@ -123,19 +160,7 @@ export async function POST(
     );
   }
 
-  // 3. Confirm non-empty and within limit
-  if (file.size === 0) {
-    return NextResponse.json(
-      { success: false, error: "הקובץ שהועלה ריק. אנא נסה שוב עם קובץ תקין." },
-      { status: 400 }
-    );
-  }
-  if (file.size > MAX_UPLOAD_BYTES) {
-    return NextResponse.json(
-      { success: false, error: `הקובץ חורג מהמגבלה של ${MAX_UPLOAD_LABEL}.` },
-      { status: 413 }
-    );
-  }
+  const fileName = file.name.toLowerCase();
 
   // 4. Extract text
   try {
@@ -181,3 +206,8 @@ export async function POST(
     );
   }
 }
+
+// Auth + rate-limit. Closes F-1, F-2, F1.2.3.
+export const POST = withUser(
+  withRateLimitForUser(handle, { prefix: "parse-form-106", limit: 20 }),
+);

@@ -7,7 +7,7 @@
  *   - keys on uid+ip for the authenticated wrapper
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import type { NextRequest } from "next/server";
 
 // Capture the most recent Ratelimit constructor invocation so tests can

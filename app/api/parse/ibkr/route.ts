@@ -34,19 +34,26 @@ import { NextRequest, NextResponse } from "next/server";
 import type { IbkrParseResponse } from "@/types";
 import { parseIbkrCsv } from "@/lib/ibkrParser";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@/lib/uploadLimits";
+import { withUser } from "@/lib/api/withUser";
+import { withRateLimitForUser } from "@/lib/api/withRateLimit";
+import {
+  IbkrUploadMetaSchema,
+  ibkrFileAccepted,
+} from "@/lib/api/schemas/parse";
 
-const ACCEPTED_MIME = [
-  "text/csv",
-  "text/plain",
-  "application/vnd.ms-excel",
-  "application/octet-stream",
-];
-
-export async function POST(
-  request: NextRequest
+async function handle(
+  request: NextRequest,
 ): Promise<NextResponse<IbkrParseResponse>> {
   // ── 1. Extract file ───────────────────────────────────────────────────────
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "פורמט הבקשה אינו תקין." },
+      { status: 400 },
+    );
+  }
   const file = formData.get("file") as File | null;
 
   if (!file) {
@@ -56,22 +63,30 @@ export async function POST(
     );
   }
 
-  // ── 2. Validate file type ─────────────────────────────────────────────────
-  const isCSV =
-    file.name.toLowerCase().endsWith(".csv") ||
-    ACCEPTED_MIME.includes(file.type);
-
-  if (!isCSV) {
+  // ── 2. Validate metadata via Zod (size + name length) ─────────────────────
+  const metaParsed = IbkrUploadMetaSchema.safeParse({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
+  if (!metaParsed.success) {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { success: false, error: `הקובץ חורג מהמגבלה של ${MAX_UPLOAD_LABEL}.` },
+        { status: 413 },
+      );
+    }
     return NextResponse.json(
-      { success: false, error: "סוג קובץ לא נתמך. יש להעלות קובץ CSV מ-Interactive Brokers." },
-      { status: 400 }
+      { success: false, error: "מטא-נתוני הקובץ אינם תקינים." },
+      { status: 400 },
     );
   }
 
-  if (file.size > MAX_UPLOAD_BYTES) {
+  // ── 3. Validate file type ─────────────────────────────────────────────────
+  if (!ibkrFileAccepted(file.name, file.type)) {
     return NextResponse.json(
-      { success: false, error: `הקובץ חורג מהמגבלה של ${MAX_UPLOAD_LABEL}.` },
-      { status: 413 }
+      { success: false, error: "סוג קובץ לא נתמך. יש להעלות קובץ CSV מ-Interactive Brokers." },
+      { status: 400 }
     );
   }
 
@@ -96,3 +111,8 @@ export async function POST(
     },
   });
 }
+
+// Auth + rate-limit. Closes F-1, F-2, F1.2.4.
+export const POST = withUser(
+  withRateLimitForUser(handle, { prefix: "parse-ibkr", limit: 30 }),
+);

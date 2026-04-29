@@ -25,9 +25,18 @@ export interface WithUserContext {
   uid: string;
 }
 
-export type WithUserHandler<C = unknown> = (
+/**
+ * Next.js route handler context shape — `params` is a Promise of the dynamic
+ * route segments (Next 15+ change). We don't introspect it; we forward it so
+ * dynamic-segment routes can `await ctx.params`.
+ */
+export interface NextRouteContext {
+  params?: Promise<unknown>;
+}
+
+export type WithUserHandler = (
   req: NextRequest,
-  ctx: WithUserContext & { params?: C },
+  ctx: WithUserContext & NextRouteContext,
 ) => Promise<Response> | Response;
 
 /**
@@ -66,10 +75,10 @@ export async function verifyBearerOrNull(
  *
  * The wrapped handler MUST be `async` — its return value is awaited.
  */
-export function withUser<C = unknown>(
-  handler: WithUserHandler<C>,
-): (req: NextRequest, ctx?: { params?: C }) => Promise<Response> {
-  return async (req: NextRequest, ctx?: { params?: C }) => {
+export function withUser(
+  handler: WithUserHandler,
+): (req: NextRequest, ctx: NextRouteContext) => Promise<Response> {
+  return async (req: NextRequest, ctx: NextRouteContext) => {
     const decoded = await verifyBearerOrNull(req);
     if (!decoded) return unauthorized();
     return await handler(req, { uid: decoded.uid, params: ctx?.params });

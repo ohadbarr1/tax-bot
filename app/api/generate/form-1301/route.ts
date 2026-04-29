@@ -10,7 +10,7 @@
  * visual verification.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import fs from "fs";
@@ -46,26 +46,36 @@ interface FieldDraw {
   align?:  "right" | "left";
 }
 
-export async function POST(req: NextRequest): Promise<Response> {
+async function handle(req: NextRequest): Promise<Response> {
   if (!fs.existsSync(TEMPLATE_PATH)) {
-    return Response.json(
-      { error: "TEMPLATE_MISSING", message: "form1301_2025.pdf not found at public/templates/" },
-      { status: 503 },
+    return serviceUnavailable(
+      "תבנית הטופס אינה זמינה כרגע.",
+      "TEMPLATE_MISSING",
     );
   }
 
+  let raw: unknown;
   try {
-    const body = (await req.json()) as Form135Payload & { calibrate?: boolean };
-    const { taxpayer, financials } = body;
+    raw = await req.json();
+  } catch {
+    return invalidInput("גוף הבקשה אינו JSON תקין.");
+  }
+  const parsedBody = Form1301PayloadSchema.safeParse(raw);
+  if (!parsedBody.success) {
+    return invalidInputFromZod(parsedBody.error.issues, "פורמט הבקשה אינו תקין.");
+  }
+  const body = parsedBody.data;
 
-    if (!taxpayer || !financials) {
-      return Response.json({ error: "Missing taxpayer or financials" }, { status: 400 });
-    }
+  try {
+    // The Zod schema validates structure + bounds. The output types are a
+    // structural subset of TaxPayer/FinancialData (insights/actionItems are
+    // accepted as `unknown[]` since we don't render their internals in the
+    // PDF), so we cast back to the canonical app types.
+    const taxpayer = body.taxpayer as unknown as import("@/types").TaxPayer;
+    const financials = body.financials as unknown as import("@/types").FinancialData;
+
     if (taxpayer.idNumber && !isValidTZ(taxpayer.idNumber)) {
-      return Response.json(
-        { error: "INVALID_TZ", message: "מספר תעודת זהות לא תקין — ספרת ביקורת שגויה" },
-        { status: 400 },
-      );
+      return invalidInput("מספר תעודת זהות לא תקין — ספרת ביקורת שגויה");
     }
 
     const calibrate = !!body.calibrate;
@@ -75,12 +85,9 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     const pageCount = pdfDoc.getPageCount();
     if (pageCount < 4) {
-      return NextResponse.json(
-        {
-          error: "TEMPLATE_INVALID",
-          detail: `Form 1301 template has ${pageCount} pages (expected 4). Replace public/templates/form1301_2025.pdf.`,
-        },
-        { status: 500 },
+      return internalError(
+        "תבנית הטופס פגומה. צור קשר עם התמיכה.",
+        `Form 1301 template has ${pageCount} pages (expected 4).`,
       );
     }
 
@@ -101,7 +108,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (issues.length > 0) {
       console.warn("[form-1301] page 1/3 deduction mismatch:", issues);
       if (calibrate) {
-        return NextResponse.json({ error: "DEDUCTION_MISMATCH", issues }, { status: 422 });
+        return new Response(
+          JSON.stringify({ error: { code: "DEDUCTION_MISMATCH", message: "אי-התאמה בין סכומי ניכויים בעמוד 1 ובעמוד 3.", details: { issues } } }),
+          { status: 422, headers: { "Content-Type": "application/json; charset=utf-8" } },
+        );
       }
     }
 
@@ -268,9 +278,14 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   } catch (err: unknown) {
     console.error("[form-1301] Generation failed:", err);
-    return Response.json(
-      { error: "PDF_GENERATION_FAILED", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+    return internalError(
+      "יצירת ה-PDF נכשלה. נסה שוב מאוחר יותר.",
+      err instanceof Error ? err.message : String(err),
     );
   }
 }
+
+// Auth + rate-limit gate. Closes F-1, F-2, F1.2.6.
+export const POST = withUser(
+  withRateLimitForUser(handle, { prefix: "generate-form-1301", limit: 30 }),
+);

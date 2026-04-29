@@ -1,6 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import taxData from "@/data/tax_brackets_2024_2025.json";
 import { currentTaxYear } from "@/lib/currentTaxYear";
+import { withUser } from "@/lib/api/withUser";
+import { withRateLimitForUser } from "@/lib/api/withRateLimit";
+import {
+  invalidInput,
+  invalidInputFromZod,
+  internalError,
+} from "@/lib/api/errorEnvelope";
+import { Form161PayloadSchema } from "@/lib/api/schemas/generate";
 
 interface SpreadYear {
   year: number;
@@ -75,14 +83,28 @@ function calculateSeveranceSpreading(
   };
 }
 
-export async function POST(request: Request) {
+async function handle(request: NextRequest): Promise<Response> {
+  let raw: unknown;
   try {
-    const { taxableSeverance, currentYear, spreadYears, currentYearIncome, taxpayerName, idNumber } =
-      await request.json();
+    raw = await request.json();
+  } catch {
+    return invalidInput("גוף הבקשה אינו JSON תקין.");
+  }
 
-    if (!taxableSeverance || taxableSeverance <= 0) {
-      return NextResponse.json({ success: false, error: "taxableSeverance required" }, { status: 400 });
-    }
+  const parsed = Form161PayloadSchema.safeParse(raw);
+  if (!parsed.success) {
+    return invalidInputFromZod(parsed.error.issues, "פורמט הבקשה אינו תקין.");
+  }
+
+  try {
+    const {
+      taxableSeverance,
+      currentYear,
+      spreadYears,
+      currentYearIncome,
+      taxpayerName,
+      idNumber,
+    } = parsed.data;
 
     const years = Math.min(Math.max(1, spreadYears ?? 3), 6);
     const resolvedYear = currentYear ?? currentTaxYear();
@@ -90,7 +112,7 @@ export async function POST(request: Request) {
       taxableSeverance,
       resolvedYear,
       years,
-      currentYearIncome ?? 0
+      currentYearIncome ?? 0,
     );
 
     return NextResponse.json({
@@ -102,12 +124,22 @@ export async function POST(request: Request) {
         taxableSeverance,
         spreadYears: years,
         spreading,
-        recommendation: spreading.savings > 0
-          ? `פריסה על ${years} שנים חוסכת ₪${spreading.savings.toLocaleString("he-IL")} במס`
-          : "פריסה אינה מועילה — שלם כסכום חד-פעמי",
+        recommendation:
+          spreading.savings > 0
+            ? `פריסה על ${years} שנים חוסכת ₪${spreading.savings.toLocaleString("he-IL")} במס`
+            : "פריסה אינה מועילה — שלם כסכום חד-פעמי",
       },
     });
   } catch (err) {
-    return NextResponse.json({ success: false, error: String(err) }, { status: 400 });
+    console.error("[form-161] severance spread failed:", err);
+    return internalError(
+      "חישוב פריסת פיצויים נכשל. נסה שוב מאוחר יותר.",
+      err instanceof Error ? err.message : String(err),
+    );
   }
 }
+
+// Auth + rate-limit gate. Closes F-1, F-2, F1.2.6.
+export const POST = withUser(
+  withRateLimitForUser(handle, { prefix: "generate-form-161", limit: 30 }),
+);

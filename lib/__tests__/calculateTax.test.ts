@@ -2,16 +2,22 @@
  * calculateTax.test.ts
  *
  * Unit tests for the Israeli income tax calculation engine.
- * Verified ground truth (Ohad Bar 2024):
- *   Gross:          ₪376,000 (₪312k + ₪64k)
- *   Bracket tax:    ₪88,903
- *   Credit pts:     4.75 × ₪2,904 = ₪13,794
- *   Ded credits:    ₪525 (donation) + ₪750 (life ins) = ₪1,275
- *   Net tax owed:   ₪73,834
- *   Tax paid:       ₪102,480 (₪72,400 + ₪30,080)
- *   Refund from emp:₪28,646
- *   CG tax (ILS):   ₪477 (net gain ₪2,026 × 25% − ₪30 foreign)
- *   Net refund:     ₪28,169
+ *
+ * Phase 0 §0.C update (2026-04-29) — legacy assertions corrected:
+ *   The pre-Phase-0 version of this file asserted values that contradicted
+ *   the law per audits/tax-domain.md §2.1. The corrected baselines are now:
+ *     • BA degree credit  : 0.5 → 1.0   (F-001, סעיף 40ג(א))
+ *     • PHD degree credit : 1.0 → 1.5   (F-002, סעיף 40ג(ב1))
+ *     • Daycare ages 0-3  : 2.0 → 1.0   (F-010, סעיף 40א)
+ *     • Daycare ages 3-5  : 2.5 → DELETED (F-010 — no statutory basis)
+ *     • Kibbutz 0.25      : DELETED       (F-008 — no statutory basis)
+ *     • Disability points : DELETED → income-exemption helper (F-004, סעיף 9(5))
+ *     • Oleh 42/12/12     : 18/12/12/12   (F-009, סעיף 35)
+ *   See `calculateTax.scenarios.test.ts` for the full Phase-0 finding-ID
+ *   coverage.
+ *
+ * Verified ground truth (Ohad Bar 2024) — kept for documentation only;
+ * the smoke tests below assert structure, not the legacy refund magnitude.
  */
 
 import { describe, it, expect } from "vitest";
@@ -64,7 +70,7 @@ describe("calculateCreditPoints — base", () => {
     expect(points).toBe(3.75);
   });
 
-  it("divorced with children → single parent +1.0 pt", () => {
+  it("divorced with children → single parent +1.0 pt (F-012 retains coverage)", () => {
     const tp = makeTaxpayer({
       maritalStatus: "divorced",
       children: [{ id: "c1", birthDate: "2015-01-01" }],
@@ -106,20 +112,22 @@ describe("calculateCreditPoints — children", () => {
     expect(breakdown["child_c2"]).toBe(1.0);
   });
 
-  it("child age 1-2 in daycare → 2.0 credit", () => {
+  it("child age 1 in daycare → 1.0 credit (F-010 corrected from 2.0)", () => {
     const tp = makeTaxpayer({
       children: [{ id: "c3", birthDate: "2023-01-01", inDaycare: true }], // age 1 in 2024
     });
     const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown["child_c3_daycare_12"]).toBe(2.0);
+    expect(breakdown["child_c3_daycare_03"]).toBe(1.0);
   });
 
-  it("child age 3-5 in daycare → 2.5 credit", () => {
+  it("child age 4 in daycare → no daycare credit (F-010: ages 3-5 removed)", () => {
     const tp = makeTaxpayer({
       children: [{ id: "c4", birthDate: "2020-06-01", inDaycare: true }], // age 4 in 2024
     });
     const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown["child_c4_daycare_35"]).toBe(2.5);
+    expect(breakdown["child_c4_daycare_35"]).toBeUndefined();
+    // Falls back to standard under-18 credit:
+    expect(breakdown["child_c4"]).toBe(1.0);
   });
 
   it("child age 18+ → no credit", () => {
@@ -128,12 +136,12 @@ describe("calculateCreditPoints — children", () => {
     expect(points).toBe(2.25); // resident only
   });
 
-  it("child without inDaycare at age 1-2 → 1.0 regular credit (not daycare)", () => {
+  it("child without inDaycare at age 1 → 1.0 regular credit (not daycare)", () => {
     const tp = makeTaxpayer({
       children: [{ id: "c6", birthDate: "2023-01-01", inDaycare: false }],
     });
     const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown["child_c6_daycare_12"]).toBeUndefined();
+    expect(breakdown["child_c6_daycare_03"]).toBeUndefined();
     expect(breakdown["child_c6"]).toBe(1.0);
   });
 });
@@ -141,12 +149,12 @@ describe("calculateCreditPoints — children", () => {
 // ─── 3. calculateCreditPoints — degrees ───────────────────────────────────────
 
 describe("calculateCreditPoints — degrees", () => {
-  it("BA completed year-1 → 0.5 credit (strict 1-year window)", () => {
+  it("BA completed year-1 → 1.0 credit (F-001 corrected from 0.5)", () => {
     const tp = makeTaxpayer({
       degrees: [{ type: "BA", institution: "TAU", completionYear: 2023 }],
     });
     const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown["degree_ba_TAU"]).toBe(0.5);
+    expect(breakdown["degree_ba_TAU"]).toBe(1.0);
   });
 
   it("BA completed year-2 → no credit (window expired)", () => {
@@ -157,7 +165,7 @@ describe("calculateCreditPoints — degrees", () => {
     expect(breakdown["degree_ba_TAU"]).toBeUndefined();
   });
 
-  it("MA completed year-1 → 0.5 credit (1-year window only)", () => {
+  it("MA generic completed year-1 → 0.5 credit (1-year window only)", () => {
     const tp = makeTaxpayer({
       degrees: [{ type: "MA", institution: "BGU", completionYear: 2023 }],
     });
@@ -181,12 +189,12 @@ describe("calculateCreditPoints — degrees", () => {
     expect(breakdown.degree_ma).toBeUndefined();
   });
 
-  it("PHD completed year-1 → 1.0 credit", () => {
+  it("PHD completed year-1 → 1.5 credit (F-002 corrected from 1.0)", () => {
     const tp = makeTaxpayer({
       degrees: [{ type: "PHD", institution: "Weizmann", completionYear: 2023 }],
     });
     const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown.degree_phd).toBe(1.0);
+    expect(breakdown.degree_phd).toBe(1.5);
   });
 
   it("PHD completed year-2 → no credit (strict window)", () => {
@@ -200,60 +208,64 @@ describe("calculateCreditPoints — degrees", () => {
 
 // ─── 4. calculateCreditPoints — soldier discharge ─────────────────────────────
 
-describe("calculateCreditPoints — soldier discharge", () => {
-  it("male discharged 1 year ago → 2.0 pts", () => {
+describe("calculateCreditPoints — soldier discharge (F-011 pro-rata)", () => {
+  it("male, default service, year-1 post-discharge → 2.0 pts", () => {
     const tp = makeTaxpayer({ dischargeYear: 2023, gender: "male" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.soldier_discharge).toBe(2.0);
   });
 
-  it("female discharged 1 year ago → 1.75 pts", () => {
+  it("female, default service, year-1 post-discharge → 2.0 pts (F-011 unisex)", () => {
+    // F-011 — pro-rata is gender-blind (1/12 nq per service month). The
+    // pre-Phase-0 1.75-pt female asymmetry was a fabrication (no statutory basis).
     const tp = makeTaxpayer({ dischargeYear: 2023, gender: "female" });
-    const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown.soldier_discharge).toBe(1.75);
-  });
-
-  it("discharged exactly 3 years ago → still eligible", () => {
-    const tp = makeTaxpayer({ dischargeYear: 2021, gender: "male" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.soldier_discharge).toBe(2.0);
   });
 
-  it("discharged 4 years ago → no credit", () => {
+  it("year-2 post-discharge → still eligible at 2.0 pts", () => {
+    const tp = makeTaxpayer({ dischargeYear: 2022, gender: "male" });
+    const { breakdown } = calculateCreditPoints(tp, 2024);
+    expect(breakdown.soldier_discharge).toBe(2.0);
+  });
+
+  it("year-3 post-discharge → no credit (F-011 cap)", () => {
+    const tp = makeTaxpayer({ dischargeYear: 2021, gender: "male" });
+    const { breakdown } = calculateCreditPoints(tp, 2024);
+    expect(breakdown.soldier_discharge).toBeUndefined();
+  });
+
+  it("discharged 4+ years ago → no credit", () => {
     const tp = makeTaxpayer({ dischargeYear: 2020, gender: "male" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.soldier_discharge).toBeUndefined();
   });
 });
 
-// ─── 5. calculateCreditPoints — oleh chadash ──────────────────────────────────
+// ─── 5. calculateCreditPoints — oleh chadash (F-009: 18/12/12/12) ─────────────
 
-describe("calculateCreditPoints — oleh chadash", () => {
-  it("aliyah < 42 months ago → 3.0 pts", () => {
-    // Tax year 2024 starts 2024-01-01. Aliyah 12 months before = 2023-01-01
-    const tp = makeTaxpayer({ aliyahDate: "2023-01-01" });
+describe("calculateCreditPoints — oleh chadash (F-009 corrected band)", () => {
+  it("aliyah within 18 months → 3.0 pts", () => {
+    // Tax year end 2024-12-31. Aliyah 6 months earlier = 2024-06-01.
+    const tp = makeTaxpayer({ aliyahDate: "2024-06-01" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.oleh_chadash_3pts).toBe(3.0);
   });
 
-  it("aliyah ~48 months ago → 2.0 pts (months 43-54)", () => {
-    // ITA evaluates at Dec 31, 2024.
-    // Dec 2020 → Dec 2024 = 48 months → bracket 43-54 → 2 pts
-    const tp = makeTaxpayer({ aliyahDate: "2020-12-01" });
+  it("aliyah ~24 months ago → 2.0 pts (months 19-30 window)", () => {
+    const tp = makeTaxpayer({ aliyahDate: "2023-01-01" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.oleh_chadash_2pts).toBe(2.0);
   });
 
-  it("aliyah ~60 months ago → 1.0 pt (months 55-66)", () => {
-    // ITA evaluates at Dec 31, 2024.
-    // Aug 2019 → Dec 2024 ≈ 64 months → bracket 55-66 → 1 pt
-    const tp = makeTaxpayer({ aliyahDate: "2019-08-01" });
+  it("aliyah ~36 months ago → 1.0 pt (months 31-42 window)", () => {
+    const tp = makeTaxpayer({ aliyahDate: "2022-01-01" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.oleh_chadash_1pt).toBe(1.0);
   });
 
-  it("aliyah > 66 months ago → 0 pts (expired)", () => {
-    const tp = makeTaxpayer({ aliyahDate: "2017-01-01" }); // ~84 months
+  it("aliyah > 42 months ago → 0 pts (corrected: was 42-66 in legacy)", () => {
+    const tp = makeTaxpayer({ aliyahDate: "2017-01-01" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.oleh_chadash_3pts).toBeUndefined();
     expect(breakdown.oleh_chadash_2pts).toBeUndefined();
@@ -261,37 +273,26 @@ describe("calculateCreditPoints — oleh chadash", () => {
   });
 });
 
-// ─── 6. calculateCreditPoints — periphery, kibbutz, disability ────────────────
+// ─── 6. calculateCreditPoints — disability / kibbutz / periphery (F-004/7/8) ──
 
-describe("calculateCreditPoints — periphery / kibbutz / disability", () => {
-  it("kibbutz member → +0.25 pts", () => {
+describe("calculateCreditPoints — disability / kibbutz / periphery (post-Phase-0)", () => {
+  it("kibbutz member → no credit (F-008 deleted — no statutory basis)", () => {
     const tp = makeTaxpayer({ kibbutzMember: true });
-    const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown.kibbutz).toBe(0.25);
+    const { breakdown, points } = calculateCreditPoints(tp, 2024);
+    expect(breakdown.kibbutz).toBeUndefined();
+    expect(points).toBe(2.25);
   });
 
-  it("disability 90%+ → 2.0 pts", () => {
+  it("disability is no longer a credit-points entry (F-004 → income exemption)", () => {
     const tp = makeTaxpayer({ disabilityType: "general", disabilityPercent: 90 });
     const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown.disability).toBe(2.0);
-  });
-
-  it("disability 50-89% → 1.0 pt", () => {
-    const tp = makeTaxpayer({ disabilityType: "general", disabilityPercent: 65 });
-    const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown.disability).toBe(1.0);
-  });
-
-  it("disability 20-49% → 0.5 pt", () => {
-    const tp = makeTaxpayer({ disabilityType: "general", disabilityPercent: 35 });
-    const { breakdown } = calculateCreditPoints(tp, 2024);
-    expect(breakdown.disability).toBe(0.5);
-  });
-
-  it("disability < 20% → no credit", () => {
-    const tp = makeTaxpayer({ disabilityType: "general", disabilityPercent: 15 });
-    const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.disability).toBeUndefined();
+  });
+
+  it("periphery is no longer a credit-points entry (F-007 → tax-discount)", () => {
+    const tp = makeTaxpayer({ postcode: "86100" }); // דימונה
+    const { breakdown } = calculateCreditPoints(tp, 2024);
+    expect(breakdown.periphery).toBeUndefined();
   });
 
   it("unknown postcode → no periphery credit", () => {
@@ -322,7 +323,7 @@ describe("calculateDeductionCredits", () => {
 
   it("donation capped at 30% of income", () => {
     const grossIncome = 100_000;
-    const largeDonation = 50_000; // exceeds 30% cap
+    const largeDonation = 50_000;
     const deds: PersonalDeduction[] = [
       { id: "d1", type: "donation_sec46", amount: largeDonation, providerName: "עמותה" },
     ];
@@ -334,7 +335,6 @@ describe("calculateDeductionCredits", () => {
     const deds: PersonalDeduction[] = [
       { id: "d1", type: "donation_sec46", amount: 210, providerName: "עמותה" },
     ];
-    // 210 >= 207 (2024) → credit; 210 < 214 (2025) → no credit
     const { total: t2024 } = calculateDeductionCredits(deds, 100_000, 2024);
     const { total: t2025 } = calculateDeductionCredits(deds, 100_000, 2025);
     expect(t2024).toBeGreaterThan(0);
@@ -346,7 +346,7 @@ describe("calculateDeductionCredits", () => {
       { id: "li", type: "life_insurance_sec45a", amount: 4_000, providerName: "הראל" },
     ];
     const { total } = calculateDeductionCredits(deds, 200_000, 2024);
-    expect(total).toBe(Math.round(4_000 * 0.25)); // 1000
+    expect(total).toBe(Math.round(4_000 * 0.25));
   });
 
   it("LTC insurance → 25% credit", () => {
@@ -354,7 +354,7 @@ describe("calculateDeductionCredits", () => {
       { id: "ltc", type: "ltc_insurance_sec45a", amount: 2_400, providerName: "מגדל" },
     ];
     const { total } = calculateDeductionCredits(deds, 200_000, 2024);
-    expect(total).toBe(Math.round(2_400 * 0.25)); // 600
+    expect(total).toBe(Math.round(2_400 * 0.25));
   });
 
   it("pension_sec47 capped at ₪10,000", () => {
@@ -362,18 +362,18 @@ describe("calculateDeductionCredits", () => {
       { id: "p1", type: "pension_sec47", amount: 20_000, providerName: "כלל" },
     ];
     const { total } = calculateDeductionCredits(deds, 200_000, 2024);
-    expect(total).toBe(Math.round(10_000 * 0.35)); // 3500
+    expect(total).toBe(Math.round(10_000 * 0.35));
   });
 
   it("self_employed_pension_sec47 → 35% credit up to 16% of income cap", () => {
     const grossIncome = 200_000;
-    const deposit = 40_000; // exceeds 16% = 32,000
+    const deposit = 40_000;
     const deds: PersonalDeduction[] = [
       { id: "sep", type: "self_employed_pension_sec47", amount: deposit, providerName: "מנורה" },
     ];
     const { total } = calculateDeductionCredits(deds, grossIncome, 2024);
-    const expectedCap = Math.round(grossIncome * 0.16); // 32000
-    expect(total).toBe(Math.round(expectedCap * 0.35)); // 11200
+    const expectedCap = Math.round(grossIncome * 0.16);
+    expect(total).toBe(Math.round(expectedCap * 0.35));
   });
 
   it("disabled child → 35% credit capped at ₪35,000 expenses", () => {
@@ -381,7 +381,7 @@ describe("calculateDeductionCredits", () => {
       { id: "dc", type: "disabled_child_sec45", amount: 50_000, providerName: "טיפול" },
     ];
     const { total } = calculateDeductionCredits(deds, 200_000, 2024);
-    expect(total).toBe(Math.round(35_000 * 0.35)); // 12250
+    expect(total).toBe(Math.round(35_000 * 0.35));
   });
 
   it("study fund → 35% credit on declared amount", () => {
@@ -389,7 +389,7 @@ describe("calculateDeductionCredits", () => {
       { id: "sf", type: "study_fund_sec3e3", amount: 5_000, providerName: "קרן השתלמות" },
     ];
     const { total } = calculateDeductionCredits(deds, 200_000, 2024);
-    expect(total).toBe(Math.round(5_000 * 0.35)); // 1750
+    expect(total).toBe(Math.round(5_000 * 0.35));
   });
 
   it("alimony_sec9a is skipped (income deduction, not credit)", () => {
@@ -410,20 +410,22 @@ describe("calculateDeductionCredits", () => {
 // ─── 8. calculateIncomeDeductions ────────────────────────────────────────────
 
 describe("calculateIncomeDeductions", () => {
-  it("alimony returns full amount as income deduction", () => {
+  it("alimony returns full amount (default 100% spouse-portion + warning)", () => {
     const deds: PersonalDeduction[] = [
       { id: "al", type: "alimony_sec9a", amount: 36_000, providerName: "גרוש" },
     ];
-    const result = calculateIncomeDeductions(deds);
-    expect(result).toBe(36_000);
+    const { total, warnings } = calculateIncomeDeductions(deds, 200_000);
+    expect(total).toBe(36_000);
+    // F-006: when spousePortion is unspecified, the engine emits a warning.
+    expect(warnings.length).toBeGreaterThan(0);
   });
 
   it("non-alimony deductions return 0 income deduction", () => {
     const deds: PersonalDeduction[] = [
       { id: "li", type: "life_insurance_sec45a", amount: 4_000, providerName: "הראל" },
     ];
-    const result = calculateIncomeDeductions(deds);
-    expect(result).toBe(0);
+    const { total } = calculateIncomeDeductions(deds, 200_000);
+    expect(total).toBe(0);
   });
 
   it("multiple alimony entries sum correctly", () => {
@@ -431,8 +433,8 @@ describe("calculateIncomeDeductions", () => {
       { id: "al1", type: "alimony_sec9a", amount: 12_000, providerName: "גרוש 1" },
       { id: "al2", type: "alimony_sec9a", amount: 18_000, providerName: "גרוש 2" },
     ];
-    const result = calculateIncomeDeductions(deds);
-    expect(result).toBe(30_000);
+    const { total } = calculateIncomeDeductions(deds, 200_000);
+    expect(total).toBe(30_000);
   });
 });
 
@@ -487,7 +489,7 @@ describe("calculateFullRefund", () => {
       },
     });
     const result = calculateFullRefund(tp, 2024);
-    expect(result.capitalGainsTax).toBe(Math.round(100_000 * 0.25)); // 25000
+    expect(result.capitalGainsTax).toBe(Math.round(100_000 * 0.25));
   });
 
   it("foreign tax credit reduces capital gains tax", () => {
@@ -499,6 +501,6 @@ describe("calculateFullRefund", () => {
       },
     });
     const result = calculateFullRefund(tp, 2024);
-    expect(result.capitalGainsTax).toBe(25_000 - 5_000); // 20000
+    expect(result.capitalGainsTax).toBe(25_000 - 5_000);
   });
 });

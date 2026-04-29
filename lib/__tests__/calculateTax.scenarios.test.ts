@@ -247,7 +247,9 @@ describe("F-007 Periphery percentage-discount model (צו 2023)", () => {
     expect(breakdown.periphery).toBeUndefined();
   });
 
-  it("calculateFullRefund applies periphery discount as tax reduction (Dimona resident, ₪200k)", () => {
+  it("calculateFullRefund applies periphery discount as tax reduction (Dimona, ₪400k)", () => {
+    // Use a high enough income so the discount is not truncated by the
+    // netTaxOwed floor — i.e. calculatedTax > creditPoints + discount.
     const tp = makeTaxpayer({
       employers: [
         {
@@ -255,8 +257,8 @@ describe("F-007 Periphery percentage-discount model (צו 2023)", () => {
           name: "מעסיק",
           isMainEmployer: true,
           monthsWorked: 12,
-          grossSalary: 200_000,
-          taxWithheld: 50_000,
+          grossSalary: 400_000,
+          taxWithheld: 100_000,
         },
       ],
       postcode: "86100", // Dimona, tier 1 = 13%
@@ -268,17 +270,17 @@ describe("F-007 Periphery percentage-discount model (צו 2023)", () => {
           name: "מעסיק",
           isMainEmployer: true,
           monthsWorked: 12,
-          grossSalary: 200_000,
-          taxWithheld: 50_000,
+          grossSalary: 400_000,
+          taxWithheld: 100_000,
         },
       ],
     });
     const r = calculateFullRefund(tp, 2025);
     const rBase = calculateFullRefund(tpNoPeriphery, 2025);
-    // Discount must be roughly 13% × 200,000 = ₪26,000.
-    const expectedDiscount = Math.round(200_000 * 0.13);
-    expect(rBase.netTaxOwed - r.netTaxOwed).toBeGreaterThanOrEqual(expectedDiscount - 5);
-    expect(rBase.netTaxOwed - r.netTaxOwed).toBeLessThanOrEqual(expectedDiscount + 5);
+    // Discount = 13% × min(400,000, 241,920) = 13% × 241,920 = ₪31,450.
+    const expectedDiscount = Math.round(241_920 * 0.13);
+    expect(rBase.netTaxOwed - r.netTaxOwed).toBe(expectedDiscount);
+    expect(r.peripheryDiscount).toBe(expectedDiscount);
   });
 });
 
@@ -369,14 +371,22 @@ describe("F-011 Military service = pro-rata 1/12 per month, capped 2 yrs (הור
     expect(breakdown.soldier_discharge).toBeCloseTo(0.5, 1);
   });
 
-  it("18-month service → 1.5 pts (1/12 × 18 = 1.5, capped at 2.0)", () => {
+  it("18-month service ≥ 12 mo → 2.0 pts (full eligibility, capped at 2.0)", () => {
+    // הוראת ביצוע 32/2014 — ≥ 12 חודש = 2.0 נק' מלאות; < 12 חודש = פרופורציה.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tp = makeTaxpayer({ dischargeYear: 2024, gender: "male", serviceMonths: 18 } as any);
     const { breakdown } = calculateCreditPoints(tp, 2025);
-    expect(breakdown.soldier_discharge).toBeCloseTo(1.5, 1);
+    expect(breakdown.soldier_discharge).toBe(2.0);
   });
 
-  it("3rd year post-discharge → no credit (cap is 2 years)", () => {
+  it("year-2 post-discharge → 2.0 pts (still eligible)", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tp = makeTaxpayer({ dischargeYear: 2023, gender: "male", serviceMonths: 24 } as any);
+    const { breakdown } = calculateCreditPoints(tp, 2025);
+    expect(breakdown.soldier_discharge).toBe(2.0);
+  });
+
+  it("year-3 post-discharge → no credit (cap is 2 years)", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tp = makeTaxpayer({ dischargeYear: 2022, gender: "male", serviceMonths: 24 } as any);
     const { breakdown } = calculateCreditPoints(tp, 2025);

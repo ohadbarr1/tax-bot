@@ -95,7 +95,11 @@ async function handle(req: NextRequest): Promise<Response> {
   const body = parsed.data;
 
   try {
-    const { taxpayer, financials } = body;
+    // Zod's parsed output is a structural subset of the app types
+    // (insights/actionItems are accepted as `unknown[]` since the PDF doesn't
+    // render their internals). Cast back to the canonical types.
+    const taxpayer = body.taxpayer as unknown as import("@/types").TaxPayer;
+    const financials = body.financials as unknown as import("@/types").FinancialData;
 
     if (taxpayer.idNumber && !isValidTZ(taxpayer.idNumber)) {
       return invalidInput("מספר תעודת זהות לא תקין — ספרת ביקורת שגויה");

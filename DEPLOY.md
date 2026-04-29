@@ -60,6 +60,26 @@ Then uncomment the secret block at the bottom of `apphosting.yaml`:
     availability: [RUNTIME]
 ```
 
+## 4b. Provision Upstash Redis for rate limiting (closes audit F-2 / F1.2.1)
+
+Every authenticated API route (`/api/advisor*`, `/api/parse/*`, `/api/generate/*`,
+`/api/mine/document`) is rate-limited per `uid + ip` via Upstash Redis. Without
+the env vars below, `lib/api/withRateLimit.ts` falls back to a no-op + warning
+(so dev/test still work). **Production must provision both.**
+
+1. Create a database at [console.upstash.com/redis](https://console.upstash.com/redis)
+   (the free tier covers tens of thousands of requests / day).
+2. Copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` from the
+   "REST API" tab.
+3. Store both as Firebase App Hosting secrets:
+
+   ```bash
+   firebase apphosting:secrets:set UPSTASH_REDIS_REST_URL
+   firebase apphosting:secrets:set UPSTASH_REDIS_REST_TOKEN
+   ```
+
+The secret block is already wired up in `apphosting.yaml` (RUNTIME-only).
+
 ## 5. Link GitHub and deploy
 
 In the Firebase Console → **App Hosting** → **Create backend**:
