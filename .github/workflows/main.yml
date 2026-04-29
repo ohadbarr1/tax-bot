@@ -108,12 +108,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: next-build
-          # upload-artifact@v4 requires explicit globs to recurse; bare
-          # `.next/` finds zero files even when the dir is populated.
+          # upload-artifact@v4 needs explicit globs to recurse, AND
+          # include-hidden-files:true because `.next/` is dot-prefixed
+          # (default treats it as hidden and skips silently).
           path: |
             .next/**
             !.next/cache/**
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 1
 
   # ---- 5. Calibration smoke (PDF generation regression catcher) ------------
