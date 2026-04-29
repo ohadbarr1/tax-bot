@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { currentTaxYear } from "@/lib/currentTaxYear";
+import { clientFetch, ClientFetchUnauthenticatedError } from "@/lib/api/clientFetch";
 import type { AdvisorNudge, AdvisorNudgeAction, AdvisorNudgeListResponse } from "@/lib/advisorNudge";
 import type { PersonalDeduction, TaxInsight } from "@/types";
 
@@ -59,7 +60,7 @@ export function AdvisorNudgeRail() {
   const fetchNudges = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/advisor/nudges", {
+      const res = await clientFetch("/api/advisor/nudges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,8 +76,13 @@ export function AdvisorNudgeRail() {
       const data = (await res.json()) as AdvisorNudgeListResponse;
       setRemoteNudges(Array.isArray(data.nudges) ? data.nudges : []);
     } catch (err) {
-      console.warn("[AdvisorNudgeRail] fetch failed:", err);
-      setRemoteNudges([]);
+      if (err instanceof ClientFetchUnauthenticatedError) {
+        // Anon-sign-in still pending or signed out — quietly skip nudges.
+        setRemoteNudges([]);
+      } else {
+        console.warn("[AdvisorNudgeRail] fetch failed:", err);
+        setRemoteNudges([]);
+      }
     } finally {
       setLoading(false);
     }

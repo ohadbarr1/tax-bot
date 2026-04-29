@@ -19,6 +19,11 @@
 
 import { getApps, initializeApp, type FirebaseApp, type FirebaseOptions } from "firebase/app";
 import {
+  initializeAppCheck,
+  ReCaptchaV3Provider,
+  type AppCheck,
+} from "firebase/app-check";
+import {
   initializeAuth,
   getAuth,
   browserPopupRedirectResolver,
@@ -61,7 +66,66 @@ function getFirebaseApp(): FirebaseApp | null {
   if (!isFirebaseConfigured()) return null;
   if (_app) return _app;
   _app = getApps()[0] ?? initializeApp(firebaseConfig);
+  // Init App Check exactly once per app — see initAppCheck() below for the
+  // reCAPTCHA-v3 + debug-token rationale.
+  initAppCheck(_app);
   return _app;
+}
+
+// ─── Firebase App Check (security-F1.1.4 / F1.3.2) ───────────────────────────
+//
+// App Check attests every Firebase backend call (Auth, Firestore, Storage,
+// Functions) as coming from a real instance of THIS web app, not a `curl`
+// from someone's laptop. We use the reCAPTCHA v3 provider (free tier — the
+// Enterprise variant is paid). The site key is public-by-design (it's
+// embedded in the page anyway) and lives in `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`.
+//
+// Local dev / Firebase emulator path:
+//   set `window.FIREBASE_APPCHECK_DEBUG_TOKEN = true` BEFORE this module
+//   loads (we wire that via a `<script>` in dev only). The Firebase SDK then
+//   issues a debug token, prints it to console once, and you whitelist it
+//   in Firebase Console → App Check → Debug tokens. See DEPLOY.md.
+//
+// We tolerate missing env: when `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` is unset,
+// we skip App Check init and emit a single console warning so dev doesn't
+// hard-break. Production CI must set the env.
+
+let _appCheck: AppCheck | null = null;
+function initAppCheck(app: FirebaseApp): void {
+  if (_appCheck) return;
+  if (typeof window === "undefined") return;
+
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  if (!siteKey) {
+    if (typeof console !== "undefined") {
+      console.warn(
+        "[firebase] NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set — App Check is DISABLED. " +
+          "See DEPLOY.md §App Check setup.",
+      );
+    }
+    return;
+  }
+
+  try {
+    _appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      // Auto-refresh the App Check token a few minutes before expiry so the
+      // first call after a long idle does not pay the reCAPTCHA round-trip.
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (err) {
+    // Initializing twice (e.g. HMR re-runs the module) throws — swallow that
+    // silently. Anything else is logged for diagnostics.
+    const code = (err as { code?: string } | null)?.code;
+    if (code !== "appCheck/already-initialized") {
+      console.warn("[firebase] initializeAppCheck failed:", err);
+    }
+  }
+}
+
+/** Exposed for testing / forced re-init scenarios. May return null in SSR. */
+export function getClientAppCheck(): AppCheck | null {
+  return _appCheck;
 }
 
 // HMR-safe auth cache. `initializeAuth` throws `auth/already-initialized`

@@ -3,6 +3,7 @@ import { Heebo, Inter_Tight, Rubik, Figtree } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { WebVitals } from "@/components/WebVitals";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -46,6 +47,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background">
+        {/* Closes performance §1.6 — Web Vitals reporter (LCP/INP/CLS/FCP/TTFB)
+            beacons to /api/_metrics. Renders nothing; pure side-effect. */}
+        <WebVitals />
         <ThemeProvider>
           <ErrorBoundary>{children}</ErrorBoundary>
         </ThemeProvider>

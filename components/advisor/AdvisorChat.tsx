@@ -4,6 +4,7 @@ import { Bot, X, Send, Minimize2 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { currentTaxYear } from "@/lib/currentTaxYear";
 import { cn } from "@/lib/utils";
+import { clientFetch } from "@/lib/api/clientFetch";
 
 interface ChatMessage {
   id: string;
@@ -61,7 +62,7 @@ export function AdvisorChat() {
       abortRef.current = new AbortController();
 
       try {
-        const res = await fetch("/api/advisor", {
+        const res = await clientFetch("/api/advisor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: abortRef.current.signal,

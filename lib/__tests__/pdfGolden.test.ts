@@ -67,10 +67,15 @@ const sampleFinancials: FinancialData = {
 describe("PDF golden field snapshots", () => {
   it("Form 135 field output is stable", () => {
     const f = buildForm135Fields(sampleTaxpayer, sampleFinancials);
-    expect(f).toMatchInlineSnapshot(`
+    // Strip dynamic fields (date-dependent) before snapshotting.
+    const stable = { ...f };
+    delete (stable as { signatureDate?: string }).signatureDate;
+    expect(stable).toMatchInlineSnapshot(`
       {
         "012": "123456789",
         "013": "987654321",
+        "014": "כן",
+        "020": "נשוי/נשואה",
         "022": "תל אביב",
         "023": "דיזנגוף",
         "024": "100",
@@ -81,21 +86,31 @@ describe("PDF golden field snapshots", () => {
         "042": "108,000",
         "045": "36,600",
         "055": "1,500",
+        "069": "12,000",
+        "086": "",
+        "117": "12,000",
+        "124": "",
         "135": "7,200",
         "158": "540,000",
         "166": "8,000",
+        "245": "",
         "256": "50,000",
         "272": "0",
         "account_number": "456789",
+        "aliyahDate": "",
         "bank_name": "הפועלים",
         "bank_number": "12",
         "branch_number": "123",
         "carriedForwardLoss": "0",
+        "declarationMark": "X",
         "estimatedRefund": "18,000",
         "foreignSourceCountry": "",
         "maritalStatusLabel": "נשוי/נשואה",
         "pensionFundId": "",
         "pensionFundName": "",
+        "peripheryFlag": "",
+        "signatureName": "אוהד בר",
+        "spouseCreditPoints": "",
         "spouseGrossSalary": "0",
         "taxYear": "2024",
       }
@@ -104,10 +119,15 @@ describe("PDF golden field snapshots", () => {
 
   it("Form 1301 field output is stable", () => {
     const f = buildForm1301Fields(sampleTaxpayer, sampleFinancials);
-    expect(f).toMatchInlineSnapshot(`
+    // Strip dynamic fields (date-dependent) before snapshotting.
+    const stable = { ...f };
+    delete (stable as { signatureDate?: string }).signatureDate;
+    expect(stable).toMatchInlineSnapshot(`
       {
         "012": "123456789",
         "013": "987654321",
+        "014": "כן",
+        "020": "נשוי/נשואה",
         "022": "תל אביב",
         "023": "דיזנגוף",
         "024": "100",
@@ -127,8 +147,12 @@ describe("PDF golden field snapshots", () => {
         "060": "50,000",
         "067": "8,000",
         "068_main": "96,000",
+        "069": "12,000",
         "069_2nd": "12,000",
         "078": "5,000",
+        "086": "",
+        "117": "12,000",
+        "124": "",
         "126": "2,400",
         "135": "7,200",
         "141": "12,000",
@@ -140,6 +164,7 @@ describe("PDF golden field snapshots", () => {
         "172_2nd": "60,000",
         "201": "0",
         "211": "0",
+        "245": "",
         "256": "50,000",
         "258_main": "33,600",
         "272": "0",
@@ -148,28 +173,33 @@ describe("PDF golden field snapshots", () => {
         "301": "0",
         "335": "14,600",
         "account_number": "456789",
+        "aliyahDate": "",
         "bank_name": "הפועלים",
         "bank_number": "12",
         "branch_number": "123",
         "carriedForwardLoss": "0",
+        "declarationMark": "X",
         "estimatedRefund": "18,000",
         "foreignSourceCountry": "",
         "maritalStatusLabel": "נשוי/נשואה",
         "pensionFundId": "",
         "pensionFundName": "",
+        "peripheryFlag": "",
+        "signatureName": "אוהד בר",
+        "spouseCreditPoints": "",
         "spouseGrossSalary": "0",
         "taxYear": "2024",
       }
     `);
   });
 
-  it("Form 135 field count does not regress", () => {
+  it("Form 135 field count does not regress (≥38 after Phase 0 §0.D)", () => {
     const f = buildForm135Fields(sampleTaxpayer, sampleFinancials);
-    expect(Object.keys(f).length).toBeGreaterThanOrEqual(24);
+    expect(Object.keys(f).length).toBeGreaterThanOrEqual(38);
   });
 
-  it("Form 1301 field count does not regress", () => {
+  it("Form 1301 field count does not regress (≥55 after Phase 0 §0.D)", () => {
     const f = buildForm1301Fields(sampleTaxpayer, sampleFinancials);
-    expect(Object.keys(f).length).toBeGreaterThanOrEqual(40);
+    expect(Object.keys(f).length).toBeGreaterThanOrEqual(55);
   });
 });

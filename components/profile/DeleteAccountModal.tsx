@@ -13,6 +13,15 @@ interface Props {
   onClose: () => void;
 }
 
+interface DeletionState {
+  inProgress: boolean;
+  requestedAt?: string;
+  firestoreDoneAt?: string | null;
+  storageDoneAt?: string | null;
+  authDoneAt?: string | null;
+  errors?: Array<{ step: string; message: string; at: string }>;
+}
+
 /**
  * DeleteAccountModal — two-step confirm dialog. The user must type the
  * literal word "מחק" to enable the red confirm button. On confirm:
@@ -21,6 +30,13 @@ interface Props {
  *      onAuthStateChanged listener will try to re-anon-sign-in which
  *      gives the user a fresh session on /.
  *   3. Navigate to "/".
+ *
+ * Resume affordance (closes architecture-F-15):
+ *   When the modal opens we GET /api/user/deletion-status. If a previous
+ *   deletion call partially succeeded (e.g. Firestore done, Storage failed)
+ *   the API surfaces the in-progress state and we show a "המחיקה בעיצומה
+ *   — לחץ להמשך." CTA. Clicking it retries the delete; the server-side
+ *   state-machine resumes from the last completed step.
  */
 export function DeleteAccountModal({ open, onClose }: Props) {
   const router = useRouter();
@@ -28,18 +44,38 @@ export function DeleteAccountModal({ open, onClose }: Props) {
   const [typed, setTyped] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resumeState, setResumeState] = useState<DeletionState | null>(null);
 
+  // On open, check whether a partial deletion exists and surface a resume CTA.
   useEffect(() => {
     if (!open) {
       setTyped("");
       setSubmitting(false);
       setError(null);
+      setResumeState(null);
+      return;
     }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authedFetch("/api/user/deletion-status", { method: "GET" });
+        if (!res.ok) return;
+        const body = (await res.json()) as DeletionState;
+        if (!cancelled && body.inProgress) {
+          setResumeState(body);
+        }
+      } catch {
+        /* offline / unauth — ignore, the user can still trigger fresh delete */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   if (!open) return null;
 
-  const canConfirm = typed.trim() === CONFIRM_WORD && !submitting;
+  const canConfirm = (typed.trim() === CONFIRM_WORD || resumeState?.inProgress) && !submitting;
 
   async function handleConfirm() {
     setSubmitting(true);
@@ -50,6 +86,23 @@ export function DeleteAccountModal({ open, onClose }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirm: CONFIRM_WORD }),
       });
+      if (res.status === 207) {
+        // Partial — server returned the in-progress state. Surface the
+        // resume CTA inline so the user can click again.
+        let body: DeletionState | null = null;
+        try {
+          const parsed = (await res.json()) as { state?: DeletionState };
+          body = parsed?.state
+            ? { ...parsed.state, inProgress: true }
+            : null;
+        } catch {
+          /* ignore */
+        }
+        setResumeState(body ?? { inProgress: true });
+        setError("המחיקה לא הושלמה במלואה. לחץ להמשך.");
+        setSubmitting(false);
+        return;
+      }
       if (!res.ok) {
         let body: unknown = null;
         try {
@@ -57,9 +110,15 @@ export function DeleteAccountModal({ open, onClose }: Props) {
         } catch {
           /* ignore */
         }
-        const msg = (body as { error?: string } | null)?.error ?? "מחיקה נכשלה";
+        const msg =
+          (body as { error?: { message?: string } | string } | null)?.error
+            ? typeof (body as { error?: unknown }).error === "string"
+              ? ((body as { error: string }).error)
+              : ((body as { error: { message?: string } }).error.message ?? "מחיקה נכשלה")
+            : "מחיקה נכשלה";
         throw new Error(msg);
       }
+      // 204 — clean delete.
       try {
         await signOut();
       } catch {
@@ -72,6 +131,13 @@ export function DeleteAccountModal({ open, onClose }: Props) {
       setSubmitting(false);
     }
   }
+
+  // Compute "N של M" progress for the partial-deletion CTA.
+  const totalSteps = 3;
+  const doneSteps = resumeState
+    ? [resumeState.firestoreDoneAt, resumeState.storageDoneAt, resumeState.authDoneAt]
+        .filter(Boolean).length
+    : 0;
 
   return (
     <div
@@ -100,21 +166,32 @@ export function DeleteAccountModal({ open, onClose }: Props) {
           </button>
         </div>
 
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          פעולה זו תמחק לצמיתות את כל הנתונים, המסמכים, והטיוטות שלך. לא ניתן לבטל.
-          כדי להמשיך, הקלד <span className="font-mono font-bold text-foreground">{CONFIRM_WORD}</span> בתיבה למטה.
-        </p>
+        {resumeState?.inProgress ? (
+          <div
+            role="status"
+            className="text-sm bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-100 rounded-lg px-3 py-2 leading-relaxed"
+          >
+            המחיקה בעיצומה — נמחקו {doneSteps} מתוך {totalSteps}. לחץ להמשך.
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            פעולה זו תמחק לצמיתות את כל הנתונים, המסמכים, והטיוטות שלך. לא ניתן לבטל.
+            כדי להמשיך, הקלד <span className="font-mono font-bold text-foreground">{CONFIRM_WORD}</span> בתיבה למטה.
+          </p>
+        )}
 
-        <input
-          type="text"
-          value={typed}
-          onChange={(e) => setTyped(e.target.value)}
-          disabled={submitting}
-          autoFocus
-          dir="rtl"
-          placeholder={CONFIRM_WORD}
-          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-red-400"
-        />
+        {!resumeState?.inProgress && (
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            disabled={submitting}
+            autoFocus
+            dir="rtl"
+            placeholder={CONFIRM_WORD}
+            className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-red-400"
+          />
+        )}
 
         {error && (
           <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-lg px-3 py-2">
@@ -137,7 +214,11 @@ export function DeleteAccountModal({ open, onClose }: Props) {
             disabled={!canConfirm}
             className="py-2 px-4 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {submitting ? "מוחק…" : "מחק לצמיתות"}
+            {submitting
+              ? "מוחק…"
+              : resumeState?.inProgress
+                ? "המשך מחיקה"
+                : "מחק לצמיתות"}
           </button>
         </div>
       </div>

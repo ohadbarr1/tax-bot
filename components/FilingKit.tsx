@@ -22,6 +22,7 @@ import { useApp } from "@/lib/appContext";
 import type { Form135Payload } from "@/types";
 import { determineFormType, FORM_LABELS } from "@/lib/formTypeSelector";
 import { refundHeadline } from "@/lib/refundDisplay";
+import { clientFetch } from "@/lib/api/clientFetch";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const fadeUp: Variants = {
@@ -87,7 +88,7 @@ export function FilingKit() {
     try {
       const payload: Form135Payload & { calibrate?: boolean } = { taxpayer, financials, calibrate };
 
-      const res = await fetch(apiEndpoint, {
+      const res = await clientFetch(apiEndpoint, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(payload),
