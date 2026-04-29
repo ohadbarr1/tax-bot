@@ -77,8 +77,8 @@ export async function verifyBearerOrNull(
  */
 export function withUser(
   handler: WithUserHandler,
-): (req: NextRequest, ctx: NextRouteContext) => Promise<Response> {
-  return async (req: NextRequest, ctx: NextRouteContext) => {
+): (req: NextRequest, ctx?: NextRouteContext) => Promise<Response> {
+  return async (req: NextRequest, ctx?: NextRouteContext) => {
     const decoded = await verifyBearerOrNull(req);
     if (!decoded) return unauthorized();
     return await handler(req, { uid: decoded.uid, params: ctx?.params });

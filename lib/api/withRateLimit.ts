@@ -64,6 +64,10 @@ function readUpstashEnv(): UpstashEnv | null {
   if (!url || !token) {
     if (!warned) {
       warned = true;
+      // One-time boot-warning. Using console here (not lib/logger) is
+      // intentional — pino is a server-only dep and this module loads
+      // in the edge-runtime middleware path on Next 16.
+      // eslint-disable-next-line no-console
       console.warn(
         "[withRateLimit] UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN not set — rate limiting disabled. Set them in production (see apphosting.yaml).",
       );
