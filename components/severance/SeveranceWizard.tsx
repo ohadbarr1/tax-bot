@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calculator, Calendar, TrendingDown, CheckCircle } from "lucide-react";
+import { clientFetch } from "@/lib/api/clientFetch";
 
 interface SpreadYear {
   year: number;
@@ -28,7 +29,7 @@ export function SeveranceWizard() {
   const handleCalculate = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/generate/form-161", {
+      const res = await clientFetch("/api/generate/form-161", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

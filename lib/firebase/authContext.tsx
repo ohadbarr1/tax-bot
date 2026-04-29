@@ -239,6 +239,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // another device, or anon→link was attempted twice). Drop the throwaway
       // anon session and sign in as the existing Google-linked user.
       if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
+        // security-F1.1.2: anonymous→Google linking can orphan the data the
+        // user accumulated under the throwaway anon uid. Phase 0 only DETECTS
+        // this — Phase 1 will implement the actual merge (see UPGRADE_PLAN
+        // §1.A). For now, warn loudly so we have a Sentry breadcrumb when it
+        // happens in production.
+        const anonUid = auth.currentUser?.uid ?? "unknown";
+        console.warn(
+          "[auth] credential-already-in-use — anon uid",
+          anonUid,
+          "may have orphaned data (Firestore + Storage). Phase 1 will implement merge. See security-F1.1.2.",
+        );
         try {
           await fbSignOut(auth);
           await withPopupTimeout(signInWithPopup(auth, provider));
@@ -295,6 +306,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const auth = getClientAuth();
     if (!auth) return;
+
+    // Server-side revoke FIRST (security-F1.1.3): hit `/api/user/sign-out`
+    // with the current bearer token so any in-flight ID token (incl. ones
+    // already cached in IndexedDB or scraped via XSS) becomes useless on
+    // the next API call. We do this BEFORE `fbSignOut(auth)` because once
+    // fbSignOut runs, `currentUser.getIdToken()` returns null and we cannot
+    // attach the bearer header.
+    //
+    // Best-effort — never block sign-out on a network failure: the local
+    // `fbSignOut` is the user-facing "I'm out" guarantee, and the next
+    // page load reissues an anon uid anyway.
+    const current = auth.currentUser;
+    if (current) {
+      try {
+        const token = await current.getIdToken(/* forceRefresh */ false);
+        await fetch("/api/user/sign-out", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.warn("[auth] server-side revoke failed (continuing):", err);
+      }
+    }
+
     await fbSignOut(auth);
     // onAuthStateChanged will trigger a fresh anonymous sign-in
   }, []);

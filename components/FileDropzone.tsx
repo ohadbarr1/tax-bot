@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
+import { clientFetch } from "@/lib/api/clientFetch";
 import type {
   IbkrParseResponse,
   Form106ParseResponse,
@@ -160,7 +161,7 @@ export function FileDropzone() {
         body.append("file", file);
 
         const endpoint = category === "IBKR" ? "/api/parse/ibkr" : "/api/parse/form-106";
-        const res = await fetch(endpoint, { method: "POST", body });
+        const res = await clientFetch(endpoint, { method: "POST", body });
 
         clearInterval(progressTimer);
 

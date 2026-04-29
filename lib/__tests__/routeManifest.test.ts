@@ -112,11 +112,15 @@ describe("Route manifest", () => {
         "/api/generate/form-1301",
         "/api/generate/form-135",
         "/api/generate/form-161",
+        "/api/health",
+        "/api/metrics",
         "/api/mine/document",
         "/api/parse/form-106",
         "/api/parse/ibkr",
         "/api/user/delete",
+        "/api/user/deletion-status",
         "/api/user/export",
+        "/api/user/sign-out",
       ]
     `);
   });

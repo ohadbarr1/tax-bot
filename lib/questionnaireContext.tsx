@@ -1,6 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useMemo } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
@@ -276,6 +283,96 @@ export function QuestionnaireProvider({
   const [disabilityPercent, setDisabilityPercent] = useState(
     taxpayer.disabilityPercent ?? 0,
   );
+
+  // ── Debounced sync to AppContext (closes user-flow-1.3) ─────────────────────
+  //
+  // Mirror every questionnaire state slice into AppContext on a 500 ms debounce.
+  // AppContext then runs its own debounce to Firestore (appContext.tsx:269-274),
+  // so partial drafts survive a refresh / tab-close / wifi blip mid-flow.
+  // The first run is skipped — initial state equals the hydrated taxpayer /
+  // financials, and we only persist user-driven changes.
+  const isFirstSyncRef = useRef(true);
+
+  useEffect(() => {
+    if (isFirstSyncRef.current) {
+      isFirstSyncRef.current = false;
+      return;
+    }
+
+    const t = setTimeout(() => {
+      const isMarried = maritalStatus === "married";
+      const spousePayload = isMarried
+        ? {
+            firstName: spouseFirstName,
+            lastName: spouseLastName,
+            idNumber: spouseIdNumber,
+          }
+        : undefined;
+      updateTaxpayer({
+        firstName,
+        lastName,
+        fullName: [firstName, lastName].filter(Boolean).join(" ").trim(),
+        idNumber,
+        address,
+        bank,
+        maritalStatus,
+        spouseHasIncome: spouseIncome,
+        spouse: spousePayload,
+        spouseId: isMarried ? spouseIdNumber : undefined,
+        paysAlimony,
+        children,
+        degrees,
+        employers,
+        personalDeductions: deductions,
+        lifeEvents,
+        gender,
+        dischargeYear: servedInArmy ? dischargeYear : undefined,
+        aliyahDate: isOleh ? aliyahDate : undefined,
+        postcode: postcode || undefined,
+        kibbutzMember,
+        disabilityType: hasDisability ? disabilityType : undefined,
+        disabilityPercent: hasDisability ? disabilityPercent : undefined,
+      });
+      updateFinancials({
+        hasForeignBroker: portfolioLocation === "foreign_broker",
+        brokerName:
+          portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
+        employersCount: employers.length,
+      });
+    }, 500);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updaters are stable; the watched state list mirrors the useMemo deps below
+  }, [
+    firstName,
+    lastName,
+    idNumber,
+    address,
+    bank,
+    maritalStatus,
+    spouseIncome,
+    spouseFirstName,
+    spouseLastName,
+    spouseIdNumber,
+    paysAlimony,
+    children,
+    degrees,
+    employers,
+    deductions,
+    lifeEvents,
+    gender,
+    servedInArmy,
+    dischargeYear,
+    isOleh,
+    aliyahDate,
+    postcode,
+    kibbutzMember,
+    hasDisability,
+    disabilityType,
+    disabilityPercent,
+    portfolioLocation,
+    selectedBroker,
+  ]);
 
   // ── Finish ──────────────────────────────────────────────────────────────────
 

@@ -43,6 +43,17 @@ env:
     value: "1:335346608639:web:d1ba92ab74673c017e1fca"
     availability: [BUILD, RUNTIME]
 
+  # ── Firebase App Check (security-F1.1.4 / F1.3.2) ────────────────────────
+  # reCAPTCHA v3 site key for the App Check provider. Public-by-design — the
+  # key is embedded in the page anyway. Get one at
+  #   https://www.google.com/recaptcha/admin/create
+  # (type: reCAPTCHA v3, domains: <project>.web.app + your custom domain)
+  # then register the same key in Firebase Console → App Check → reCAPTCHA v3.
+  # See DEPLOY.md §App Check.
+  - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+    value: ""
+    availability: [BUILD, RUNTIME]
+
   # Anthropic API key — stored in Google Cloud Secret Manager. Set via:
   #   firebase apphosting:secrets:set ANTHROPIC_API_KEY
   # The runner service account is granted secretAccessor scoped to this one
@@ -50,6 +61,26 @@ env:
   - variable: ANTHROPIC_API_KEY
     secret: ANTHROPIC_API_KEY
     availability: [RUNTIME]
+
+  # ── Sentry (observability, closes audit performance §1.6) ───────────────
+  # Stored in Google Cloud Secret Manager. Set via:
+  #   firebase apphosting:secrets:set SENTRY_DSN
+  #   firebase apphosting:secrets:set SENTRY_AUTH_TOKEN
+  # SENTRY_DSN is read at runtime by `lib/sentry.server.ts` and
+  # `lib/sentry.client.ts` (the latter via NEXT_PUBLIC_SENTRY_DSN — set both
+  # to the same DSN value; only NEXT_PUBLIC_* is exposed to the browser
+  # bundle). SENTRY_AUTH_TOKEN is used at BUILD time by `withSentryConfig`
+  # to upload source maps; without it, the build still succeeds but client
+  # stack traces in Sentry won't be symbolicated. See DEPLOY.md.
+  - variable: SENTRY_DSN
+    secret: SENTRY_DSN
+    availability: [RUNTIME]
+  - variable: NEXT_PUBLIC_SENTRY_DSN
+    secret: SENTRY_DSN
+    availability: [BUILD, RUNTIME]
+  - variable: SENTRY_AUTH_TOKEN
+    secret: SENTRY_AUTH_TOKEN
+    availability: [BUILD]
 
   # ── Upstash Redis (rate limiting, closes audit F-2 / F1.2.1) ─────────────
   # Stored in Google Cloud Secret Manager. Set via:

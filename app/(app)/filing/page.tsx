@@ -341,19 +341,26 @@ export default function FilingPage() {
             </div>
           )}
 
+          {/*
+            Phase 0 §0.D / audits/user-flow.md §1.5: the original CTA was
+            "חתום והגש עכשיו" with an empty `onClick` — a no-op black button
+            that mis-promised digital submission. Tax-Bot does NOT submit to
+            ITA; the user uploads the generated PDF themselves at taxes.gov.il.
+            Honest copy + working handler: download the PDF.
+          */}
           <button
-            onClick={signDisabled ? undefined : () => { /* signing flow — see Round 2 plan */ }}
-            disabled={signDisabled}
+            onClick={signDisabled || downloading ? undefined : handleDownload}
+            disabled={signDisabled || downloading}
             title={
               !headline.hasRefund
-                ? "אין מה להגיש — הטיוטה הנוכחית לא מזכה בהחזר"
+                ? "אין מה להוריד — הטיוטה הנוכחית לא מזכה בהחזר"
                 : downloadDisabled
-                  ? "השלם פרטים אישיים לפני חתימה"
+                  ? "השלם פרטים אישיים לפני הורדת הטופס"
                   : undefined
             }
             style={{
               all: "unset",
-              cursor: signDisabled ? "not-allowed" : "pointer",
+              cursor: signDisabled || downloading ? "not-allowed" : "pointer",
               textAlign: "center",
               background: signDisabled ? "rgba(26,26,31,0.45)" : "var(--kc-ink)",
               color: signDisabled ? "rgba(255,255,255,0.6)" : "var(--kc-lime)",
@@ -364,45 +371,30 @@ export default function FilingPage() {
               fontFamily: "var(--font-figtree)",
               letterSpacing: "-0.01em",
               opacity: signDisabled ? 0.7 : 1,
-            }}
-          >
-            {signDisabled && !headline.hasRefund ? "אין מה להגיש עדיין" : "חתום והגש עכשיו"}
-          </button>
-          <div style={{ fontSize: 12, color: "var(--kc-ink-dim)", textAlign: "center", lineHeight: 1.55 }}>
-            בלחיצה על חתום אתה מאשר את הצהרת מגיש · ניתן לבטל תוך 14 יום
-          </div>
-
-          <button
-            onClick={handleDownload}
-            disabled={downloadDisabled || downloading}
-            title={downloadDisabled ? "השלם פרטים אישיים לפני הורדה" : undefined}
-            style={{
-              all: "unset",
-              cursor: downloadDisabled || downloading ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: 8,
-              fontSize: 13,
-              color: "var(--kc-ink-dim)",
-              textAlign: "center",
-              textDecoration: "underline",
-              marginTop: 6,
-              opacity: downloadDisabled || downloading ? 0.6 : 1,
             }}
           >
             {downloading ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
-                מייצר טיוטה...
+                מייצר טופס...
               </>
+            ) : signDisabled && !headline.hasRefund ? (
+              "אין מה להוריד עדיין"
             ) : (
               <>
-                <FileDown size={14} />
-                הצג טיוטת 135 המלאה
+                <FileDown size={16} />
+                הורד את טופס 135
               </>
             )}
           </button>
+          <div style={{ fontSize: 12, color: "var(--kc-ink-dim)", textAlign: "center", lineHeight: 1.55 }}>
+            ההורדה היא של PDF; את החתימה וההגשה מבצעים באתר רשות המיסים
+          </div>
+
           {downloadError && (
             <div
               role="alert"
