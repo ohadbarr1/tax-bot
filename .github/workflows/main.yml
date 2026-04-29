@@ -108,9 +108,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: next-build
+          # upload-artifact@v4 requires explicit globs to recurse; bare
+          # `.next/` finds zero files even when the dir is populated.
           path: |
-            .next/
-            !.next/cache/
+            .next/**
+            !.next/cache/**
           if-no-files-found: error
           retention-days: 1
 
