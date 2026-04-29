@@ -1,0 +1,30 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run start -- --port 3000",
+      "url": [
+        "http://localhost:3000/",
+        "http://localhost:3000/dashboard",
+        "http://localhost:3000/filing"
+      ],
+      "numberOfRuns": 1,
+      "settings": {
+        "preset": "desktop",
+        "chromeFlags": "--no-sandbox --headless=new --disable-gpu"
+      },
+      "startServerReadyPattern": "Ready in"
+    },
+    "assert": {
+      "assertions": {
+        "_phase0_note": "a11y >= 0.9 is the Phase 3 §3.A target (design-system rebuild, dark mode, prefers-reduced-motion, skip-link, aria-current, focus-trap). Phase 0 closed only the marketing-claim layer; gating at 0.9 here would block Phase 0 ship. Demoted to warn until Phase 3.",
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.85 }],
+        "categories:seo": ["warn", { "minScore": 0.85 }],
+        "categories:performance": ["warn", { "minScore": 0.5 }]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

@@ -9,6 +9,7 @@ import type { ParseStatus, ParseResult } from "@/components/documents/DocUploadZ
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { clientFetch } from "@/lib/api/clientFetch";
 import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse } from "@/types";
 
 const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
@@ -135,7 +136,7 @@ function DocumentsPageInner() {
       formData.append("file", file);
 
       if (docType === "form106") {
-        const res = await fetch("/api/parse/form-106", { method: "POST", body: formData });
+        const res = await clientFetch("/api/parse/form-106", { method: "POST", body: formData });
         const json: Form106ParseResponse = await res.json();
         if (!json.success || !json.data) throw new Error(json.error ?? "parse failed");
 
@@ -183,7 +184,7 @@ function DocumentsPageInner() {
         });
 
       } else if (docType === "ibkr") {
-        const res = await fetch("/api/parse/ibkr", { method: "POST", body: formData });
+        const res = await clientFetch("/api/parse/ibkr", { method: "POST", body: formData });
         const json: IbkrParseResponse = await res.json();
         if (!json.success || !json.data) throw new Error(json.error ?? "parse failed");
 

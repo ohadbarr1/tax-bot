@@ -116,28 +116,36 @@ export function generateOptimizations(
     });
   }
 
-  // 6. Periphery — same reasoning as oleh chadash: do not auto-surface to
-  // every user. Only cities in `data/periphery_postcodes.json` qualify and
-  // the user already declared their city in Step 0. If we want to surface a
-  // match we should do a positive city→postcode lookup and only suggest when
-  // the city hit, not when the postcode field is blank.
+  // 6. Periphery — F-007 corrected: periphery is a percentage tax-discount
+  // (11%/13% × income, capped) under צו 2023, NOT credit-points. We surface
+  // a "set your postcode" hint when:
+  //   (a) the user typed a city name that appears in our periphery list,
+  //   (b) they haven't yet provided a postcode, and
+  //   (c) their `peripheryDiscount` is currently 0 (i.e. uncomputed).
+  // The estimated saving uses tier-2 (11%) on a conservative ₪100k slice as a
+  // floor — actual benefit is computed precisely once the postcode arrives.
   const addr = taxpayer.address;
   if (
     addr?.city &&
     !taxpayer.postcode &&
-    !result.breakdown.creditPointsBreakdown.periphery &&
+    !result.peripheryDiscount &&
     cityLooksPeripheral(addr.city)
   ) {
+    const conservativeIncomeForHint = Math.min(result.taxableIncome, 100_000);
+    const conservativeSaving = Math.round(conservativeIncomeForHint * 0.11);
     suggestions.push({
       id: "opt-periphery",
       title: "בדוק ישוב פריפריה",
-      description: `${addr.city} עשוי להיות מזוהה כישוב פריפריה. הוסף מיקוד לפרופיל כדי לחשב זכאות לנקודת זיכוי (₪${Math.round(0.5 * creditPointValue).toLocaleString("he-IL")}–₪${creditPointValue.toLocaleString("he-IL")}).`,
-      estimatedSaving: creditPointValue,
+      description: `${addr.city} עשוי להיות מזוהה כישוב פריפריה. הוסף מיקוד לפרופיל כדי לקבל הנחת מס של 11%–13% מההכנסה החייבת (עד תקרה שנתית) — חיסכון משוער מינימלי ₪${conservativeSaving.toLocaleString("he-IL")}.`,
+      estimatedSaving: conservativeSaving,
       priority: "low",
       action: "update_profile",
       actionPayload: { field: "postcode" },
     });
   }
+  // Reference unused so TS doesn't fail when downstream callers strip — the
+  // existing creditPointValue is still used by the spouse + LTC suggestions.
+  void creditPointValue;
 
   // 7. Non-working spouse unclaimed
   if (taxpayer.maritalStatus === "married" && taxpayer.spouseHasIncome === undefined) {

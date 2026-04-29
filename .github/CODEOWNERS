@@ -1,0 +1,34 @@
+# Tax-Bot CODEOWNERS — Phase 0 §0.G placeholders.
+# Replace @backend-team / @frontend-team / @tax-team / @release-team with real
+# GitHub handles or org-team slugs once the team list is finalised. Until then
+# these are documentation-only — GitHub silently skips review-requests against
+# unknown handles.
+
+# --- Default --------------------------------------------------------------
+*                                       @release-team
+
+# --- API surface (auth + rate-limit + Zod owners) -------------------------
+/app/api/**                             @backend-team
+/lib/api/**                             @backend-team
+
+# --- Tax math (changes during freeze require @tax-team sign-off) ---------
+/lib/calculateTax.ts                    @tax-team @backend-team
+/lib/optimizer.ts                       @tax-team @backend-team
+/data/tax_brackets_*.json               @tax-team
+/data/credit_points_*.json              @tax-team
+/data/periphery_postcodes.json          @tax-team
+
+# --- Form templates + field maps -----------------------------------------
+/templates/**                           @backend-team @tax-team
+/scripts/build-field-map.mjs            @backend-team
+
+# --- Marketing / RTL copy ------------------------------------------------
+/app/(marketing)/**                     @frontend-team
+/components/MarketingNavbar.tsx         @frontend-team
+
+# --- CI / release infrastructure -----------------------------------------
+/.github/**                             @release-team
+/apphosting.yaml                        @release-team
+/firebase.json                          @release-team
+/firestore.rules                        @release-team @backend-team
+/storage.rules                          @release-team @backend-team

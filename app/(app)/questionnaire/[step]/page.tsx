@@ -67,6 +67,7 @@ export default function StepPage({
             spouseLastName={ctx.spouseLastName}
             spouseIdNumber={ctx.spouseIdNumber}
             paysAlimony={ctx.paysAlimony}
+            // eslint-disable-next-line react/no-children-prop -- "children" here = tax-return children (kids), not React children
             children={ctx.children}
             onMaritalStatusChange={ctx.setMaritalStatus}
             onSpouseIncomeChange={ctx.setSpouseIncome}
@@ -148,6 +149,7 @@ export default function StepPage({
             hasDisability={ctx.hasDisability}
             disabilityType={ctx.disabilityType}
             disabilityPercent={ctx.disabilityPercent}
+            // eslint-disable-next-line react/no-children-prop -- "children" here = tax-return children (kids), not React children
             children={ctx.children}
             onGenderChange={ctx.setGender}
             onServedInArmyChange={ctx.setServedInArmy}

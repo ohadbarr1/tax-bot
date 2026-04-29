@@ -2,6 +2,14 @@ import { generateObject } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { DocMineResponse, VaultDocType, MinedField, ProvenanceConfidence } from "@/types";
+import type { NextRequest } from "next/server";
+import { withUser } from "@/lib/api/withUser";
+import { withRateLimitForUser } from "@/lib/api/withRateLimit";
+import {
+  MineUploadMetaSchema,
+  MineHintTypeSchema,
+  MAX_MINE_BYTES,
+} from "@/lib/api/schemas/mine";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -9,7 +17,7 @@ export const maxDuration = 60;
 const ERROR_MISSING_KEY = "שירות הזיהוי אינו זמין כרגע.";
 const ERROR_PARSE = "לא הצלחנו לקרוא את המסמך. נסה שוב או מלא ידנית.";
 const ERROR_TOO_BIG = "הקובץ גדול מדי (עד 10MB).";
-const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_BYTES = MAX_MINE_BYTES;
 
 // Claude vision schema — flat, NO nullables and NO optionals. Anthropic's
 // tool-grammar compiler caps structured outputs at 24 optional parameters
@@ -151,7 +159,7 @@ function toMinedFields(mined: MinedShape): MinedField[] {
   return out;
 }
 
-export async function POST(request: Request): Promise<Response> {
+async function handle(request: NextRequest): Promise<Response> {
   if (!process.env.ANTHROPIC_API_KEY) {
     return json({ success: false, error: ERROR_MISSING_KEY }, 501);
   }
@@ -161,9 +169,27 @@ export async function POST(request: Request): Promise<Response> {
 
   const file = form.get("file");
   if (!(file instanceof File)) return json({ success: false, error: ERROR_PARSE }, 400);
-  if (file.size > MAX_BYTES) return json({ success: false, error: ERROR_TOO_BIG }, 413);
 
-  const hintedType = (form.get("type") as VaultDocType | null) ?? undefined;
+  // Validate file metadata via Zod (size, name length).
+  const metaParsed = MineUploadMetaSchema.safeParse({
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
+  if (!metaParsed.success) {
+    if (file.size > MAX_BYTES) return json({ success: false, error: ERROR_TOO_BIG }, 413);
+    return json({ success: false, error: ERROR_PARSE }, 400);
+  }
+
+  // Validate optional document-type hint.
+  const rawHint = form.get("type");
+  const hintParsed = MineHintTypeSchema.safeParse(
+    typeof rawHint === "string" ? rawHint : undefined,
+  );
+  if (!hintParsed.success) {
+    return json({ success: false, error: "סוג מסמך לא תקין." }, 400);
+  }
+  const hintedType: VaultDocType | undefined = hintParsed.data;
 
   let bytes: ArrayBuffer;
   let mediaType: string;
@@ -232,6 +258,11 @@ export async function POST(request: Request): Promise<Response> {
     return json({ success: false, error: `${ERROR_PARSE} (${debug})` }, 500);
   }
 }
+
+// Auth + rate-limit. Closes F-1, F-2, F1.2.5.
+export const POST = withUser(
+  withRateLimitForUser(handle, { prefix: "mine-document", limit: 15 }),
+);
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

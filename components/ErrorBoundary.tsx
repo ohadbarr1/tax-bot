@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import * as Sentry from "@sentry/nextjs";
 
 interface Props {
   children: React.ReactNode;
@@ -15,7 +16,11 @@ interface State {
 /**
  * ErrorBoundary — catches uncaught render errors in its subtree.
  *
- * Sentry-ready: drop-in `onError` hook at line marked SENTRY_HOOK.
+ * Phase 0 / 0.F: forwards every caught error to Sentry (initialised in
+ * `instrumentation-client.ts`). The previous SENTRY_HOOK comment is now
+ * the real call. If Sentry's DSN is unset (local dev / CI) the SDK is a
+ * no-op, so this stays safe in every environment.
+ *
  * Usage:
  *   <ErrorBoundary>
  *     <MyComponent />
@@ -33,7 +38,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[ErrorBoundary] Caught:", error, info);
-    // SENTRY_HOOK — replace with: Sentry.captureException(error, { extra: info })
+    // Phase 0 / 0.F — forward to Sentry. `extra: info` carries the
+    // React component stack so the Sentry issue includes the render path.
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
   render() {

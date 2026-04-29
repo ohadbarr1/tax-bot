@@ -1,7 +1,10 @@
 {
-  "description": "Israeli periphery-eligible postcodes per ITA Section 11",
-  "source": "ITA / National Periphery Authority classification",
+  "description": "Israeli periphery-eligible postcodes per ITA Section 11 + צו 2023.",
+  "source": "ITA / National Periphery Authority classification (subset).",
   "last_updated": "2024",
+  "model": "percentage_discount",
+  "model_description": "Periphery benefit is a percentage discount on personal-effort income up to an annual cap (סעיף 11 + צו 2023). tier 1 = 13%, tier 2 = 11%. NOT credit-points. Caps and rates live in data/credit_points_{2024,2025}.json under periphery_tier{1,2}_pct.",
+  "phase_0_data_gap": "צו 2023 enumerates ~408 communities. This file lists ~40 (the production-priority subset used in Phase 0). Full ingest is Phase 1 §1.H per UPGRADE_PLAN. Math model fix in code applies to ALL listed postcodes — when more communities are ingested they will inherit the correct percentage-discount calculation automatically.",
   "postcodes": {
     "84100": { "city": "באר שבע", "tier": 1, "region": "south" },
     "84200": { "city": "באר שבע", "tier": 1, "region": "south" },

@@ -22,6 +22,7 @@
  */
 
 import type { TaxPayer, FinancialData } from "@/types";
+import peripheryData from "@/data/periphery_postcodes.json";
 
 // ─── 1. RTL Text Helpers ──────────────────────────────────────────────────────
 
@@ -75,21 +76,64 @@ export interface Form135Fields {
   "024": string; // House number — numeric string
   maritalStatusLabel: string; // Hebrew label (raw)
 
+  // §1b Residency / aliyah / periphery (Phase 0 §0.D — audits/generation.md §1.1)
+  /**
+   * Code 020 — מצב משפחתי. The 2025 form uses an X-mark on a grouped row
+   * (single / married / divorced / widowed). We render the Hebrew label in
+   * that single value-box. Audit table: P0.
+   */
+  "020": string;
+  /** Code 014 — תושב ישראל לכל השנה (כן / לא). Hebrew "כן" or "לא". P0. */
+  "014": string;
+  /**
+   * Code 015 — תאריך עליה (DD/MM/YYYY). NOT present in the auto-generated
+   * field-map (the value-box label was filtered as a section reference);
+   * positional draw planned in route. P0 for olim.
+   */
+  aliyahDate: string;
+  /**
+   * Code 016 — תושב יישוב מזכה (X mark + tier). NOT present in the
+   * auto-generated field-map; positional draw planned in route. P0.
+   */
+  peripheryFlag: string;
+
   // §2 Employment income
   "158": string; // Total gross salary
   "042": string; // Total income tax withheld
   "045": string; // Total pension deduction
   "272": string; // Taxable severance pay
+  /** Code 069 — מס שנוכה — מעסיק שני (left column). P0 (multi-employer). */
+  "069": string;
+  /** Code 086 — מענק פטור (סעיף 9(7א)). P0 (severance). */
+  "086": string;
 
   // §3 Capital gains & foreign income
   "256": string;
   "166": string;
   "055": string;
+  /** Code 117 — דיבידנד מסיכום ני"ע סחירים. P0 (broker users). */
+  "117": string;
+  /** Code 124 — ריבית ני"ע סחירים. P0 (broker users). */
+  "124": string;
 
   // §4 Personal deductions
   "037": string;
   "036": string;
   "135": string;
+
+  // §4b Credit-points printed on the form (Phase 0 §0.D)
+  /**
+   * Code 119 — זיכוי בגין בן/בת זוג (married/non-working spouse).
+   * NOT present in the auto-generated field-map; positional draw planned
+   * in route, derived from `creditPointsValue`. P0 (married filers).
+   */
+  spouseCreditPoints: string;
+  /**
+   * Code 245 — נקודות זיכוי בגין ילדים (count, NOT ILS). The credit-points
+   * box on the 135 expects the numeric count; the engine returns total
+   * `creditPointsCount` so we surface it here for printing. P0.
+   */
+  "245": string;
 
   // §5 Bank details
   bank_number:    string;
@@ -108,6 +152,14 @@ export interface Form135Fields {
   carriedForwardLoss: string;
   foreignSourceCountry: string;
   spouseGrossSalary: string;
+
+  // §8 Signature block (Phase 0 §0.D — text only, NOT a digital signature)
+  /** Taxpayer printed name — printed on the signature line on page 4. */
+  signatureName: string;
+  /** Today's date in DD/MM/YYYY — printed next to the signature line. */
+  signatureDate: string;
+  /** Declaration X-mark — "אני מצהיר שכל הפרטים נכונים…" checkbox on page 4. */
+  declarationMark: string;
 }
 
 // ─── 3. Form-1301 Field Value Extractor ──────────────────────────────────────
@@ -270,6 +322,14 @@ export function buildForm135Fields(
   const totalTax      = taxpayer.employers?.reduce((s, e) => s + (e.taxWithheld     ?? 0), 0) ?? 0;
   const totalPension  = taxpayer.employers?.reduce((s, e) => s + (e.pensionDeduction ?? 0), 0) ?? 0;
 
+  // ── Multi-employer split (codes 069 = secondary tax-withheld; 086 = exempt grant) ──
+  // Audit table §1.1: code 069 prints withholding for the 2nd (left-column)
+  // employer. Aggregating ALL non-main into one column matches the form's
+  // single "מעסיק נוסף" slot; if the taxpayer has 3+ employers the user has
+  // already been routed to Form 1301 by `formTypeSelector`.
+  const secondaryEmployers = taxpayer.employers?.filter((e) => !e.isMainEmployer) ?? [];
+  const secondaryTax = secondaryEmployers.reduce((s, e) => s + (e.taxWithheld ?? 0), 0);
+
   // ── Deduction buckets ─────────────────────────────────────────────────────
   const donations  = taxpayer.personalDeductions
     ?.filter((d) => d.type === "donation_sec46")
@@ -296,6 +356,73 @@ export function buildForm135Fields(
   const hebrewPart = taxpayer.fullName?.split(" - ")[1] ?? "";
   const nameParts  = hebrewPart.trim().split(/\s+/);
 
+  // ── Children credit-points count (code 245) ───────────────────────────────
+  // The form expects the *count* of children-derived credit-points, not their
+  // ILS value. Without re-running the calc engine, approximate as: each child
+  // under 18 = 1 nq baseline + daycare (0–3) = 1 nq. This is a conservative
+  // mirror of `calculateCreditPoints` (F-010 corrected). Phase 1 §1.A will
+  // pipe the canonical count through CalculationResult to retire this mirror.
+  const childCreditPointsCount = (taxpayer.children ?? []).reduce((acc, child) => {
+    let pts = 1; // under-18 default
+    if (child.inDaycare) pts += 1; // F-010 — ages 0-3 daycare bonus
+    return acc + pts;
+  }, 0);
+
+  // ── Spouse credit-points indicator (code 119) ─────────────────────────────
+  // 1.0 nq for non-working spouse (married && !spouseHasIncome) per
+  // calculateCreditPoints. Engine-source-of-truth would be ideal; stamp the
+  // value here so the form aligns with the engine's printed refund total.
+  const spouseCreditPoints =
+    taxpayer.maritalStatus === "married" && taxpayer.spouseHasIncome === false
+      ? "1.0"
+      : "";
+
+  // ── Aliyah date (code 015) — DD/MM/YYYY ───────────────────────────────────
+  let aliyahFormatted = "";
+  if (taxpayer.aliyahDate) {
+    const d = new Date(taxpayer.aliyahDate);
+    if (!Number.isNaN(d.getTime())) {
+      aliyahFormatted =
+        `${String(d.getDate()).padStart(2, "0")}/` +
+        `${String(d.getMonth() + 1).padStart(2, "0")}/` +
+        d.getFullYear();
+    }
+  }
+
+  // ── Periphery flag (code 016) — "X" if eligible postcode ──────────────────
+  // Mirror the lookup in calculateTax.calculateFullRefund step 4b. The form
+  // wants a checkbox mark here; rendering "X" matches Israeli convention.
+  let peripheryFlag = "";
+  if (taxpayer.postcode) {
+    const postcodes = (peripheryData as { postcodes: Record<string, { tier: number }> })
+      .postcodes;
+    const entry = postcodes[taxpayer.postcode];
+    if (entry && (entry.tier === 1 || entry.tier === 2)) {
+      peripheryFlag = "X";
+    }
+  }
+
+  // ── Residency flag (code 014) — Hebrew "כן" / "לא" ────────────────────────
+  // Defaults to "כן" (full-year resident); a non-empty `aliyahDate` for the
+  // current tax year flips this to "לא" (partial-year). The questionnaire
+  // does not yet capture an explicit residency toggle; aliyah is the only
+  // current signal. Phase 1 §1.A will introduce a dedicated toggle.
+  const residencyAnswer = aliyahFormatted ? "לא" : "כן";
+
+  // ── Marital status checkbox label (code 020) — Hebrew label ───────────────
+  const maritalLabel = maritalMap[taxpayer.maritalStatus];
+
+  // ── Signature / declaration (Phase 0 §0.D — text-only sig line on p.4) ────
+  const today = new Date();
+  const signatureDate =
+    `${String(today.getDate()).padStart(2, "0")}/` +
+    `${String(today.getMonth() + 1).padStart(2, "0")}/` +
+    today.getFullYear();
+  const sigName =
+    taxpayer.fullName?.includes(" - ")
+      ? (taxpayer.fullName.split(" - ")[1] ?? "")
+      : (taxpayer.fullName ?? "");
+
   return {
     // Personal — Hebrew strings in raw logical Unicode order
     "012": taxpayer.idNumber ?? "",
@@ -305,23 +432,45 @@ export function buildForm135Fields(
     "022": taxpayer.address?.city        ?? "",
     "023": taxpayer.address?.street      ?? "",
     "024": taxpayer.address?.houseNumber ?? "",
-    maritalStatusLabel: maritalMap[taxpayer.maritalStatus],
+    maritalStatusLabel: maritalLabel,
+
+    // Residency / aliyah / periphery
+    "020": maritalLabel,
+    "014": residencyAnswer,
+    aliyahDate: aliyahFormatted,
+    peripheryFlag,
 
     // Employment — numeric strings (formatted with commas)
     "158": formatIlsForPdf(totalGross),
     "042": formatIlsForPdf(totalTax),
     "045": formatIlsForPdf(totalPension),
     "272": formatIlsForPdf(taxpayer.lifeEvents?.taxableSeverancePay),
+    "069": formatIlsForPdf(secondaryTax || undefined),
+    // Code 086 — מענק פטור per סעיף 9(7א). Phase 0 keeps the user-entered
+    // exempt portion at 0 because F-013 (severance §9(7א) auto-exemption) is
+    // Phase 1 scope; surface as empty for now to avoid stamping a bogus 0.
+    // TODO Phase 1 §1.A — wire to taxpayer.lifeEvents.exemptSeveranceGrant.
+    "086": "",
 
     // Capital gains — numeric
     "256": formatIlsForPdf(cg?.totalRealizedProfit),
     "166": formatIlsForPdf(cg?.totalRealizedLoss),
     "055": formatIlsForPdf(cg?.foreignTaxWithheld),
+    "117": formatIlsForPdf(cg?.dividends),
+    // Code 124 — ריבית ני"ע סחירים. The IBKR parser does not yet split
+    // interest from dividends; surface "" rather than mis-stamping
+    // dividends in the interest field.
+    // TODO Phase 1 §1.K — split interest/dividend on the IBKR parser.
+    "124": "",
 
     // Deductions — numeric
     "037": formatIlsForPdf(donations),
     "036": formatIlsForPdf(lifeIns),
     "135": formatIlsForPdf(indPension),
+
+    // Credit-points printed on the form
+    spouseCreditPoints,
+    "245": childCreditPointsCount > 0 ? String(childCreditPointsCount) : "",
 
     // Bank — IDs are numeric, name is Hebrew
     bank_number:    taxpayer.bank?.bankId   ?? "",
@@ -341,6 +490,11 @@ export function buildForm135Fields(
     spouseGrossSalary: taxpayer.maritalStatus === "married" && taxpayer.spouseHasIncome
       ? formatIlsForPdf((taxpayer as unknown as { spouseGrossSalary?: number }).spouseGrossSalary)
       : "",
+
+    // Signature block (text only — NOT a digital signature)
+    signatureName: sigName,
+    signatureDate,
+    declarationMark: taxpayer.idNumber ? "X" : "",
   };
 }
 

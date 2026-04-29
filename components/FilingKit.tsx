@@ -22,6 +22,7 @@ import { useApp } from "@/lib/appContext";
 import type { Form135Payload } from "@/types";
 import { determineFormType, FORM_LABELS } from "@/lib/formTypeSelector";
 import { refundHeadline } from "@/lib/refundDisplay";
+import { clientFetch } from "@/lib/api/clientFetch";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const fadeUp: Variants = {
@@ -30,26 +31,28 @@ const fadeUp: Variants = {
 };
 
 // ─── Submission guide steps ───────────────────────────────────────────────────
+// Note: this app does NOT submit to ITA. The user submits manually on taxes.gov.il.
+// Copy uses neutral plural and avoids any claim of automated signing/submission.
 const GUIDE_STEPS = [
   {
     icon: Monitor,
     step: "01",
-    title: "כניסה לאזור האישי",
-    body: "גש לאתר רשות המיסים (taxes.gov.il) ← \"אזור אישי\" ← \"הגשת בקשה להחזר מס (טופס 135)\".",
+    title: "כניסה לאזור האישי באתר רשות המיסים",
+    body: 'יש להיכנס לאתר רשות המיסים (taxes.gov.il) ← "אזור אישי" ← "הגשת בקשה להחזר מס (טופס 135)". ההזדהות נעשית באתר רשות המיסים, לא דרכנו.',
     color: "bg-blue-50 text-blue-600 border-blue-100",
   },
   {
     icon: Upload,
     step: "02",
-    title: "העלאת הקובץ",
-    body: "לחץ על \"העלה מסמך\" ובחר את קובץ ה-PDF שהורדת בשלב הקודם. וודא שהשם הוא form_135_ready.pdf.",
+    title: "העלאת הקובץ שהורדתם",
+    body: 'בוחרים "העלה מסמך" ומעלים את קובץ ה-PDF שהורדתם בשלב הקודם.',
     color: "bg-violet-50 text-violet-600 border-violet-100",
   },
   {
     icon: Stamp,
     step: "03",
-    title: "חתימה ואישור",
-    body: "חתום דיגיטלית בעזרת תעודת הזיהוי האלקטרונית או ה-SMS OTP. ההחזר יועבר ישירות לחשבון הבנק תוך 30–90 יום.",
+    title: "חתימה והגשה באתר רשות המיסים",
+    body: 'את החתימה והגשת הבקשה מבצעים באתר רשות המיסים בהתאם להוראות שם. לוחות הזמנים לקבלת ההחזר נקבעים על ידי רשות המיסים — אנחנו לא יכולים להתחייב למועד מסוים.',
     color: "bg-emerald-50 text-emerald-600 border-emerald-100",
   },
 ];
@@ -85,7 +88,7 @@ export function FilingKit() {
     try {
       const payload: Form135Payload & { calibrate?: boolean } = { taxpayer, financials, calibrate };
 
-      const res = await fetch(apiEndpoint, {
+      const res = await clientFetch(apiEndpoint, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(payload),

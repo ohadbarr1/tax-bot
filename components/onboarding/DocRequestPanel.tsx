@@ -13,6 +13,7 @@ import {
 import { docsForSources, sourceById, type SourceDocRequest } from "@/lib/sourceCatalog";
 import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
+import { clientFetch } from "@/lib/api/clientFetch";
 import type {
   IncomeSourceId,
   DocMineResponse,
@@ -107,7 +108,7 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
         if (req.type === "ibkr") {
           const form = new FormData();
           form.append("file", file);
-          const res = await fetch("/api/parse/ibkr", { method: "POST", body: form });
+          const res = await clientFetch("/api/parse/ibkr", { method: "POST", body: form });
           const json = (await res.json()) as IbkrParseResponse;
           if (!res.ok || !json.success || !json.data) {
             throw new Error(json.error ?? "IBKR parse failed");
@@ -141,7 +142,7 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
         form.append("file", file);
         form.append("type", req.type);
 
-        const res = await fetch("/api/mine/document", { method: "POST", body: form });
+        const res = await clientFetch("/api/mine/document", { method: "POST", body: form });
         const json = (await res.json()) as DocMineResponse;
 
         if (!res.ok || !json.success || !json.data) {
