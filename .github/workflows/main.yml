@@ -1,0 +1,265 @@
+name: ci
+
+# Phase 0 §0.G — gating CI workflow.
+# Closes audit findings: qa-release-CI (no CI today), qa-release-canary
+# (no calibration smoke gate), qa-release-utests (no pre-merge unit gate).
+# Refs: UPGRADE_PLAN.md §3 Phase 0 §0.G; audits/qa-release.md §1.4 + §3.2.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same branch / PR to keep CI fast and cheap.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22.x"
+  # Speed up Next builds in CI: skip telemetry prompts.
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  # ---- 1. Lint --------------------------------------------------------------
+  lint:
+    name: Lint (eslint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Run lint
+        run: npm run lint --if-present
+
+  # ---- 2. Typecheck ---------------------------------------------------------
+  typecheck:
+    name: Typecheck (tsc --noEmit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+  # ---- 3. Unit / integration tests -----------------------------------------
+  test:
+    name: Test (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Run vitest with coverage
+        run: npm run test:ci
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ---- 4. Production build --------------------------------------------------
+  build:
+    name: Build (next build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Cache .next/cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextcache-${{ hashFiles('package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nextcache-${{ hashFiles('package-lock.json') }}-
+            ${{ runner.os }}-nextcache-
+      - name: Install deps
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Upload .next build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-build
+          path: |
+            .next/
+            !.next/cache/
+          if-no-files-found: error
+          retention-days: 1
+
+  # ---- 5. Calibration smoke (PDF generation regression catcher) ------------
+  calibration-smoke:
+    name: Calibration smoke (PDF stamping)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Run forms:smoke
+        run: npm run forms:smoke
+      - name: Upload sample PDFs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-pdfs
+          path: |
+            /tmp/smoke_135.pdf
+            /tmp/smoke_1301.pdf
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ---- 6. Marketing-claims regression --------------------------------------
+  marketing-claims:
+    name: Marketing claims (no reintroduced lies)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Run marketing-claims test (skip if 0.B not yet shipped)
+        run: |
+          if [ -f lib/__tests__/marketingClaims.test.ts ]; then
+            npx vitest run lib/__tests__/marketingClaims.test.ts
+          else
+            echo "::notice title=marketing-claims skipped::lib/__tests__/marketingClaims.test.ts not present yet (workstream 0.B); will gate once landed."
+          fi
+
+  # ---- 7. Accessibility audit (axe) on the production build ----------------
+  axe:
+    name: Accessibility (axe-core)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Download Next build
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next/
+      - name: Install axe-core CLI
+        run: npm install --no-save @axe-core/cli@^4
+      - name: Start production server
+        run: |
+          npm run start -- --port 3000 &
+          echo $! > .next-server.pid
+          # Wait for the server to come up.
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/ >/dev/null 2>&1; then
+              echo "server up after ${i}s"; break
+            fi
+            sleep 1
+          done
+      - name: Run axe on critical routes (Phase-0 threshold = 0 critical)
+        run: |
+          set +e
+          npx axe --exit \
+            http://localhost:3000/ \
+            http://localhost:3000/dashboard \
+            http://localhost:3000/filing \
+            --tags wcag2a,wcag2aa \
+            --save axe-report.json
+          AXE_EXIT=$?
+          set -e
+          # Phase 0 gating: 0 critical only. We grep the report; serious/moderate
+          # are warn-only until Phase 3 (per UPGRADE_PLAN §0.G).
+          if [ -f axe-report.json ]; then
+            CRIT=$(node -e "const r=require('./axe-report.json');const all=Array.isArray(r)?r:[r];let c=0;for(const p of all){for(const v of (p.violations||[])){if(v.impact==='critical')c+=v.nodes.length;}}console.log(c);")
+            echo "Critical axe violations: ${CRIT}"
+            if [ "${CRIT}" -gt 0 ]; then
+              echo "::error title=axe critical::${CRIT} critical accessibility violations found"
+              exit 1
+            fi
+          else
+            echo "::warning title=axe::no report written; treating as soft fail"
+            exit "${AXE_EXIT}"
+          fi
+      - name: Upload axe report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axe-report
+          path: axe-report.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill "$(cat .next-server.pid)" || true
+          fi
+
+  # ---- 8. Lighthouse CI (a11y >= 90 on /, /dashboard, /filing) ------------
+  lighthouse:
+    name: Lighthouse CI (a11y >= 90)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Download Next build
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build
+          path: .next/
+      - name: Install Lighthouse CI
+        run: npm install --no-save @lhci/cli@^0.14
+      - name: Run Lighthouse CI
+        run: npx lhci autorun --config=.github/lighthouserc.json
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          if-no-files-found: ignore
+          retention-days: 14

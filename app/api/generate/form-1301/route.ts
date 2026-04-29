@@ -18,7 +18,15 @@ import path from "path";
 import { buildForm1301Fields, hebrewForPdf, assertForm1301Consistency } from "@/lib/pdfUtils";
 import { isValidTZ } from "@/lib/validateTZ";
 import { loadFieldMap, findField, type FieldMap } from "@/lib/fieldMap";
-import type { Form135Payload } from "@/types";
+import { withUser } from "@/lib/api/withUser";
+import { withRateLimitForUser } from "@/lib/api/withRateLimit";
+import {
+  invalidInput,
+  invalidInputFromZod,
+  internalError,
+  serviceUnavailable,
+} from "@/lib/api/errorEnvelope";
+import { Form1301PayloadSchema } from "@/lib/api/schemas/generate";
 
 const FORM_ID       = "1301_2025";
 const TEMPLATE_PATH = path.join(process.cwd(), "public/templates/form1301_2025.pdf");

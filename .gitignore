@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/.lighthouseci
+axe-report.json
 
 # next.js
 /.next/

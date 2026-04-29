@@ -41,7 +41,15 @@ import path from "path";
 import { buildForm135Fields, hebrewForPdf } from "@/lib/pdfUtils";
 import { isValidTZ } from "@/lib/validateTZ";
 import { loadFieldMap, findField, type FieldMap } from "@/lib/fieldMap";
-import type { Form135Payload } from "@/types";
+import { withUser } from "@/lib/api/withUser";
+import { withRateLimitForUser } from "@/lib/api/withRateLimit";
+import {
+  invalidInput,
+  invalidInputFromZod,
+  internalError,
+  serviceUnavailable,
+} from "@/lib/api/errorEnvelope";
+import { Form135PayloadSchema } from "@/lib/api/schemas/generate";
 
 const FORM_ID       = "135_2025";
 const TEMPLATE_PATH = path.join(process.cwd(), "public/templates/form135_2025.pdf");
@@ -66,26 +74,31 @@ interface FieldDraw {
 
 // ── Route handler ────────────────────────────────────────────────────────────
 
-export async function POST(req: NextRequest): Promise<Response> {
+async function handle(req: NextRequest): Promise<Response> {
   if (!fs.existsSync(TEMPLATE_PATH)) {
-    return Response.json(
-      { error: "TEMPLATE_MISSING", message: "form135_2025.pdf not found at public/templates/" },
-      { status: 503 },
+    return serviceUnavailable(
+      "תבנית הטופס אינה זמינה כרגע.",
+      "TEMPLATE_MISSING",
     );
   }
 
+  let raw: unknown;
   try {
-    const body = (await req.json()) as Form135Payload & { calibrate?: boolean };
+    raw = await req.json();
+  } catch {
+    return invalidInput("גוף הבקשה אינו JSON תקין.");
+  }
+  const parsed = Form135PayloadSchema.safeParse(raw);
+  if (!parsed.success) {
+    return invalidInputFromZod(parsed.error.issues, "פורמט הבקשה אינו תקין.");
+  }
+  const body = parsed.data;
+
+  try {
     const { taxpayer, financials } = body;
 
-    if (!taxpayer || !financials) {
-      return Response.json({ error: "Missing taxpayer or financials" }, { status: 400 });
-    }
     if (taxpayer.idNumber && !isValidTZ(taxpayer.idNumber)) {
-      return Response.json(
-        { error: "INVALID_TZ", message: "מספר תעודת זהות לא תקין — ספרת ביקורת שגויה" },
-        { status: 400 },
-      );
+      return invalidInput("מספר תעודת זהות לא תקין — ספרת ביקורת שגויה");
     }
 
     const calibrate = !!body.calibrate;
@@ -228,9 +241,15 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   } catch (err: unknown) {
     console.error("[form-135] Generation failed:", err);
-    return Response.json(
-      { error: "PDF_GENERATION_FAILED", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
+    return internalError(
+      "יצירת ה-PDF נכשלה. נסה שוב מאוחר יותר.",
+      err instanceof Error ? err.message : String(err),
     );
   }
 }
+
+// withRateLimitForUser ∘ withUser — every request must carry a valid Bearer
+// ID token AND fall within the per-user/IP quota. Closes F-1, F-2, F1.2.6.
+export const POST = withUser(
+  withRateLimitForUser(handle, { prefix: "generate-form-135", limit: 30 }),
+);
