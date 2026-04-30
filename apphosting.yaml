@@ -44,15 +44,14 @@ env:
     availability: [BUILD, RUNTIME]
 
   # ── Firebase App Check (security-F1.1.4 / F1.3.2) ────────────────────────
-  # reCAPTCHA v3 site key for the App Check provider. Public-by-design — the
-  # key is embedded in the page anyway. Get one at
-  #   https://www.google.com/recaptcha/admin/create
-  # (type: reCAPTCHA v3, domains: <project>.web.app + your custom domain)
-  # then register the same key in Firebase Console → App Check → reCAPTCHA v3.
-  # See DEPLOY.md §App Check.
-  - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
-    value: ""
-    availability: [BUILD, RUNTIME]
+  # reCAPTCHA v3 site key — set later via:
+  #   firebase apphosting:secrets:set NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+  # then uncomment the block below. Until set, App Check no-ops (per
+  # lib/firebase/client.ts) and the build proceeds. App Hosting rejects
+  # empty `value: ""` entries, so we omit rather than stub.
+  # - variable: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+  #   secret: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+  #   availability: [BUILD, RUNTIME]
 
   # Anthropic API key — stored in Google Cloud Secret Manager. Set via:
   #   firebase apphosting:secrets:set ANTHROPIC_API_KEY
