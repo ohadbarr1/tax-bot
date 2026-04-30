@@ -1,23 +1,24 @@
 "use client";
-// Lands users on the LAST questionnaire step they visited, not always step 1.
-// state.questionnaire.step is mirrored from the [step] page on every mount;
-// when the user clicks "שאלון" in the sidebar from anywhere, we resume.
+// Resume the user on the LAST questionnaire step they visited.
+// Source of truth is localStorage (sync, no auth race). The [step]
+// page writes there on every mount; we read here before any auth /
+// Firestore round-trip.
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useApp } from "@/lib/appContext";
-import { STEP_CONFIG, FIRST_SLUG } from "@/lib/questionnaireSteps";
+import { isValidSlug, FIRST_SLUG } from "@/lib/questionnaireSteps";
+
+const LAST_STEP_KEY = "taxbot.questionnaire.lastSlug";
 
 export default function QuestionnaireResume() {
-  const { state, hydrated } = useApp();
   const router = useRouter();
-
   useEffect(() => {
-    if (!hydrated) return;
-    const step = state.questionnaire?.step ?? 1;
-    const slug =
-      STEP_CONFIG.find((s) => s.id === step)?.slug ?? FIRST_SLUG;
+    let slug = FIRST_SLUG;
+    try {
+      const stored = window.localStorage.getItem(LAST_STEP_KEY);
+      if (stored && isValidSlug(stored)) slug = stored;
+    } catch { /* localStorage unavailable (private mode) — fall through */ }
     router.replace(`/questionnaire/${slug}`);
-  }, [hydrated, state.questionnaire?.step, router]);
+  }, [router]);
 
   return (
     <div className="min-h-[50vh] flex items-center justify-center">

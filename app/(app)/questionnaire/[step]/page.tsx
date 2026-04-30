@@ -39,9 +39,18 @@ export default function StepPage({
   const currentStep = getStepBySlug(slug)!;
 
   // Track last-visited step so /questionnaire (no slug) resumes here.
+  // Two writes for resilience:
+  //   1. localStorage  — sync, no auth race; consumed by /questionnaire.
+  //   2. AppContext    — async; debounced into Firestore for cross-device.
   useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "taxbot.questionnaire.lastSlug",
+        slug,
+      );
+    } catch { /* private mode etc. */ }
     setQuestionnaireStep(currentStep.id);
-  }, [currentStep.id, setQuestionnaireStep]);
+  }, [slug, currentStep.id, setQuestionnaireStep]);
   const prev = prevSlug(slug);
   const next = nextSlug(slug);
   const isLast = currentStep.id === LAST_STEP_ID;
