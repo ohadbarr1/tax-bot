@@ -1,0 +1,15 @@
+{
+  "currency": "USD",
+  "base": "ILS",
+  "source": "Bank of Israel — https://www.boi.org.il/PublicApi/GetExchangeRates",
+  "_warning": "Seed dataset only. Run `node scripts/seed-fx-rates.mjs` to populate full daily backfill from the live BoI API. Until then, lib/fx.ts falls back to the documented annual mean for any unseeded date and emits a warning.",
+  "annualMean": {
+    "2020": 3.44,
+    "2021": 3.23,
+    "2022": 3.36,
+    "2023": 3.69,
+    "2024": 3.71,
+    "2025": 3.65
+  },
+  "rates": {}
+}
