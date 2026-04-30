@@ -83,19 +83,23 @@ export function buildCsp(nonce: string): string {
     "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
     "script-src": [
       "'self'",
-      `'nonce-${nonce}'`,
-      // NOTE on 'strict-dynamic': Phase 0 shipped it with the intent that the
-      // nonce'd loader would pull bundle chunks. Reality: Next 16 emits
-      // <script async src="..."> chunks WITHOUT the nonce (no wire-through
-      // from middleware → RSC → renderer in this version), so 'strict-dynamic'
-      // blocks the entire React hydration → page hangs at SSR shell. Removed.
-      // Tracked for Phase 3 design-system work to re-introduce with proper
-      // nonce wire-through (Next 16 docs: pass nonce via Script component).
-      // 'unsafe-inline' is ignored by the browser when a nonce is present
-      // (spec § "if a 'nonce-source' / 'hash-source' is present, ignore
-      // 'unsafe-inline'"), so it only relaxes inline scripts that LACK a
-      // nonce — currently just Next's tiny theme-detection bootstrap.
+      // NOTE on the dropped nonce: Phase 0 §0.J shipped CSP with a per-request
+      // nonce + 'strict-dynamic'. Reality: Next 16 emits ~7 inline scripts per
+      // page (RSC payload, theme bootstrap, hydration data) WITHOUT propagating
+      // our middleware nonce — and once a nonce-source is in script-src, the
+      // browser IGNORES 'unsafe-inline' (CSP spec § Backwards-Compat). Result:
+      // every inline script blocked → React hydration fails → page hangs at
+      // SSR shell. Browser console: "Executing inline script violates the
+      // following Content Security Policy directive ... Note that
+      // 'unsafe-inline' is ignored if either a hash or nonce value is present".
+      //
+      // Mitigation chosen: drop the nonce, keep 'unsafe-inline'. Less strict
+      // than the audit promised but functional. Phase 3 §3.A backlog: wire
+      // nonce through Next 16 via experimental option / next/script nonce
+      // prop OR switch to per-build hash list of expected inline scripts.
       "'unsafe-inline'",
+      // 'self' covers /_next/static/chunks/*.js. Host allowlist for Firebase
+      // SDK + reCAPTCHA still applies.
       ...FIREBASE_HOSTS,
       ...RECAPTCHA_HOSTS,
     ],

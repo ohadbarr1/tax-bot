@@ -55,12 +55,23 @@ describe("proxy.ts — CSP + security headers (security-F1.2.x / F1.3.1)", () =>
     expect(csp).toMatch(/frame-src[^;]*www\.google\.com/);
   });
 
-  it("uses a per-request nonce in script-src", () => {
+  // Phase 0 §0.J shipped a per-request nonce. Phase 1 follow-up dropped it
+  // (see proxy.ts header) because Next 16 emits inline scripts without our
+  // nonce → CSP spec ignores 'unsafe-inline' when nonce-source present →
+  // every inline script blocked → React hydration failed → /welcome hung.
+  // Phase 3 §3.A backlog: re-introduce nonce with proper Next-RSC wire-through.
+  it.skip("uses a per-request nonce in script-src — DROPPED Phase 1; Phase 3 backlog", () => {
     const csp1 = buildCsp("nonce-A");
     const csp2 = buildCsp("nonce-B");
     expect(csp1).toContain("'nonce-nonce-A'");
     expect(csp2).toContain("'nonce-nonce-B'");
     expect(csp1).not.toEqual(csp2);
+  });
+
+  it("script-src has 'unsafe-inline' (Next 16 needs it for hydration data)", () => {
+    const csp = buildCsp("ignored");
+    expect(csp).toContain("'unsafe-inline'");
+    expect(csp).not.toMatch(/'nonce-/);
   });
 
   it("sets HSTS, X-Frame-Options, Permissions-Policy, Referrer-Policy, X-Content-Type-Options", () => {
@@ -73,12 +84,9 @@ describe("proxy.ts — CSP + security headers (security-F1.2.x / F1.3.1)", () =>
     expect(res.headers.get("permissions-policy")).toBeTruthy();
   });
 
-  it("forwards the nonce to downstream React via x-csp-nonce request header", () => {
+  it.skip("forwards the nonce to downstream React via x-csp-nonce request header — DROPPED Phase 1; Phase 3 backlog", () => {
     const req = makeNextRequest("https://example.test/dashboard");
     const res = proxy(req);
-    // The proxy MUST set the nonce on a request header so RSC pages can read
-    // it via `headers()` and pass it to inline scripts. We assert the same
-    // nonce is in CSP header AND was attached to the next request.
     const csp = res.headers.get("content-security-policy") ?? "";
     const nonceMatch = /'nonce-([^']+)'/.exec(csp);
     expect(nonceMatch).toBeTruthy();
