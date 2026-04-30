@@ -11,10 +11,30 @@
  *   • PDF  — text extracted via pdf-parse (all pages)
  *   • Image — JPG, PNG, TIFF (Tesseract OCR)
  *
- * Field extraction strategy:
- *   Regex patterns match the field number followed by a numeric value nearby.
- *   Fields targeted: 158 (gross), 042 (tax withheld), 045 (pension).
- *   Patterns require word boundaries to avoid false matches on longer numbers.
+ * Field extraction strategy (Phase 1 §1.C):
+ *   Two layout-aware extractors live in `lib/form106Parser.ts` — line-per-
+ *   field (Phoenix/Hilan) and columnar (university תוסף 106). The route runs
+ *   both and validates the merged result against `Form106ExtractedSchema`
+ *   (Zod). The full canonical ITA-code set is extracted now, not just the
+ *   original 3 — closes ingestion-F-1 (3-of-14) and ingestion-F-2 (158-vs-158
+ *   silent ambiguity).
+ *
+ * Fields returned (legacy + new):
+ *   - employerName, monthsWorked
+ *   - 158 (regular) → grossSalary
+ *   - 158 (תיאום)  → field158Coordinated   ← F-2 fix
+ *   - 042 → taxWithheld
+ *   - 045 → pensionDeduction
+ *   - 086 → nationalInsuranceWithheld
+ *   - 219/218 → studyFundSalary / studyFundEmployer
+ *   - 245/244 → pensionInsuredSalary / severanceMargin
+ *   - 249/248 → employerPensionTotal / employerPensionDeduct
+ *   - 272 → severanceTaxable
+ *   - 037 → employerDonations
+ *   - 044 → creditPointsValue / creditPointsCount
+ *   - 004 → taxFileNumber
+ *   - 033 → incomeType
+ *   - 089/090 → exemptionSection9a / exemptionSection9b
  *
  * Fallback: If a field isn't found, the field is omitted from the response
  * (client handles missing fields gracefully).
@@ -30,6 +50,7 @@ import { withRateLimitForUser } from "@/lib/api/withRateLimit";
 import {
   Form106UploadMetaSchema,
   form106ExtensionAccepted,
+  Form106ExtractedSchema,
 } from "@/lib/api/schemas/parse";
 
 // Accepted MIME types now live in lib/api/schemas/parse.ts
@@ -185,14 +206,48 @@ async function handle(
 
     const fields = extractForm106Fields(ocrText);
 
+    // Validate the extracted-fields shape via Zod. The schema is intentionally
+    // permissive (every field optional) — its job is to catch type drift and
+    // out-of-range values (e.g. negative salaries, malformed taxFileNumber).
+    // On schema-violation, fail soft: log + drop to legacy 5-field response.
+    const parsed = Form106ExtractedSchema.safeParse(fields);
+    if (!parsed.success) {
+      console.error(
+        "[form-106] Form106ExtractedSchema rejected parser output:",
+        parsed.error.issues,
+      );
+    }
+    const safe = parsed.success ? parsed.data : {};
+
+    // Closes ingestion-F-1 (only 3/14 fields parsed) and F-2 (158-vs-158
+    // ambiguity) — every canonical Form 106 ITA code is now in the response.
     return NextResponse.json<Form106ParseResponse>({
       success: true,
       data: {
-        employerName:     fields.employerName     ?? "",
-        monthsWorked:     fields.monthsWorked     ?? 12,
-        grossSalary:      fields.grossSalary      ?? 0,
-        taxWithheld:      fields.taxWithheld      ?? 0,
-        pensionDeduction: fields.pensionDeduction ?? 0,
+        // Legacy fields — back-compat with existing FileDropzone consumer.
+        employerName:     safe.employerName     ?? fields.employerName     ?? "",
+        monthsWorked:     safe.monthsWorked     ?? fields.monthsWorked     ?? 12,
+        grossSalary:      safe.grossSalary      ?? fields.grossSalary      ?? 0,
+        taxWithheld:      safe.taxWithheld      ?? fields.taxWithheld      ?? 0,
+        pensionDeduction: safe.pensionDeduction ?? fields.pensionDeduction ?? 0,
+
+        // Phase 1 §1.C — new canonical fields (optional; absent = not parsed).
+        field158Coordinated:       safe.field158Coordinated,
+        nationalInsuranceWithheld: safe.nationalInsuranceWithheld,
+        studyFundSalary:           safe.studyFundSalary,
+        studyFundEmployer:         safe.studyFundEmployer,
+        pensionInsuredSalary:      safe.pensionInsuredSalary,
+        severanceMargin:           safe.severanceMargin,
+        employerPensionTotal:      safe.employerPensionTotal,
+        employerPensionDeduct:     safe.employerPensionDeduct,
+        severanceTaxable:          safe.severanceTaxable,
+        employerDonations:         safe.employerDonations,
+        creditPointsValue:         safe.creditPointsValue,
+        creditPointsCount:         safe.creditPointsCount,
+        taxFileNumber:             safe.taxFileNumber,
+        incomeType:                safe.incomeType,
+        exemptionSection9a:        safe.exemptionSection9a,
+        exemptionSection9b:        safe.exemptionSection9b,
       },
     });
   } catch (err: unknown) {

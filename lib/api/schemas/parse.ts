@@ -5,6 +5,10 @@
  * validate (1) the presence of a File, (2) its size, and (3) the declared MIME
  * type / extension. Pure JSON Zod can't model `File` directly, so we parse the
  * extracted file out-of-band and then validate metadata via these schemas.
+ *
+ * The full extracted-fields schema for Form 106 lives in
+ * `lib/api/schemas/form106.ts` (`Form106ExtractedSchema`) — it is large enough
+ * to deserve its own file with the field-code map kept in one place.
  */
 
 import { z } from "zod";
@@ -31,6 +35,11 @@ export function form106ExtensionAccepted(name: string): boolean {
   const lower = name.toLowerCase();
   return FORM106_ACCEPTED_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
+
+// Re-export the extracted-fields schema for convenience — the route imports
+// from this module so callers don't need to know the file split.
+export { Form106ExtractedSchema, Form106IncomeType } from "./form106";
+export type { Form106Extracted } from "./form106";
 
 // ─── IBKR (CSV) ──────────────────────────────────────────────────────────────
 
