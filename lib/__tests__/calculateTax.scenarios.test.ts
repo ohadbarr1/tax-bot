@@ -21,6 +21,10 @@ import {
   calculateQualifyingPensionExemption,
   calculateForeignSalaryCredit,
   calculateDeductionCredits,
+  calculateShiftWorkDiscount,
+  calculateChaltAdjustment,
+  calculateMaternityLeaveAdjustment,
+  calculateTaxOnIncome,
 } from "../calculateTax";
 import { generateOptimizations } from "../optimizer";
 import type { TaxPayer, PersonalDeduction, FinancialData } from "@/types";
@@ -906,5 +910,232 @@ describe("Per-year pensionIncomeCeiling (Phase 1 §1.A — was 2025?283:270)", (
     expect(r2023.total).toBe(Math.round(Math.round(223_920 * 0.16) * 0.35));
     // Sanity: 2024 > 2023 because indexation grew the ceiling.
     expect(r2024.total).toBeGreaterThan(r2023.total);
+  });
+});
+
+// ─── F-018: שכר במשמרות (shift-work tax discount) — תקנה 5 ───────────────────
+
+describe("F-018 שכר במשמרות — תקנה 5 לתקנות מס הכנסה (15% הנחה על שעות 175-200 לחודש)", () => {
+  // תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) +
+  // הוראת ביצוע 24/2002 — עובד שעיקר עבודתו במשמרות וההיקף החודשי
+  // נמצא בטווח 175-200 שעות זכאי להנחת מס של 15% על המס השולי
+  // המיוחס לשעות אלה.
+  it("≥ 175h × 12 months → positive discount, scaled by 15% × marginal-rate × shift slice", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        shiftWorkHours: { months: 12, avgHoursPerMonth: 200 },
+      },
+    });
+    const r = calculateFullRefund(tp, 2025);
+    expect(r.shiftWorkDiscount).toBeGreaterThan(0);
+    // The discount must never exceed the raw bracket tax.
+    expect(r.shiftWorkDiscount).toBeLessThanOrEqual(r.calculatedTax + r.shiftWorkDiscount);
+    // Ballpark: 25 recognised hours × 12 = 300 hours; (300/1900) × 200k ≈ ₪31.6k
+    // shift slice; effective marginal ≈ 30k/200k = 15%; discount ≈ 0.15 × 0.15 × 31.6k
+    // ≈ ₪711. Allow generous bounds — the model is a documented proxy.
+    expect(r.shiftWorkDiscount).toBeGreaterThan(300);
+    expect(r.shiftWorkDiscount).toBeLessThan(2_500);
+  });
+
+  it("< 175 hours/month → NO discount (eligibility floor)", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        shiftWorkHours: { months: 12, avgHoursPerMonth: 170 },
+      },
+    });
+    const r = calculateShiftWorkDiscount(tp, 200_000, 30_000);
+    expect(r.adjustment).toBe(0);
+    // The Hebrew explanation must surface the eligibility floor.
+    expect(r.explanation).toContain("175");
+  });
+
+  it("hours capped at 200 — extra hours above 200 do NOT increase the discount", () => {
+    const tp200 = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        shiftWorkHours: { months: 12, avgHoursPerMonth: 200 },
+      },
+    });
+    const tp250 = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        shiftWorkHours: { months: 12, avgHoursPerMonth: 250 },
+      },
+    });
+    const r200 = calculateShiftWorkDiscount(tp200, 200_000, 30_000);
+    const r250 = calculateShiftWorkDiscount(tp250, 200_000, 30_000);
+    // Both cap at 200 → identical recognised band.
+    expect(r250.adjustment).toBe(r200.adjustment);
+  });
+
+  it("citation must reference תקנה 5 + הוראת ביצוע 24/2002", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        shiftWorkHours: { months: 12, avgHoursPerMonth: 190 },
+      },
+    });
+    const r = calculateShiftWorkDiscount(tp, 200_000, 30_000);
+    expect(r.cite).toContain("תקנה 5");
+    expect(r.cite).toContain("24/2002");
+  });
+
+  it("calculateFullRefund without shiftWorkHours → discount = 0 (back-compat)", () => {
+    const tp = makeTaxpayer();
+    const r = calculateFullRefund(tp, 2025);
+    expect(r.shiftWorkDiscount).toBe(0);
+  });
+});
+
+// ─── חל"ת: תקנה 5(ג)(4) — חופשה ללא תשלום ──────────────────────────────────
+
+describe('חל"ת — תקנה 5(ג)(4) (תיאום מס לאחר חזרה מחל"ת)', () => {
+  // תקנה 5(ג)(4) — תיאום מס לאחר חזרה מחל"ת. ניכוי המס נעשה על
+  // בסיס הצפי השנתי המלא; כשבפועל עובד רק חלק מהשנה, נוצרת גביית-יתר
+  // שמוחזרת בתיאום. המהנדס ההכנסה החייבת מורד בנתח החודשים בחל"ת.
+  it("3 months חל\"ת → taxableIncome reduced by 25% before bracket calc", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        chaltMonths: 3,
+      },
+    });
+    const r = calculateFullRefund(tp, 2025);
+    // 200k gross, 3/12 leave → 50k removed.
+    expect(r.chaltAdjustment).toBe(50_000);
+    expect(r.taxableIncome).toBe(150_000);
+  });
+
+  it('0 months → no adjustment (back-compat)', () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        chaltMonths: 0,
+      },
+    });
+    const r = calculateFullRefund(tp, 2025);
+    expect(r.chaltAdjustment).toBe(0);
+    expect(r.taxableIncome).toBe(200_000);
+  });
+
+  it('full-year (12 months) חל"ת → adjustment 0 (no income to reconcile)', () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        chaltMonths: 12,
+      },
+    });
+    const r = calculateChaltAdjustment(tp, 200_000);
+    expect(r.adjustment).toBe(0);
+    expect(r.explanation).toContain("חל\"ת מלא");
+  });
+
+  it('citation must reference תקנה 5(ג)(4)', () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        chaltMonths: 4,
+      },
+    });
+    const r = calculateChaltAdjustment(tp, 200_000);
+    expect(r.cite).toContain("תקנה 5(ג)(4)");
+  });
+
+  it("reduced taxableIncome → strictly lower bracket tax than no-chalt baseline", () => {
+    const tpBase = makeTaxpayer();
+    const tpChalt = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        chaltMonths: 4,
+      },
+    });
+    const rBase = calculateFullRefund(tpBase, 2025);
+    const rChalt = calculateFullRefund(tpChalt, 2025);
+    expect(rChalt.calculatedTax).toBeLessThan(rBase.calculatedTax);
+    // Sanity: the bracket-tax delta matches calculateTaxOnIncome on the
+    // post-adjustment income.
+    const expectedTax = calculateTaxOnIncome(rChalt.taxableIncome, 2025).tax;
+    expect(rChalt.calculatedTax).toBe(expectedTax);
+  });
+});
+
+// ─── F-019: חופשת לידה — תקנות 168 + 174 + סעיף 9(7)(ב) ──────────────────────
+
+describe("F-019 חופשת לידה — תקנות 168 + 174 (תיאום מס) + סעיף 9(7)(ב) (פטור על דמי לידה)", () => {
+  // תקנות 168 + 174 — תיאום מס לאחר חופשת לידה (אותו מנגנון כמו חל"ת).
+  // סעיף 9(7)(ב) לפקודה — דמי לידה מבל"ל פטורים ממס ולא נוספים להכנסה.
+  it("4 months מטרניטי → taxableIncome reduced by 1/3 before bracket calc", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        maternityLeaveMonths: 4,
+      },
+    });
+    const r = calculateFullRefund(tp, 2025);
+    // 200k × 4/12 ≈ 66,667.
+    expect(r.maternityLeaveAdjustment).toBe(Math.round(200_000 * (4 / 12)));
+    expect(r.taxableIncome).toBe(200_000 - r.maternityLeaveAdjustment);
+  });
+
+  it("דמי לידה (allowance) NEVER added to taxable income (סעיף 9(7)(ב) exemption)", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        maternityLeaveMonths: 4,
+        maternityLeaveAllowanceIls: 35_000, // BL grant
+      },
+    });
+    const r = calculateFullRefund(tp, 2025);
+    // The grant is exempt — totalGrossIncome reflects only employer salary.
+    expect(r.totalGrossIncome).toBe(200_000);
+    // …and the explanation surfaces the exempt allowance line.
+    const m = calculateMaternityLeaveAdjustment(tp, 200_000);
+    expect(m.explanation).toContain("דמי לידה");
+    expect(m.explanation).toContain("9(7)(ב)");
+  });
+
+  it('0 months → no adjustment (back-compat)', () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        maternityLeaveMonths: 0,
+      },
+    });
+    const r = calculateMaternityLeaveAdjustment(tp, 200_000);
+    expect(r.adjustment).toBe(0);
+  });
+
+  it('citation must reference תקנות 168 + 174 + סעיף 9(7)(ב)', () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        maternityLeaveMonths: 3,
+      },
+    });
+    const r = calculateMaternityLeaveAdjustment(tp, 200_000);
+    expect(r.cite).toContain("168");
+    expect(r.cite).toContain("174");
+    expect(r.cite).toContain("9(7)(ב)");
+  });
+
+  it("חל\"ת + maternity in same year → both reductions compose, not double-count", () => {
+    const tp = makeTaxpayer({
+      lifeEvents: {
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        chaltMonths: 2,
+        maternityLeaveMonths: 3,
+      },
+    });
+    const r = calculateFullRefund(tp, 2025);
+    // First: chalt removes 2/12 = 33,333. Remaining base = 166,667.
+    // Then: maternity removes 3/12 of 166,667 = 41,667. Final taxable ≈ 125,000.
+    expect(r.chaltAdjustment).toBe(Math.round(200_000 * (2 / 12)));
+    const expectedMaternityBase = 200_000 - r.chaltAdjustment;
+    expect(r.maternityLeaveAdjustment).toBe(Math.round(expectedMaternityBase * (3 / 12)));
+    expect(r.taxableIncome).toBe(
+      Math.max(0, 200_000 - r.chaltAdjustment - r.maternityLeaveAdjustment)
+    );
   });
 });

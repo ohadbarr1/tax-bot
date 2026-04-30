@@ -92,7 +92,7 @@ export interface ExtractedFile {
 
 /** Discriminated result so routes can branch without try/catch. */
 export type FileExtractResult =
-  | { ok: true; file: ExtractedFile }
+  | { ok: true; file: ExtractedFile; password?: string }
   | { ok: false; status: number; error: string };
 
 /** Discriminated result of the vision call. */
@@ -113,6 +113,20 @@ export interface VisionOptions<T> {
 
 // ─── 1. Extract + validate the multipart file ────────────────────────────────
 
+/**
+ * Extract `file` (and optionally `password`) from a multipart/form-data
+ * request body, validating size + extension/MIME, normalising HEIC → JPEG.
+ *
+ * Phase 1 §1.L (closes ingestion-F-5): `password` is forwarded verbatim to
+ * the caller via `result.password` so encrypted-PDF parsers (form-106 today;
+ * 867 / 161 / withholding-cert tomorrow) can pass it into pdf-parse. The
+ * field is OPTIONAL; absent means "treat as unencrypted, surface 422 +
+ * Hebrew prompt if the parser disagrees".
+ *
+ * The password is bounded at 64 chars (DoS guard); anything longer is
+ * silently dropped rather than rejecting the whole upload — the parser will
+ * then surface the same NEED_PASSWORD path as if no password had been sent.
+ */
 export async function extractMultipartFile(
   request: Request,
 ): Promise<FileExtractResult> {
@@ -156,9 +170,19 @@ export async function extractMultipartFile(
     return { ok: false, status: 400, error: PARSE_ERROR.PREPROCESS };
   }
 
+  // Optional password (Phase 1 §1.L). 64-char cap — see PARSE_ERROR / schema
+  // doc; longer values are dropped rather than failing the whole upload so
+  // that a fat-fingered TZ doesn't surface as "form rejected".
+  const rawPwd = formData.get("password");
+  const password =
+    typeof rawPwd === "string" && rawPwd.length > 0 && rawPwd.length <= 64
+      ? rawPwd
+      : undefined;
+
   return {
     ok: true,
     file: { bytes, mediaType, fileName },
+    password,
   };
 }
 

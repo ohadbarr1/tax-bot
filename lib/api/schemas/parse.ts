@@ -29,6 +29,18 @@ export const Form106UploadMetaSchema = z.object({
   name: z.string().min(1).max(512),
   size: z.number().int().min(1).max(MAX_UPLOAD_BYTES),
   type: z.string().max(255).optional(),
+  /**
+   * Optional password for encrypted PDFs (Phase 1 §1.L, closes ingestion-F-5).
+   * ITA's own ניכוי-במקור / 867 / 161 PDFs ship encrypted with the recipient's
+   * תעודת זהות (TZ) as the user-password. When the upload is encrypted and no
+   * `password` is supplied, the route returns 422 with a TZ-prompt error;
+   * client retries with the TZ in this field.
+   *
+   * Capped at 64 chars: a TZ is 9 digits, an arbitrary owner-password may be
+   * up to ~32 chars (PDF spec allows 127 but no real-world ITA cert exceeds
+   * the TZ width). 64 leaves head-room without becoming a DoS surface.
+   */
+  password: z.string().max(64).optional(),
 });
 
 export function form106ExtensionAccepted(name: string): boolean {

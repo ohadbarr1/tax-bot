@@ -114,6 +114,41 @@ export interface LifeEvent {
    * The engine uses this to size the over-withholding refund slice.
    */
   multiEmployerOverlapMonths?: number;
+  /**
+   * Phase 1 §1.I (F-018) — שכר במשמרות (shift-work tax discount).
+   * תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) +
+   * הוראת ביצוע 24/2002 — 15% הנחה ממס שולי על שעות שעיקרן בטווח
+   * 175-200 לחודש. The engine uses `months` × `avgHoursPerMonth` to
+   * compute the eligible shift-hour band and applies a 15% discount on
+   * the bracket-tax slice attributable to those hours.
+   */
+  shiftWorkHours?: {
+    /** Number of months the worker performed eligible משמרות in the tax year (1–12). */
+    months: number;
+    /** Average hours-per-month worked in the eligible shift band. */
+    avgHoursPerMonth: number;
+  };
+  /**
+   * Phase 1 §1.I (חל"ת) — חופשה ללא תשלום months in the tax year.
+   * תקנה 5(ג)(4) — when withholding was based on a 12-month projection
+   * but the worker was on חל"ת for some months, the over-withheld slice
+   * is refundable. The engine reduces `taxableIncome` by the leave-month
+   * fraction BEFORE bracket calc to surface the refund.
+   */
+  chaltMonths?: number;
+  /**
+   * Phase 1 §1.I (F-019) — חופשת לידה months in the tax year.
+   * תקנות 168 + 174 — same reconciliation logic as חל"ת. The דמי לידה
+   * grant from ביטוח לאומי is tax-exempt under סעיף 9(7)(ב) and is
+   * NOT added to taxable income.
+   */
+  maternityLeaveMonths?: number;
+  /**
+   * Phase 1 §1.I (F-019) — דמי לידה grant amount paid by ביטוח לאומי
+   * (informational only; the grant is tax-exempt under סעיף 9(7)(ב)
+   * and never added to taxable income).
+   */
+  maternityLeaveAllowanceIls?: number;
 }
 
 // Phase 3 ─────────────────────────────────────────────────────────────────────

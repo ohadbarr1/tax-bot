@@ -8,8 +8,12 @@
  * defined"). For images (JPG/PNG/TIFF), runs Tesseract.js Hebrew + English OCR.
  *
  * Supported inputs:
- *   • PDF  — text extracted via pdf-parse (all pages)
+ *   • PDF  — text extracted via pdf-parse (per-page)
  *   • Image — JPG, PNG, TIFF (Tesseract OCR)
+ *
+ * Multipart form fields:
+ *   • file      (required) — PDF / JPG / PNG / TIFF
+ *   • password  (optional) — TZ used to decrypt ITA-issued PDFs (1.L F-5)
  *
  * Field extraction strategy (Phase 1 §1.C):
  *   Two layout-aware extractors live in `lib/form106Parser.ts` — line-per-
@@ -18,6 +22,16 @@
  *   (Zod). The full canonical ITA-code set is extracted now, not just the
  *   original 3 — closes ingestion-F-1 (3-of-14) and ingestion-F-2 (158-vs-158
  *   silent ambiguity).
+ *
+ * Phase 1 §1.L (closes ingestion-F-4 + F-5):
+ *   • F-4 — pdf-parse v2 emits per-page text via TextResult.pages[]; we feed
+ *     the page-array into extractForm106Fields() so the columnar heuristic
+ *     no longer fuses page-1 / page-2 columns on multi-page 106s.
+ *   • F-5 — encrypted PDFs (ITA's own ניכוי-במקור / 867 / 161 PDFs are
+ *     encrypted with the recipient's TZ as user-password) are detected and
+ *     surfaced as 422 + Hebrew TZ-prompt instead of opaque 500. The
+ *     `password` form-data field threads through to pdf-parse's `password`
+ *     LoadParameter.
  *
  * Fields returned (legacy + new):
  *   - employerName, monthsWorked
@@ -78,17 +92,77 @@ function installPdfjsDomStubs(): void {
   if (typeof g.Path2D    === "undefined") g.Path2D    = class {};
 }
 
-async function extractTextFromPdf(buffer: Buffer): Promise<string> {
+/**
+ * Typed wrapper around pdf-parse's PasswordException so the route can return
+ * a user-recoverable 422 instead of a generic 500. Phase 1 §1.L (F-5).
+ *
+ * `kind`:
+ *   - "NEED_PASSWORD"     — file is encrypted, no password was supplied.
+ *   - "INCORRECT_PASSWORD" — supplied password didn't decrypt.
+ *
+ * The discriminator comes from the underlying pdfjs-dist `.code` (1 / 2)
+ * via PasswordException.cause; pdf-parse re-throws but DOES NOT preserve
+ * `.code` on the outer Error, only via cause.
+ */
+export class EncryptedPdfError extends Error {
+  readonly kind: "NEED_PASSWORD" | "INCORRECT_PASSWORD";
+  constructor(kind: "NEED_PASSWORD" | "INCORRECT_PASSWORD", message?: string) {
+    super(message ?? kind);
+    this.name = "EncryptedPdfError";
+    this.kind = kind;
+    Object.setPrototypeOf(this, EncryptedPdfError.prototype);
+  }
+}
+
+/**
+ * Per-page PDF text extraction.
+ *
+ * Returns the page array from pdf-parse v2's TextResult so the parser can
+ * run extraction page-by-page (closes ingestion-F-4: previously the
+ * concatenated `result.text` fused page-1 + page-2 columns into a single
+ * "longest run" of number-only lines and zipped them against page-1
+ * descriptions, silently scrambling values).
+ *
+ * Phase 1 §1.L:
+ *   - `password`, if supplied, is forwarded to pdf-parse's LoadParameter
+ *     (its underlying pdfjs-dist getDocument() honours the option).
+ *   - On PasswordException, we re-throw a typed EncryptedPdfError that the
+ *     route handler maps to a 422 + Hebrew prompt.
+ */
+async function extractTextFromPdf(
+  buffer: Buffer,
+  password?: string,
+): Promise<string[]> {
   installPdfjsDomStubs();
 
   // pdf-parse v2 bundles pdfjs-dist's Node build internally. See stub
   // explanation above for why we must install browser-global shims first.
-  const { PDFParse } = await import("pdf-parse");
+  const { PDFParse, PasswordException } = await import("pdf-parse");
 
-  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  const parser = new PDFParse({
+    data: new Uint8Array(buffer),
+    ...(password ? { password } : {}),
+  });
   try {
     const result = await parser.getText();
-    return result.text;
+    // pdf-parse always populates `pages: PageTextResult[]` even on a
+    // single-page document. Empty array would be malformed input.
+    if (!result.pages || result.pages.length === 0) {
+      // Single-blob fallback if a future pdf-parse version drops `pages`.
+      return [result.text ?? ""];
+    }
+    return result.pages.map((p) => p.text ?? "");
+  } catch (err: unknown) {
+    if (err instanceof PasswordException) {
+      // PDFJS PasswordResponses: 1 = NEED_PASSWORD, 2 = INCORRECT_PASSWORD.
+      // pdf-parse re-throws but only `cause` carries the numeric code.
+      const cause = (err as { cause?: { code?: number } }).cause;
+      const code = typeof cause?.code === "number" ? cause.code : undefined;
+      const kind: "NEED_PASSWORD" | "INCORRECT_PASSWORD" =
+        code === 2 ? "INCORRECT_PASSWORD" : "NEED_PASSWORD";
+      throw new EncryptedPdfError(kind, err.message);
+    }
+    throw err;
   } finally {
     await parser.destroy();
   }
@@ -183,21 +257,30 @@ async function handle(
 
   const fileName = file.name.toLowerCase();
 
+  // Optional password for ITA-issued encrypted PDFs (1.L F-5).
+  // Form-data field "password" is the recipient TZ that gov.il used to encrypt.
+  const passwordRaw = formData.get("password");
+  const password = typeof passwordRaw === "string" && passwordRaw.length > 0
+    ? passwordRaw
+    : undefined;
+
   // 4. Extract text
   try {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    let ocrText: string;
+    let ocrText: string | string[];
 
     if (fileName.endsWith(".pdf")) {
-      // Digital PDF → extract embedded text (much more reliable than OCR on PDF)
-      const pdfText = await extractTextFromPdf(buffer);
-      if (pdfText.replace(/\s+/g, "").length < 100) {
+      // Digital PDF → per-page text array (1.L). extractForm106Fields
+      // accepts string | string[].
+      const pages = await extractTextFromPdf(buffer, password);
+      const concatenated = pages.join("");
+      if (concatenated.replace(/\s+/g, "").length < 100) {
         // Image-only PDF — fall back to Tesseract
         ocrText = await runImageOcr(buffer);
       } else {
-        ocrText = pdfText;
+        ocrText = pages;
       }
     } else {
       // Scanned image → Tesseract OCR

@@ -125,6 +125,22 @@ export interface CalculationResult {
   donationCarryForwardConsumed: { year: number; consumed: number }[];
   /** F-023: estimated refund-add-on from multi-employer overlap-month over-withholding. */
   multiEmployerOverlapRefund: number;
+  /**
+   * Phase 1 §1.I (F-018) — שכר במשמרות tax discount per תקנה 5.
+   * Subtracted from `calculatedTax` AFTER bracket calc.
+   */
+  shiftWorkDiscount: number;
+  /**
+   * Phase 1 §1.I (חל"ת) — un-earned-income slice removed from `taxableIncome`
+   * BEFORE bracket calc per תקנה 5(ג)(4) reconciliation.
+   */
+  chaltAdjustment: number;
+  /**
+   * Phase 1 §1.I (F-019) — un-earned-income slice removed from `taxableIncome`
+   * BEFORE bracket calc per תקנות 168/174 reconciliation. The דמי לידה
+   * grant from BL is NEVER added to taxable income (סעיף 9(7)(ב)).
+   */
+  maternityLeaveAdjustment: number;
   netTaxOwed: number;           // calculatedTax − credits − peripheryDiscount − foreignSalaryCredit
   taxPaid: number;              // sum of all employer taxWithheld + F-023 overlap refund
   refundFromEmployment: number; // taxPaid − netTaxOwed
@@ -878,6 +894,219 @@ export function calculateDeductionCredits(
   return { total, breakdown, carryForwardExcess: excessCurrentYear, carryForwardConsumed };
 }
 
+// ─── 5b. Phase 1 §1.I — משמרות / חל"ת / חופשת לידה helpers ───────────────────
+
+/**
+ * Standard return-shape for the Phase 1 §1.I helpers (audit F-018, F-019, חל"ת
+ * 41-42). Each helper computes a single ILS adjustment and reports the
+ * statutory citation + a Hebrew explanation that the dashboard / 135 review
+ * surface can use directly. `adjustment` is signed POSITIVE when it INCREASES
+ * the user's refund (i.e. it is added to `netRefund` or subtracted from
+ * `calculatedTax`/`taxableIncome` upstream).
+ */
+export interface LifeEventAdjustment {
+  /** ILS amount of the adjustment (positive when it benefits the refund). */
+  adjustment: number;
+  /** Statutory citation in Hebrew (e.g. "תקנה 5 לתקנות מס הכנסה"). */
+  cite: string;
+  /** Hebrew explanation of how the adjustment was derived. */
+  explanation: string;
+}
+
+/**
+ * F-018: Compute the שכר במשמרות tax discount.
+ *
+ * Statutory basis: תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) +
+ * הוראת ביצוע 24/2002. A worker who performs eligible משמרות where the
+ * monthly hours fall in the 175-200 band receives a 15% discount on the
+ * marginal tax attributable to those shift hours, capped at 200 hours / month.
+ *
+ * Model (intentionally simple — the law sets a band, not a per-minute meter):
+ *   1. Eligibility floor = 175 hours / month. Below the floor → no discount.
+ *   2. Recognised hours / month = min(avgHoursPerMonth, 200) − 175. (0–25 band).
+ *   3. Total recognised shift hours = recognisedPerMonth × months.
+ *   4. Effective marginal rate = calculatedTax / max(1, taxableIncome).
+ *   5. Shift-portion income ≈ recognised hours × (taxableIncome / 1900) per
+ *      ITA standard 1900 work-hours/year proxy (190h × 10 months baseline).
+ *   6. Discount = 15% × effectiveMarginalRate × shiftPortionIncome.
+ *
+ * The result is an additive ILS amount (refund-side). The caller subtracts it
+ * from `calculatedTax` (the brief mandates "shift discount adjusts
+ * calculatedTax AFTER bracket calc").
+ *
+ * @param taxpayer    TaxPayer (reads `lifeEvents.shiftWorkHours`).
+ * @param taxableIncome Annual taxable income post-deductions (ILS).
+ * @param calculatedTax Annual progressive bracket tax on `taxableIncome` (ILS).
+ * @returns           {adjustment, cite, explanation}. `adjustment` = 0 when not eligible.
+ */
+export function calculateShiftWorkDiscount(
+  taxpayer: TaxPayer,
+  taxableIncome: number,
+  calculatedTax: number
+): LifeEventAdjustment {
+  const cite = "תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) + הוראת ביצוע 24/2002";
+  const sw = taxpayer.lifeEvents?.shiftWorkHours;
+  if (!sw || taxableIncome <= 0 || calculatedTax <= 0) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: "אין נתוני משמרות מוכרות (175-200 שעות לחודש) — לא חושב זיכוי משמרות.",
+    };
+  }
+
+  const months = Math.max(0, Math.min(12, sw.months));
+  const avg = Math.max(0, sw.avgHoursPerMonth);
+
+  // Eligibility floor: ≥ 175 hours/month. Below the floor — no discount.
+  if (months <= 0 || avg < 175) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: `לא קיימת זכאות: עבודה במשמרות מוכרת מ-175 שעות לחודש ומעלה (חודשים: ${months}, ממוצע: ${avg}).`,
+    };
+  }
+
+  // Recognised band: 175-200 hours / month → up to 25 eligible hours / month.
+  const recognisedPerMonth = Math.min(avg, 200) - 175;
+  const totalRecognisedHours = recognisedPerMonth * months;
+
+  // Standard ITA proxy for full-year work hours (190h × 10 base months).
+  const ANNUAL_WORK_HOURS = 1_900;
+  const effectiveMarginalRate = calculatedTax / Math.max(1, taxableIncome);
+  // Shift-portion income ≈ proportional slice of taxable income.
+  const shiftPortionIncome = (totalRecognisedHours / ANNUAL_WORK_HOURS) * taxableIncome;
+  // 15% discount per תקנה 5.
+  const discount = Math.round(0.15 * effectiveMarginalRate * shiftPortionIncome);
+  // Bound by the actual tax on the shift portion (cannot refund more than was due).
+  const shiftPortionTax = Math.round(effectiveMarginalRate * shiftPortionIncome);
+  const adjustment = Math.max(0, Math.min(discount, shiftPortionTax));
+
+  return {
+    adjustment,
+    cite,
+    explanation:
+      `זיכוי 15% על שעות משמרות מוכרות (175-200 שעות לחודש): ${totalRecognisedHours.toFixed(1)} שעות שנתיות, ` +
+      `מס שולי אפקטיבי ${(effectiveMarginalRate * 100).toFixed(1)}%, חיסכון ${adjustment.toLocaleString("he-IL")} ₪.`,
+  };
+}
+
+/**
+ * חל"ת: Compute the תקנה 5(ג)(4) reconciliation adjustment.
+ *
+ * When ניכוי במקור was withheld during worked months on the assumption of a
+ * full 12-month income trajectory, but the worker was actually on חל"ת for
+ * some months, the engine recognises the over-withheld slice as a refund.
+ *
+ * Model (per the brief):
+ *   1. Treat `taxableIncome` as the *projected* annual taxable income
+ *      (the basis the employer used for withholding).
+ *   2. monthsWorked = 12 − chaltMonths.
+ *   3. actualEarnedSlice = taxableIncome × (monthsWorked / 12).
+ *   4. The leave fraction (chaltMonths / 12) of taxableIncome is income that
+ *      was NOT actually earned but that the projection-based withholding
+ *      already taxed at the marginal rate. The reconciliation REDUCES
+ *      `taxableIncome` by the un-earned slice.
+ *
+ * Returns the ILS amount to SUBTRACT from `taxableIncome` BEFORE bracket calc
+ * (positive value = un-earned income to remove).
+ *
+ * @param taxpayer    TaxPayer (reads `lifeEvents.chaltMonths`).
+ * @param taxableIncome Projected annual taxable income (ILS).
+ * @returns           {adjustment, cite, explanation}.
+ */
+export function calculateChaltAdjustment(
+  taxpayer: TaxPayer,
+  taxableIncome: number
+): LifeEventAdjustment {
+  const cite = 'תקנה 5(ג)(4) לתקנות מס הכנסה (תיאום מס לאחר חזרה מחל"ת)';
+  const months = taxpayer.lifeEvents?.chaltMonths;
+  if (!months || months <= 0 || taxableIncome <= 0) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: 'אין חודשי חל"ת בשנת המס — לא חושבה התאמה.',
+    };
+  }
+  if (months >= 12) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: 'חל"ת מלא לשנה — אין הכנסה אמיתית; ההתאמה מחושבת ברמת הנתונים, לא כאן.',
+    };
+  }
+
+  const cappedMonths = Math.min(12, months);
+  const leaveFraction = cappedMonths / 12;
+  const adjustment = Math.round(taxableIncome * leaveFraction);
+
+  return {
+    adjustment,
+    cite,
+    explanation:
+      `חל"ת — ${cappedMonths} חודשים מתוך 12. מההכנסה החייבת המוצהרת מורד נתח של ` +
+      `${(leaveFraction * 100).toFixed(1)}% (₪${adjustment.toLocaleString("he-IL")}) ` +
+      `שלא נכנס בפועל בגלל החל"ת, ולכן ניכוי המס שבוצע עליו חוזר כהחזר.`,
+  };
+}
+
+/**
+ * F-019: Compute the חופשת לידה reconciliation adjustment.
+ *
+ * Statutory basis: תקנות 168 + 174 (תיאום מס לאחר חופשת לידה) +
+ * סעיף 9(7)(ב) — דמי לידה ששולמו על-ידי המוסד לביטוח לאומי הם פטורים ממס.
+ *
+ * Same reconciliation arithmetic as חל"ת (the projection-based withholding
+ * vs. actual months worked). The maternity allowance grant from BL is
+ * EXCLUDED from `taxableIncome` (per the §9(7)(ב) exemption); the engine
+ * never adds it to the gross.
+ *
+ * Returns the ILS amount to SUBTRACT from `taxableIncome` BEFORE bracket calc.
+ *
+ * @param taxpayer    TaxPayer (reads `lifeEvents.maternityLeaveMonths` +
+ *                    `lifeEvents.maternityLeaveAllowanceIls`).
+ * @param taxableIncome Projected annual taxable income (ILS).
+ * @returns           {adjustment, cite, explanation}.
+ */
+export function calculateMaternityLeaveAdjustment(
+  taxpayer: TaxPayer,
+  taxableIncome: number
+): LifeEventAdjustment {
+  const cite = 'תקנות 168 + 174 + סעיף 9(7)(ב) (פטור על דמי לידה)';
+  const months = taxpayer.lifeEvents?.maternityLeaveMonths;
+  if (!months || months <= 0 || taxableIncome <= 0) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: "אין ימי חופשת לידה בשנת המס — לא חושבה התאמה.",
+    };
+  }
+  if (months >= 12) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: "שנת המס כולה בחופשת לידה — אין הכנסה אמיתית; ההתאמה מחושבת ברמת הנתונים, לא כאן.",
+    };
+  }
+
+  const cappedMonths = Math.min(12, months);
+  const leaveFraction = cappedMonths / 12;
+  const adjustment = Math.round(taxableIncome * leaveFraction);
+  const allowance = Math.max(0, taxpayer.lifeEvents?.maternityLeaveAllowanceIls ?? 0);
+
+  const allowanceNote = allowance > 0
+    ? ` דמי לידה מבל"ל בסך ₪${allowance.toLocaleString("he-IL")} פטורים ממס לפי סעיף 9(7)(ב) ולא נוספו להכנסה החייבת.`
+    : "";
+
+  return {
+    adjustment,
+    cite,
+    explanation:
+      `חופשת לידה — ${cappedMonths} חודשים מתוך 12. מההכנסה החייבת המוצהרת מורד נתח של ` +
+      `${(leaveFraction * 100).toFixed(1)}% (₪${adjustment.toLocaleString("he-IL")}) ` +
+      `שלא נכנס בפועל בגלל חופשת הלידה.${allowanceNote}`,
+  };
+}
+
 // ─── 6. USD → ILS Conversion ─────────────────────────────────────────────────
 
 /**
@@ -963,13 +1192,41 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   }
 
   const incomeDeductions = incomeDeductionsCore + disabilityExemption + qualifyingPensionExemption;
-  const taxableIncome = Math.max(0, totalGrossIncome - incomeDeductions);
+  const preLifeEventTaxableIncome = Math.max(0, totalGrossIncome - incomeDeductions);
 
-  // Step 2: Raw progressive bracket tax (on income AFTER income deductions).
-  const { tax: calculatedTax, byBracket } = calculateTaxOnIncome(
+  // Step 1e: Phase 1 §1.I — חל"ת + חופשת לידה reconciliation.
+  // Per the brief, both adjustments REDUCE `taxableIncome` BEFORE bracket
+  // calc — the engine treats the user-reported income as the projected
+  // 12-month basis the employer used for withholding, and removes the
+  // leave-month slice that was never earned in practice.
+  const chaltResult = calculateChaltAdjustment(taxpayer, preLifeEventTaxableIncome);
+  // The maternity reconciliation runs against the income AFTER the חל"ת
+  // adjustment so the two leave-month buckets compose correctly when both
+  // are present (rare but possible — e.g. חל"ת directly after maternity).
+  const maternityBase = Math.max(0, preLifeEventTaxableIncome - chaltResult.adjustment);
+  const maternityResult = calculateMaternityLeaveAdjustment(taxpayer, maternityBase);
+  const taxableIncome = Math.max(
+    0,
+    preLifeEventTaxableIncome - chaltResult.adjustment - maternityResult.adjustment
+  );
+
+  // Step 2: Raw progressive bracket tax (on income AFTER income deductions
+  // AND חל"ת / maternity reconciliation).
+  const { tax: rawCalculatedTax, byBracket } = calculateTaxOnIncome(
     taxableIncome,
     year
   );
+
+  // Step 2b: Phase 1 §1.I (F-018) — שכר במשמרות discount on bracket tax.
+  // Per תקנה 5 the 15% discount applies AFTER the bracket calc. Bound the
+  // discount at the raw tax (cannot reduce calculatedTax below 0).
+  const shiftWorkResult = calculateShiftWorkDiscount(
+    taxpayer,
+    taxableIncome,
+    rawCalculatedTax
+  );
+  const shiftWorkDiscount = Math.min(shiftWorkResult.adjustment, rawCalculatedTax);
+  const calculatedTax = Math.max(0, rawCalculatedTax - shiftWorkDiscount);
 
   // Step 3: Credit points (now WITHOUT periphery / disability / kibbutz).
   const {
@@ -1122,6 +1379,9 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     donationCarryForwardExcess,
     donationCarryForwardConsumed,
     multiEmployerOverlapRefund: overlapOverWithholding,
+    shiftWorkDiscount,
+    chaltAdjustment: chaltResult.adjustment,
+    maternityLeaveAdjustment: maternityResult.adjustment,
     netTaxOwed,
     taxPaid,
     refundFromEmployment,

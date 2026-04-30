@@ -587,10 +587,51 @@ function extractNationalInsurance(
 /**
  * Parse a Form 106 PDF text blob and return the extracted fields.
  *
- * @param text — raw text output from pdf-parse (for digital PDFs) or
- *               Tesseract (for scanned PDFs/images).
+ * Phase 1 §1.L (closes ingestion-F-4): accepts either a single concatenated
+ * blob (legacy / OCR / single-page PDF) **or** a per-page string array. With
+ * a string array we run extraction page-by-page and merge "first
+ * non-undefined wins"; this prevents the columnar-layout heuristic from
+ * fusing a page-1 column with a page-2 column on multi-page payroll-house
+ * 106s.
+ *
+ * @param input — raw text output from pdf-parse (for digital PDFs) or
+ *                Tesseract (for scanned PDFs/images). Either a single
+ *                string (back-compat) or a per-page string array
+ *                from `parser.getText().pages.map(p => p.text)`.
  */
-export function extractForm106Fields(text: string): Form106Fields {
+export function extractForm106Fields(input: string | string[]): Form106Fields {
+  // Multi-page mode (Phase 1 §1.L, closes ingestion-F-4): per-page extract +
+  // merge "first non-undefined wins". Prevents the columnar-layout heuristic
+  // from fusing a page-1 column with a page-2 column.
+  if (Array.isArray(input)) {
+    const pages = input.map((page) => extractForm106SinglePage(page));
+    return mergeForm106Pages(pages);
+  }
+  return extractForm106SinglePage(input);
+}
+
+/**
+ * Merge per-page extracted-fields with "first non-undefined wins" semantics.
+ * Numeric fields are NOT summed across pages — a multi-page 106 from a single
+ * employer lists each value once on its primary page; a stray repeat on
+ * page 2 is an annex / coordination row that should be ignored, not added.
+ * grossSalary specifically benefits from page-1-wins because page 1 is the
+ * canonical primary 158/172 row and pages 2+ carry annexes / 161 detail.
+ */
+function mergeForm106Pages(pages: Form106Fields[]): Form106Fields {
+  const merged: Form106Fields = {};
+  for (const page of pages) {
+    for (const [k, v] of Object.entries(page) as [keyof Form106Fields, unknown][]) {
+      if (v === undefined || v === null) continue;
+      if (merged[k] === undefined) {
+        (merged as Record<string, unknown>)[k] = v;
+      }
+    }
+  }
+  return merged;
+}
+
+function extractForm106SinglePage(text: string): Form106Fields {
   // Normalize RTL marks AND non-breaking spaces (the TA fixture emits NBSP
   // between "086 ,045" — strip them or the field-code-only test fails).
   const normalized = text
