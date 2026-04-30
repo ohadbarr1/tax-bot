@@ -5,13 +5,81 @@
  * Mirrors the route handler logic so we can verify the auto-map pipeline
  * works without spinning up Next.js. Writes sample PDFs to /tmp.
  *
+ * Phase 1 §1.J: after stamping, re-extract the rendered PDF via pdf-parse
+ * and surface the per-page stamped values + codes-seen so CI smoke is at
+ * parity with `lib/__tests__/semanticGolden.test.ts`. A regression that
+ * silently moves a value to the wrong page surfaces here too.
+ *
  * Usage: node scripts/smoke-generate.mjs
+ *        node scripts/smoke-generate.mjs --reextract  # also dump per-page values
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+
+const REEXTRACT = process.argv.includes("--reextract");
+
+// pdf-parse uses pdfjs-dist which expects browser globals — same shim the
+// test helper applies (lib/pdfReExtract.ts).
+function installPdfjsDomStubs() {
+  if (typeof globalThis.DOMMatrix === "undefined") globalThis.DOMMatrix = class {};
+  if (typeof globalThis.ImageData === "undefined") globalThis.ImageData = class {};
+  if (typeof globalThis.Path2D === "undefined") globalThis.Path2D = class {};
+}
+
+const NUMERIC_VALUE_RE = /^-?\d{1,3}(?:,\d{3})*(?:\.\d+)?$|^-?\d+$/;
+
+/**
+ * Tail-of-page stamped-value extractor — duplicated from
+ * `lib/pdfReExtract.ts:extractStampedValuesFromPage`. The smoke runs as
+ * plain ESM (no TS), so we cannot import the TS module directly. Keep the
+ * two implementations in sync; the test in `lib/__tests__/semanticGolden.test.ts`
+ * is authoritative for the behavior.
+ */
+function isStampedLine(line) {
+  const tokens = line.split(/\s+/).map((t) => t.trim()).filter(Boolean);
+  if (tokens.length === 0) return false;
+  for (const tok of tokens) {
+    if (NUMERIC_VALUE_RE.test(tok)) continue;
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(tok)) continue;
+    if (tok === "X" || tok === "x") continue;
+    if (/^[֐-׿]+$/.test(tok)) continue;
+    return false;
+  }
+  return true;
+}
+function extractStampedFromPage(pageText) {
+  const lines = pageText.split(/\r?\n/);
+  const tail = [];
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (line === "") continue;
+    if (isStampedLine(line)) tail.unshift(line);
+    else break;
+  }
+  const out = [];
+  for (const line of tail) {
+    for (const tok of line.split(/\s+/).map((t) => t.trim()).filter(Boolean)) {
+      out.push(tok);
+    }
+  }
+  return out;
+}
+async function reextract(bytes) {
+  installPdfjsDomStubs();
+  const { PDFParse } = await import("pdf-parse");
+  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  const parser = new PDFParse({ data: u8 });
+  try {
+    const result = await parser.getText();
+    const pages = result.pages.map((p) => extractStampedFromPage(p.text));
+    return { pages };
+  } finally {
+    await parser.destroy();
+  }
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT      = path.resolve(__dirname, "..");
@@ -101,4 +169,15 @@ for (const j of jobs) {
   fs.writeFileSync(j.out, Buffer.from(r.bytes));
   const pct = Math.round((r.drawn / r.total) * 100);
   console.log(`${j.form}: drawn ${r.drawn}/${r.total} (${pct}%) missing ${r.missing} → ${j.out} ${r.bytes.length}B`);
+
+  if (REEXTRACT) {
+    // Re-extract via pdf-parse for CI parity with semanticGolden.test.ts.
+    // The full helper lives in lib/pdfReExtract.ts (TS-only, used by tests);
+    // we inline a minimal duplicate here so the smoke can run without ts-node.
+    const result = await reextract(Buffer.from(r.bytes));
+    console.log(`  re-extracted pages=${result.pages.length}`);
+    result.pages.forEach((page, i) => {
+      console.log(`    page ${i + 1}: stamped=${JSON.stringify(page)}`);
+    });
+  }
 }

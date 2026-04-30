@@ -1,0 +1,51 @@
+{
+    "tax_year": 2020,
+    "credit_point_monthly_value": 219,
+    "credit_point_annual_value": 2628,
+    "tax_brackets": [
+        {
+            "bracket": 1,
+            "rate": 0.10,
+            "min": 0,
+            "max": 75720
+        },
+        {
+            "bracket": 2,
+            "rate": 0.14,
+            "min": 75721,
+            "max": 108600
+        },
+        {
+            "bracket": 3,
+            "rate": 0.20,
+            "min": 108601,
+            "max": 174360
+        },
+        {
+            "bracket": 4,
+            "rate": 0.31,
+            "min": 174361,
+            "max": 242400
+        },
+        {
+            "bracket": 5,
+            "rate": 0.35,
+            "min": 242401,
+            "max": 504360
+        },
+        {
+            "bracket": 6,
+            "rate": 0.47,
+            "min": 504361,
+            "max": 649560
+        },
+        {
+            "bracket": 7,
+            "rate": 0.50,
+            "min": 649561,
+            "max": 9999999
+        }
+    ],
+    "_source": "ITA חוזר מס הכנסה 6/2020 (תיאומי הצמדה לסעיף 121, no indexation from 2019); credit_point_annual_value = 12 × monthly ₪219 published by ITA Jan 2020.",
+    "_verification_status": "BEST-EFFORT — bracket boundaries derived from public ITA indexation circulars. CPA/user should re-verify against the original חוזר before relying on these values for filings older than 2024."
+}

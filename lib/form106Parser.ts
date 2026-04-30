@@ -26,25 +26,68 @@
  * instead of BEFORE, so every field on every Phoenix-style 106 was wrong.
  * Layout #2 was not handled at all.
  *
- * Fields extracted:
- *   - grossSalary      (field 172/158 — "הכנסה חייבת" / "משכורת")
- *   - taxWithheld      (field 042     — "מס הכנסה שנוכה")
- *   - pensionDeduction (field 045     — "ניכוי לקופת גמל לקצבה כ'עמית שכיר'")
- *   - employerName     (multi-label: "שם המעסיק" / "מעסיק:" / "השולח:")
- *   - monthsWorked     (Phoenix: "חודשי עבודה בשנת המס N";
- *                       TA:      count of non-zero month columns)
+ * **2026-04-29 expansion (Phase 1 §1.C, closes ingestion-F-1, F-2, F-3):**
+ *   The parser now extracts ALL canonical Form 106 ITA codes (14+ fields),
+ *   not just the original 3. The 158-vs-158 tax-coordination ambiguity is
+ *   resolved by looking up `field158Coordinated` from the description label
+ *   "נוסף\לפי תאום" instead of returning the first stream-order hit.
+ *
+ * Fields extracted (Form106Fields):
+ *   - grossSalary              (158/172  — "הכנסה חייבת רגילה" / "משכורת")
+ *   - field158Coordinated      (158      — "משכורת חייבת במס - נוספת/לפי תאום")
+ *   - taxWithheld              (042      — "מס הכנסה שנוכה")
+ *   - pensionDeduction         (045      — "ניכוי לקופת גמל לקצבה כעמית שכיר")
+ *   - nationalInsuranceWithheld(086      — "דמי ביטוח לאומי + מס בריאות")
+ *   - studyFundSalary          (219      — "משכורת לקרן השתלמות")
+ *   - studyFundEmployer        (218      — "הפרשת המעסיק לקרן השתלמות")
+ *   - pensionInsuredSalary     (245      — "השכר המבוטח לקופ"ג לקצבה")
+ *   - severanceMargin          (244      — "מענק שולי")
+ *   - employerPensionTotal     (249      — "סך הפרשות מעסיק לקצבה")
+ *   - employerPensionDeduct    (248      — "הפרשות מעסיק לקצבה ניכוי")
+ *   - severanceTaxable         (272      — "פיצויי פיטורין חייבים")
+ *   - employerDonations        (037      — "תרומות שהמעסיק העביר")
+ *   - creditPointsValue        (044 ILS  — "ערך נקודות זיכוי")
+ *   - creditPointsCount        (044 cnt  — count, e.g. "6.75")
+ *   - taxFileNumber            (004      — "תיק ניכויים")
+ *   - incomeType               (033      — 1/2/5)
+ *   - exemptionSection9a       (089      — "פטור לפי סעיף 9א")
+ *   - exemptionSection9b       (090      — "פטור (שני)")
+ *   - employerName             (multi-label: "שם המעסיק" / "מעסיק:" / "השולח:")
+ *   - monthsWorked             (Phoenix: "חודשי עבודה בשנת המס N";
+ *                               TA:      count of non-zero month columns)
  *
  * When a field cannot be found we omit it (caller defaults to 0 / ""), but
  * the test suite in form106Parser.test.ts enforces exact golden values on two
  * real-world sample PDFs so regressions are caught immediately.
  */
 
+export type Form106IncomeType = 1 | 2 | 3 | 5 | 8;
+
 export interface Form106Fields {
+  // Legacy fields (kept for back-compat with FileDropzone consumer).
   grossSalary?: number;
   taxWithheld?: number;
   pensionDeduction?: number;
   employerName?: string;
   monthsWorked?: number;
+
+  // Phase 1 §1.C — full 14-code extraction.
+  field158Coordinated?: number;
+  nationalInsuranceWithheld?: number;
+  studyFundSalary?: number;
+  studyFundEmployer?: number;
+  pensionInsuredSalary?: number;
+  severanceMargin?: number;
+  employerPensionTotal?: number;
+  employerPensionDeduct?: number;
+  severanceTaxable?: number;
+  employerDonations?: number;
+  creditPointsValue?: number;
+  creditPointsCount?: number;
+  taxFileNumber?: string;
+  incomeType?: Form106IncomeType;
+  exemptionSection9a?: number;
+  exemptionSection9b?: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -52,6 +95,12 @@ export interface Form106Fields {
 function parseNumber(raw: string): number | undefined {
   const cleaned = raw.replace(/,/g, "");
   const n = parseInt(cleaned, 10);
+  return isNaN(n) ? undefined : n;
+}
+
+function parseFloatOrUndef(raw: string): number | undefined {
+  const cleaned = raw.replace(/,/g, "");
+  const n = parseFloat(cleaned);
   return isNaN(n) ? undefined : n;
 }
 
@@ -84,16 +133,67 @@ function lineContainsFieldCode(line: string, code: string): boolean {
  *
  * We scan all lines for one containing the target field code as a whole token
  * and return the first number on that line.
+ *
+ * Optional `descriptionFilter` allows narrowing to only lines whose text
+ * matches a keyword — this is how 158-vs-158 ambiguity is resolved (return
+ * the first 158-line containing "רגילה" vs the first containing "נוסף|תאום").
+ *
+ * F-3 fix: when no `descriptionFilter` is provided, also reject candidate
+ * values that are exactly equal to the field code itself OR look like the
+ * tax year (1900-2099 with no thousands separator) — both surface as false
+ * positives on header-only lines like "2025 שנת המס 172/158".
  */
-function findLineValue(lines: string[], fieldCode: string): number | undefined {
+function findLineValue(
+  lines: string[],
+  fieldCode: string,
+  descriptionFilter?: RegExp,
+): number | undefined {
   for (const line of lines) {
     if (!lineContainsFieldCode(line, fieldCode)) continue;
     // Skip lines that look like pure columnar code lists (no description text)
     if (lineIsFieldCodeOnly(line)) continue;
+    if (descriptionFilter && !descriptionFilter.test(line)) continue;
+    const m = NUMBER_RE.exec(line);
+    if (!m) continue;
+    const rawVal = m[1];
+    const val = parseNumber(rawVal);
+    if (val === undefined) continue;
+    // Sanity: reject tiny noise (page 1 etc.)
+    if (val < 100) continue;
+    if (!descriptionFilter) {
+      // Year-shaped tokens (4 digits, 1900-2099, no thousands separator).
+      if (!rawVal.includes(",") && val >= 1900 && val <= 2099) continue;
+      // Don't return the field-code itself if it accidentally matched as
+      // the leading number (e.g. a code-only header line that escaped the
+      // field-code-only filter).
+      if (String(val) === fieldCode) continue;
+    }
+    return val;
+  }
+  return undefined;
+}
+
+/**
+ * Like findLineValue but matches by description text (no field code required).
+ * Useful for fields that appear without their numeric code on the line
+ * (e.g. "דמי ביטוח לאומי" on Phoenix appears as a free-form line).
+ *
+ * `excludeRe` (optional) rejects lines that match the exclusion pattern even
+ * if they pass the inclusion match — used to disambiguate label substrings
+ * (e.g. exclude "שכר חייב בדמי ביטוח לאומי" when looking for the BL row).
+ */
+function findLineValueByDescription(
+  lines: string[],
+  descriptionRe: RegExp,
+  excludeRe?: RegExp,
+): number | undefined {
+  for (const line of lines) {
+    if (!descriptionRe.test(line)) continue;
+    if (excludeRe && excludeRe.test(line)) continue;
+    if (lineIsFieldCodeOnly(line)) continue;
     const m = NUMBER_RE.exec(line);
     if (!m) continue;
     const val = parseNumber(m[1]);
-    // Sanity: reject tiny noise (year 2025, page 1, etc.)
     if (val !== undefined && val >= 100) return val;
   }
   return undefined;
@@ -175,18 +275,21 @@ function extractColumnarLayout(lines: string[]): ColumnarLayout | undefined {
 
 /**
  * Given a columnar layout and a list of keyword alternatives, return the value
- * of the first description whose text contains any keyword.
+ * of the first description whose text contains any keyword. An optional
+ * `excludeKeywords` filters out descriptions where any exclusion is matched
+ * (useful for keyword-overlap disambiguation, e.g. "רגילה" vs "נוסף").
  */
 function findColumnarValue(
   layout: ColumnarLayout | undefined,
-  keywords: string[]
+  keywords: string[],
+  excludeKeywords: string[] = [],
 ): number | undefined {
   if (!layout) return undefined;
   for (let i = 0; i < layout.descriptions.length; i++) {
     const d = layout.descriptions[i];
-    if (keywords.some((kw) => d.includes(kw))) {
-      return layout.values[i];
-    }
+    if (!keywords.some((kw) => d.includes(kw))) continue;
+    if (excludeKeywords.some((kw) => d.includes(kw))) continue;
+    return layout.values[i];
   }
   return undefined;
 }
@@ -303,70 +406,357 @@ function extractEmployerName(
   return undefined;
 }
 
+// ─── Tax file number (field 004) ─────────────────────────────────────────────
+
+/**
+ * Field 004 — "תיק ניכויים" (employer's withholding-file ID, 6-12 digits).
+ * Both real fixtures emit a 9-digit number; some payroll houses prefix with
+ * a hyphen and a sub-account.
+ *
+ * Four layouts seen in the wild:
+ *   1. Phoenix line-per-field: "939387767 תיק ניכויים:" (number BEFORE label,
+ *      RTL flipped by pdf-parse). Match the second pattern.
+ *   2. Direct colon: "תיק ניכויים: 941180002". Match the first pattern.
+ *   3. Same-line columnar (TA page 2): the label and value live in the same
+ *      pdf-parse line, separated by tabs and other cells. The TZ appears
+ *      first, the file number second.
+ *   4. Cross-line columnar (TA page 1): label on one line, value on a
+ *      different line up the page. Walk a window of nearby lines for the
+ *      first 9-digit run that is NOT the employee TZ.
+ *
+ * The TZ disambiguation set is built by scanning all lines for "מספר ת.ז."
+ * and collecting digit runs on those lines.
+ */
+function extractTaxFileNumber(text: string, lines: string[]): string | undefined {
+  // Build the TZ blocklist — anything seen near "מספר ת.ז." gets excluded
+  // as a file-number candidate. SKIP lines that also contain "תיק ניכויים"
+  // (a single columnar header line lists BOTH labels and BOTH values; using
+  // them as a TZ source over-blocks the file number).
+  const tzCandidates = new Set<string>();
+  for (const line of lines) {
+    if (!/(?:מספר\s+ת\.?\s*ז\.?|ת\.ז\b|תעודת\s+זהות)/.test(line)) continue;
+    if (/תיק\s+ניכויים/.test(line)) continue;
+    const matches = line.match(/\d{8,12}/g) ?? [];
+    for (const c of matches) tzCandidates.add(c);
+  }
+
+  // Layout 1 (Phoenix): "939387767 תיק ניכויים:".
+  const m2 = /(\d{6,12})\s*תיק\s+ניכויים/.exec(text);
+  if (m2 && !tzCandidates.has(m2[1])) return m2[1];
+
+  // Layout 2 (direct colon): "תיק ניכויים: 941180002" (no other text between).
+  const m1 = /תיק\s+ניכויים\s*[:]\s*(\d{6,12})/.exec(text);
+  if (m1 && !tzCandidates.has(m1[1])) return m1[1];
+
+  // Layout 3 (same-line columnar): the label and the value share a line.
+  // When the line also has "מספר ת.ז." earlier in the column order, the file
+  // number is the SECOND digit run (TZ is first). Otherwise pick the first
+  // run that isn't a known TZ.
+  for (const line of lines) {
+    if (!/תיק\s+ניכויים/.test(line)) continue;
+    const digitRuns = line.match(/\d{6,12}/g) ?? [];
+    if (digitRuns.length === 0) continue;
+    const tzLabelBefore =
+      /מספר\s+ת\.?\s*ז\.?[\s\S]*תיק\s+ניכויים/.test(line) ||
+      /ת\.ז\b[\s\S]*תיק\s+ניכויים/.test(line);
+    if (tzLabelBefore && digitRuns.length >= 2) {
+      // Ordered columnar: skip the first run (TZ), take the second.
+      return digitRuns[1];
+    }
+    for (const candidate of digitRuns) {
+      if (!tzCandidates.has(candidate)) return candidate;
+    }
+  }
+
+  // Layout 4 (cross-line columnar): scan a ±10-line window around the label.
+  for (let i = 0; i < lines.length; i++) {
+    if (!/תיק\s+ניכויים/.test(lines[i])) continue;
+    const lo = Math.max(0, i - 10);
+    const hi = Math.min(lines.length, i + 10);
+    for (let j = lo; j < hi; j++) {
+      const digitRuns = lines[j].match(/\d{6,12}/g) ?? [];
+      for (const candidate of digitRuns) {
+        if (!tzCandidates.has(candidate)) return candidate;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+// ─── Income type (field 033) ─────────────────────────────────────────────────
+
+/**
+ * Field 033 — סוג הכנסה. Mostly inferred from form heading rather than a
+ * dedicated row in current sample fixtures:
+ *   - "טופס 106" without "פנסיה" / "קצבה" / "פיצויים" → 1 (regular salary)
+ *   - "פנסיה" / "קצבה" present → 2 (pension)
+ *   - "פיצויי פיטורים" / "פיצויים" + 272 row → 5 (severance)
+ */
+function extractIncomeType(text: string): Form106IncomeType | undefined {
+  // Explicit code line: "033 N" or "033: N".
+  const explicit = /\b033\b\s*[:\s]\s*([12358])\b/.exec(text);
+  if (explicit) return parseInt(explicit[1], 10) as Form106IncomeType;
+
+  // Severance recipients: form 161 / 272 row strongly implies code 5.
+  if (/פיצויי\s+פיטורין/.test(text) && /\b272\b/.test(text)) return 5;
+
+  // Pension recipients: form 106 from a קופת גמל / קרן פנסיה.
+  // The header text typically says "טופס 106 - קצבה" or "טופס 106 - פנסיה".
+  if (/טופס\s*106[^\n]*(?:קצבה|פנסיה)/.test(text)) return 2;
+
+  // Default: regular salary (header is plain "טופס 106").
+  if (/טופס\s*106/.test(text)) return 1;
+
+  return undefined;
+}
+
+// ─── Credit-point count (field 044) ──────────────────────────────────────────
+
+/**
+ * Phoenix line: "ערך נקודות זיכוי 6.75   17,119".
+ * Returns the 6.75 as `creditPointsCount`.
+ */
+function extractCreditPointsCount(text: string): number | undefined {
+  const m = /ערך\s+נקודות\s+זיכוי\s+(\d+(?:\.\d+)?)/.exec(text);
+  if (!m) return undefined;
+  const v = parseFloatOrUndef(m[1]);
+  if (v === undefined || v <= 0 || v > 30) return undefined;
+  return v;
+}
+
+// ─── National insurance (field 086) ──────────────────────────────────────────
+
+/**
+ * Field 086 — דמי ביטוח לאומי + מס בריאות שנוכו.
+ *
+ * Phoenix layout: two separate single-line rows
+ *   "15,431 דמי ביטוח לאומי"
+ *   "13,434 דמי ביטוח בריאות"
+ * → return their sum (28,865).
+ *
+ * TA columnar layout: "נ. ביטוח לאומי" + "נ. ביטוח בריאות" descriptions,
+ * values via the columnar layout. Same sum approach.
+ *
+ * **Disambiguation**: BOTH layouts also emit "שכר חייב בדמי ביטוח לאומי"
+ * (the BL-base salary, not the BL withholding). Substring-matching "ביטוח
+ * לאומי" silently grabs the wrong row — value would be 290,895 (gross), not
+ * 15,431 (BL withheld). The exclusion list below filters those out.
+ *
+ * On forms that list "086" as the field code on a single combined-line,
+ * fallback to that line's value.
+ */
+function extractNationalInsurance(
+  lines: string[],
+  layout: ColumnarLayout | undefined,
+): number | undefined {
+  // Disambiguation prefixes — these descriptions contain "ביטוח לאומי" but
+  // refer to the BASE salary (not the withholding amount).
+  const blExclude = ["שכר חייב", "הכנסה חייבת"];
+  const healthExclude = ["שכר חייב", "הכנסה חייבת"];
+
+  // Strategy A: columnar layout — look up "ביטוח לאומי" + "ביטוח בריאות".
+  const bl = findColumnarValue(layout, ["ביטוח לאומי"], blExclude);
+  const health = findColumnarValue(layout, ["ביטוח בריאות"], healthExclude);
+  if (bl !== undefined || health !== undefined) {
+    return (bl ?? 0) + (health ?? 0);
+  }
+
+  // Strategy B: line-per-field — find the two free-form lines, EXCLUDING the
+  // "שכר חייב בדמי ביטוח לאומי" base-salary row.
+  const blLine = findLineValueByDescription(
+    lines,
+    /(?:^|\s)(?:נ\.|דמי)\s+ביטוח\s+לאומי/,
+    /שכר\s+חייב|הכנסה\s+חייבת/,
+  );
+  const healthLine = findLineValueByDescription(
+    lines,
+    /(?:^|\s)(?:נ\.|דמי)\s+ביטוח\s+בריאות/,
+    /שכר\s+חייב|הכנסה\s+חייבת/,
+  );
+  if (blLine !== undefined || healthLine !== undefined) {
+    return (blLine ?? 0) + (healthLine ?? 0);
+  }
+
+  // Strategy C: explicit "086" combined row.
+  return findLineValue(lines, "086");
+}
+
 // ─── Main entry point ────────────────────────────────────────────────────────
 
 /**
  * Parse a Form 106 PDF text blob and return the extracted fields.
  *
- * @param text — raw text output from pdf-parse (for digital PDFs) or
- *               Tesseract (for scanned PDFs/images).
+ * Phase 1 §1.L (closes ingestion-F-4): accepts either a single concatenated
+ * blob (legacy / OCR / single-page PDF) **or** a per-page string array. With
+ * a string array we run extraction page-by-page and merge "first
+ * non-undefined wins"; this prevents the columnar-layout heuristic from
+ * fusing a page-1 column with a page-2 column on multi-page payroll-house
+ * 106s.
+ *
+ * @param input — raw text output from pdf-parse (for digital PDFs) or
+ *                Tesseract (for scanned PDFs/images). Either a single
+ *                string (back-compat) or a per-page string array
+ *                from `parser.getText().pages.map(p => p.text)`.
  */
-export function extractForm106Fields(text: string): Form106Fields {
-  // Normalize RTL marks and split into non-empty lines.
-  const normalized = text.replace(/[\u200F\u200E\u202A-\u202E]/g, " ");
+export function extractForm106Fields(input: string | string[]): Form106Fields {
+  // Multi-page mode (Phase 1 §1.L, closes ingestion-F-4): per-page extract +
+  // merge "first non-undefined wins". Prevents the columnar-layout heuristic
+  // from fusing a page-1 column with a page-2 column.
+  if (Array.isArray(input)) {
+    const pages = input.map((page) => extractForm106SinglePage(page));
+    return mergeForm106Pages(pages);
+  }
+  return extractForm106SinglePage(input);
+}
+
+/**
+ * Merge per-page extracted-fields with "first non-undefined wins" semantics.
+ * Numeric fields are NOT summed across pages — a multi-page 106 from a single
+ * employer lists each value once on its primary page; a stray repeat on
+ * page 2 is an annex / coordination row that should be ignored, not added.
+ * grossSalary specifically benefits from page-1-wins because page 1 is the
+ * canonical primary 158/172 row and pages 2+ carry annexes / 161 detail.
+ */
+function mergeForm106Pages(pages: Form106Fields[]): Form106Fields {
+  const merged: Form106Fields = {};
+  for (const page of pages) {
+    for (const [k, v] of Object.entries(page) as [keyof Form106Fields, unknown][]) {
+      if (v === undefined || v === null) continue;
+      if (merged[k] === undefined) {
+        (merged as Record<string, unknown>)[k] = v;
+      }
+    }
+  }
+  return merged;
+}
+
+function extractForm106SinglePage(text: string): Form106Fields {
+  // Normalize RTL marks AND non-breaking spaces (the TA fixture emits NBSP
+  // between "086 ,045" — strip them or the field-code-only test fails).
+  const normalized = text
+    .replace(/[‏‎‪-‮]/g, " ")
+    .replace(/[  ]/g, " ");
   const lines = normalized
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
 
   const result: Form106Fields = {};
+  const layout = extractColumnarLayout(lines);
 
-  // Strategy 1: single-line per field (Phoenix).
-  // Field 158 / 172 — gross salary
+  // ─── Field 158 / 172 — gross salary (regular) ──────────────────────────────
+  // F-2 fix: explicitly prefer the "רגילה" line over the "נוסף|תאום" line.
   result.grossSalary =
+    findLineValue(lines, "158", /רגילה/) ??
+    findLineValue(lines, "172", /רגילה/) ??
+    findColumnarValue(layout, ["הכנסה חייבת רגילה"]) ??
+    findColumnarValue(layout, ["משכורת"], ["נוסף", "תאום", "תיאום"]) ??
     findLineValue(lines, "158") ??
     findLineValue(lines, "172");
 
-  // Field 042 — tax withheld (try both 042 and 42)
+  // ─── Field 158 (תיאום) — coordinated/additional salary ─────────────────────
+  // Closes ingestion-F-2 — never silently overwrite grossSalary.
+  result.field158Coordinated =
+    findColumnarValue(layout, ["נוסף", "תאום", "תיאום"]) ??
+    findLineValue(lines, "158", /נוסף|תאום|תיאום/) ??
+    findLineValue(lines, "172", /נוסף|תאום|תיאום/);
+
+  // ─── Field 042 — tax withheld ──────────────────────────────────────────────
   result.taxWithheld =
-    findLineValue(lines, "042") ?? findLineValue(lines, "42");
+    findLineValue(lines, "042") ??
+    findLineValue(lines, "42") ??
+    findColumnarValue(layout, ["מס הכנסה שנוכה", "מס הכנסה"]);
 
-  // Field 045 — pension deduction (try 045, 045, 086/045)
+  // ─── Field 045 — pension deduction ─────────────────────────────────────────
   result.pensionDeduction =
-    findLineValue(lines, "045") ?? findLineValue(lines, "45");
+    findLineValue(lines, "045") ??
+    findLineValue(lines, "45") ??
+    findColumnarValue(layout, [
+      "ניכוי לקופת גמל לקצבה",
+      "ניכוי לקופת גמל",
+      "ניכוי לקופות גמל",
+    ]);
 
-  // Strategy 2: columnar fallback for fields still missing.
-  if (
-    result.grossSalary === undefined ||
-    result.taxWithheld === undefined ||
-    result.pensionDeduction === undefined
-  ) {
-    const layout = extractColumnarLayout(lines);
+  // ─── Field 086 — national insurance + health (sum) ─────────────────────────
+  result.nationalInsuranceWithheld = extractNationalInsurance(lines, layout);
 
-    result.grossSalary =
-      result.grossSalary ??
-      findColumnarValue(layout, [
-        "הכנסה חייבת רגילה",
-        "הכנסה חייבת",
-        "משכורת חייבת",
-      ]);
+  // ─── Field 219 — study-fund salary ─────────────────────────────────────────
+  // Phoenix line: "230,215 השכר לקרן השתלמות 219/218" (sum + employer share
+  // share is on the same line). TA columnar: "משכורת לצורך הפקדות לקרן השתלמות".
+  result.studyFundSalary =
+    findLineValue(lines, "219") ??
+    findColumnarValue(layout, [
+      "משכורת לצורך הפקדות לקרן השתלמות",
+      "משכורת לקרן השתלמות",
+      "השכר לקרן השתלמות",
+    ]);
 
-    result.taxWithheld =
-      result.taxWithheld ??
-      findColumnarValue(layout, ["מס הכנסה שנוכה", "מס הכנסה"]);
+  // ─── Field 218 — employer study-fund contribution ──────────────────────────
+  result.studyFundEmployer = findColumnarValue(layout, [
+    "הפרשת המעסיק לקרן השתלמות",
+    "הפרשת מעסיק לקרן השתלמות",
+  ]);
+  // Phoenix combines 218 with 219 on a single line; if no separate columnar
+  // value, leave undefined (consumer treats as not parsed rather than =0).
 
-    result.pensionDeduction =
-      result.pensionDeduction ??
-      findColumnarValue(layout, [
-        "ניכוי לקופת גמל לקצבה",
-        "ניכוי לקופת גמל",
-      ]);
-  }
+  // ─── Field 245 — pension-insured salary ────────────────────────────────────
+  result.pensionInsuredSalary =
+    findLineValue(lines, "245") ??
+    findColumnarValue(layout, [
+      "השכר המבוטח לקופ",
+      "משכורת לצורך הפקדות לקצבה",
+      "משכורת המבוטחת לקופ",
+    ]);
 
-  // Months worked
+  // ─── Field 244 — severance margin (חד-פעמי) ────────────────────────────────
+  result.severanceMargin = findLineValue(lines, "244");
+
+  // ─── Field 249 — employer pension total ────────────────────────────────────
+  result.employerPensionTotal =
+    findLineValue(lines, "249") ??
+    findColumnarValue(layout, [
+      "סך הפרשות מעסיק לקצבה",
+      "הפרשות לקופ\"ג לקצבה",
+      "הפרשות לקופ'ג לקצבה",
+    ]);
+
+  // ─── Field 248 — employer pension deduction ────────────────────────────────
+  result.employerPensionDeduct = findLineValue(lines, "248");
+
+  // ─── Field 272 — taxable severance ─────────────────────────────────────────
+  result.severanceTaxable =
+    findLineValue(lines, "272") ??
+    findLineValueByDescription(lines, /פיצויי\s+פיטורין\s+חייב/);
+
+  // ─── Field 037 — employer-channeled donations ──────────────────────────────
+  result.employerDonations =
+    findLineValue(lines, "037") ??
+    findLineValue(lines, "37", /תרומות/) ??
+    findLineValueByDescription(lines, /תרומות\s+שהמעסיק\s+העביר/);
+
+  // ─── Field 044 — credit-points value + count ───────────────────────────────
+  result.creditPointsValue =
+    findLineValueByDescription(lines, /ערך\s+נקודות\s+זיכוי/) ??
+    findLineValue(lines, "044");
+  result.creditPointsCount = extractCreditPointsCount(normalized);
+
+  // ─── Field 004 — tax-deductions file number ────────────────────────────────
+  result.taxFileNumber = extractTaxFileNumber(normalized, lines);
+
+  // ─── Field 033 — income type ───────────────────────────────────────────────
+  result.incomeType = extractIncomeType(normalized);
+
+  // ─── Field 089 / 090 — exemption portions (סע' 9א / 9(5) / 9(7א)) ─────────
+  result.exemptionSection9a =
+    findLineValue(lines, "089") ??
+    findLineValueByDescription(lines, /תשלומים\s+פטורים\s+לפי\s+סעיף\s+9א/);
+  result.exemptionSection9b = findLineValue(lines, "090");
+
+  // ─── Months worked ─────────────────────────────────────────────────────────
   result.monthsWorked = extractMonthsWorked(normalized, lines);
 
-  // Employer name
+  // ─── Employer name ─────────────────────────────────────────────────────────
   result.employerName = extractEmployerName(normalized, lines);
 
   return result;

@@ -1,0 +1,50 @@
+{
+    "tax_year": 2025,
+    "credit_point_monthly_value": 250,
+    "credit_point_annual_value": 3000,
+    "tax_brackets": [
+        {
+            "bracket": 1,
+            "rate": 0.10,
+            "min": 0,
+            "max": 88440
+        },
+        {
+            "bracket": 2,
+            "rate": 0.14,
+            "min": 88441,
+            "max": 126840
+        },
+        {
+            "bracket": 3,
+            "rate": 0.20,
+            "min": 126841,
+            "max": 203520
+        },
+        {
+            "bracket": 4,
+            "rate": 0.31,
+            "min": 203521,
+            "max": 282960
+        },
+        {
+            "bracket": 5,
+            "rate": 0.35,
+            "min": 282961,
+            "max": 589080
+        },
+        {
+            "bracket": 6,
+            "rate": 0.47,
+            "min": 589081,
+            "max": 758160
+        },
+        {
+            "bracket": 7,
+            "rate": 0.50,
+            "min": 758161,
+            "max": 9999999
+        }
+    ],
+    "_source": "ITA חוזר מס הכנסה 1/2025 (תיאומי הצמדה לסעיף 121); credit_point_annual_value = 12 × monthly ₪250 published by ITA Jan 2025."
+}

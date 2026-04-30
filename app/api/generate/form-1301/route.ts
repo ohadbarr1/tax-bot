@@ -36,15 +36,380 @@ const FONT_WOFF     = path.join(process.cwd(), "public/fonts/Assistant-Regular.w
 const TEXT_COLOR = rgb(0.05, 0.2, 0.7); // readable navy blue
 const CAL_COLOR  = rgb(0.9, 0, 0);
 
-interface FieldDraw {
+// ── Draw-list spec (mirror of form-135's structure) ─────────────────────────
+//
+// Phase 1 §1.D introduced parity with Form 135's coverage regime:
+//   - DRAW_LIST_1301:        coordinate-anchored stamps (resolved via field-map).
+//   - POSITIONAL_DRAWS_1301: stamps the auto-scanner could not anchor (page-3
+//                            spouse-name continuation, page-4 signature/date).
+//   - EXCLUDED_CODES_1301:   codes in `templates/maps/1301_2025.json` that are
+//                            intentionally NOT stamped at runtime, each with a
+//                            one-line justification. Enforced by the coverage
+//                            regression test `form1301Coverage.test.ts`.
+
+export interface FieldDraw {
   key:     string;
-  text:    string;
+  /** Value-key read from `buildForm1301Fields(...)`. Stored on the draw entry
+   *  so the coverage test can validate `DRAW_LIST_1301` statically without
+   *  invoking the engine. */
+  valueKey: string;
   code:    string;
   column?: string | null;
   size?:   number;
   heb?:    boolean;
   align?:  "right" | "left";
 }
+
+export const DRAW_LIST_1301: ReadonlyArray<FieldDraw> = [
+  // ── Personal section ──────────────────────────────────────────────────────
+  // page-3 ID duplicates: 278 (taxpayer ID) + 277 (spouse ID).
+  { key: "taxpayerId278", valueKey: "012",     code: "278", size: 10, align: "right" },
+  { key: "spouseId277",   valueKey: "013",     code: "277", size: 10, align: "right" },
+  // page-1 / page-2 personal block.
+  { key: "idPersonal",    valueKey: "012",     code: "012", size: 10, align: "right" },
+  { key: "lastName",      valueKey: "032",     code: "032", size: 10, heb: true, align: "left" },
+  { key: "city",          valueKey: "022",     code: "022", size: 10, heb: true, align: "left" },
+  { key: "street",        valueKey: "023",     code: "023", size: 10, heb: true, align: "left" },
+  { key: "houseNumber",   valueKey: "024",     code: "024", size: 10, align: "right" },
+
+  // ── Employment — main vs 2nd employer columns (codes carry separate slots) ─
+  { key: "grossSalaryMain", valueKey: "158_main", code: "158", size: 11, align: "right" },
+  { key: "grossSalary2nd",  valueKey: "172_2nd",  code: "172", size: 11, align: "right" },
+  { key: "taxWithheldMain", valueKey: "068_main", code: "068", size: 11, align: "right" },
+  { key: "taxWithheld2nd",  valueKey: "069_2nd",  code: "069", size: 11, align: "right" },
+  { key: "pensionMain",     valueKey: "258_main", code: "258", size: 10, align: "right" },
+  { key: "severance",       valueKey: "272",      code: "272", size: 10, align: "right" },
+
+  // ── Business income ───────────────────────────────────────────────────────
+  { key: "bizIncomeMain", valueKey: "201", code: "201", size: 11, align: "right" },
+  { key: "bizIncome2nd",  valueKey: "301", code: "301", size: 11, align: "right" },
+
+  // ── Capital gains ────────────────────────────────────────────────────────
+  { key: "capitalGainRight",  valueKey: "060",       code: "060", size: 11, align: "right" },
+  { key: "capitalGainCenter", valueKey: "211",       code: "211", size: 11, align: "right" },
+  { key: "capitalLoss",       valueKey: "067",       code: "067", size: 11, align: "right" },
+  { key: "foreignTaxCode157", valueKey: "157",       code: "157", size: 10, align: "right" },
+  { key: "foreignTaxCode055", valueKey: "055_1301",  code: "055", size: 10, align: "right" },
+  { key: "otherIncome",       valueKey: "141",       code: "141", size: 10, align: "right" },
+
+  // ── Deductions — page 1 ──────────────────────────────────────────────────
+  { key: "donations",       valueKey: "078", code: "078", size: 10, align: "right" },
+  { key: "lifeInsurance",   valueKey: "126", code: "126", size: 10, align: "right" },
+  { key: "indPension",      valueKey: "142", code: "142", size: 10, align: "right" },
+  { key: "totalDeductions", valueKey: "335", code: "335", size: 10, align: "right" },
+
+  // ── Deductions — page 3/4 (ITA p1↔p3 cross-check) ────────────────────────
+  { key: "lifeInsP3",          valueKey: "036_p3", code: "036", size: 10, align: "right" },
+  { key: "pensionDeductionP3", valueKey: "045_p3", code: "045", size: 10, align: "right" },
+  { key: "donationsP3",        valueKey: "037_p3", code: "037", size: 10, align: "right" },
+
+  // ── Bank details (page 3 footer) ─────────────────────────────────────────
+  { key: "bankNumber",    valueKey: "274", code: "274", size: 10, align: "right" },
+  { key: "branchNumber",  valueKey: "273", code: "273", size: 10, align: "right" },
+  { key: "accountNumber", valueKey: "044", code: "044", size: 10, align: "right" },
+];
+
+/**
+ * Positional draws — fields the user must see on the form whose anchor codes
+ * are NOT present in the auto-generated `templates/maps/1301_2025.json` (the
+ * code label was filtered as a section reference, or the cell has no printed
+ * code at all). Coordinates calibrated against the 2025 template.
+ *
+ * NOTE: the multi-employer overflow page (added at `pdfDoc.addPage(...)` when
+ * 3+ secondary employers exist) is handled INLINE in the route handler — it is
+ * NOT a positional draw against the static template. Same for the tax-year
+ * overlay (white-rectangle + redraw at the page-1 header).
+ */
+export interface PositionalDraw {
+  key: string;
+  valueKey: string;
+  /** ITA code the field corresponds to (for documentation + test cross-ref). */
+  code: string;
+  /** pdf-lib 0-indexed page. */
+  page: number;
+  /** pdf-lib bottom-left x. */
+  x: number;
+  /** pdf-lib bottom-left y. */
+  y: number;
+  size?: number;
+  heb?: boolean;
+  /** Set to true if the value is a Hebrew word/phrase needing BiDi shaping. */
+  reverse?: boolean;
+}
+
+export const POSITIONAL_DRAWS_1301: ReadonlyArray<PositionalDraw> = [
+  // 031 — first name. The auto-scanner did not detect a 3-digit "031" code
+  // near the first-name value-box on the 1301 (the form labels it with the
+  // Hebrew "שם פרטי" text only). Coordinates source: page-1 personal row,
+  // mirroring the first-name slot on Form 135.
+  { key: "firstName031", valueKey: "031", code: "031", page: 0, x: 360, y: 700, size: 9, heb: true, reverse: true },
+
+  // 015 — תאריך עליה (DD/MM/YYYY). Page-1 residency row.
+  { key: "aliyahDate015", valueKey: "aliyahDate", code: "015", page: 0, x: 50, y: 56, size: 9 },
+
+  // 016 — תושב יישוב מזכה. Page-1 residency-row checkbox.
+  { key: "peripheryFlag016", valueKey: "peripheryFlag", code: "016", page: 0, x: 280, y: 56, size: 10 },
+
+  // 119 — זיכוי בגין בן/בת זוג (count). Page-2 credit-points panel slot.
+  { key: "spouseCredit119", valueKey: "spouseCreditPoints", code: "119", page: 1, x: 305, y: 360, size: 9 },
+
+  // 245 — נקודות זיכוי בגין ילדים (count). Page-2 credit-points panel slot.
+  { key: "childCreditPoints245", valueKey: "245", code: "245", page: 1, x: 250, y: 360, size: 9 },
+
+  // 086 — מענק פטור (Sec. 9(7א)). Page-2 severance row.
+  { key: "exemptGrant086", valueKey: "086", code: "086", page: 1, x: 200, y: 280, size: 10 },
+
+  // 117 — דיבידנד / 124 — ריבית ני"ע סחירים. The 1301 has these on page 2;
+  // the auto-scanner did detect them in the field-map (covered by DRAW_LIST
+  // via the 117 / 124 entries on the 135 → 1301 inheritance), so they are
+  // already drawn through the regular draw-list when present in `vals`.
+
+  // Page-4 signature block (text only, NOT a digital signature). Phase 0 §0.D
+  // delivered the equivalent on Form 135; mirror here so SHAAM intake does
+  // not flag the 1301 as unsigned.
+  { key: "signatureName_p4", valueKey: "signatureName", code: "signature-block", page: 3, x: 100, y: 80, size: 10, heb: true, reverse: true },
+  { key: "signatureDate_p4", valueKey: "signatureDate", code: "signature-block", page: 3, x: 280, y: 80, size: 10 },
+
+  // Declaration checkbox (page 4) — "אני מצהיר שכל הפרטים נכונים…". Stamp X.
+  { key: "declarationMark_p4", valueKey: "declarationMark", code: "declaration-checkbox", page: 3, x: 470, y: 110, size: 12 },
+];
+
+/**
+ * Codes that exist in `templates/maps/1301_2025.json` but are intentionally
+ * NOT stamped at runtime. Each entry MUST carry a one-line justification.
+ *
+ * Categories:
+ *   - "spouse-column": spouse-attributed mirrors (`*_registered_spouse`,
+ *     `*_spouse`, `040_col_2`). Phase 1 §1.A wires the spouse-side data.
+ *   - "computation-row": ITA-scanner-derived sub-totals that the filer must
+ *     not stamp (the ITA back-office computes them from primary fields).
+ *   - "phase-1": fields whose source data is not yet available in the
+ *     TaxPayer / FinancialData model; deferred to a later 1.* sub-task.
+ *   - "form-internal": SHAAM-internal scanner reference codes.
+ *   - "multi-employer-column": secondary-employer column slots on page 1
+ *     beyond the 2nd employer (the 3rd, 4th, ... are emitted as the
+ *     in-route overflow annex page, not positional stamps on the template).
+ *   - "out-of-scope": fields belonging to a section the product does not
+ *     yet collect (e.g. business expenses sub-rows on page 2 of the 1301
+ *     when the user reports business income through Form 6111 instead).
+ */
+export const EXCLUDED_CODES_1301: Readonly<Record<string, string>> = {
+  // ── Spouse-column mirrors (column-keyed) ────────────────────────────────
+  "040_registered_spouse": "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "040_spouse":            "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "040_col_2":             "spouse-column — Phase 1 §1.A spouse-secondary-employer",
+  "042_registered_spouse": "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "042_spouse":            "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "043_registered_spouse": "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "043_spouse":            "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "260_registered_spouse": "spouse-column — Phase 1 §1.A spouse-data plumbing",
+  "260_spouse":            "spouse-column — Phase 1 §1.A spouse-data plumbing",
+
+  // ── Computation rows / sub-totals (page 1) ──────────────────────────────
+  "100": "computation-row — page-1 income subtotal, derived by ITA scanner",
+  "107": "computation-row — page-1 income subtotal, derived",
+  "108": "computation-row — page-1 income subtotal, derived",
+  "109": "computation-row — page-1 income subtotal, derived",
+  "111": "computation-row — page-1 calc sub-total, derived",
+  "112": "computation-row — page-1 calc sub-total, derived",
+  "113": "computation-row — page-1 calc sub-total, derived",
+  "115": "computation-row — page-1 calc sub-total, derived",
+  "118": "computation-row — page-1 calc sub-total, derived",
+  "120": "computation-row — page-1 calc sub-total, derived",
+  "121": "computation-row — page-1 calc sub-total, derived",
+  "122": "computation-row — page-1 calc sub-total, derived",
+  "123": "computation-row — page-1 calc sub-total, derived",
+  "129": "computation-row — page-1 calc sub-total, derived",
+  "132": "computation-row — page-1 calc sub-total, derived",
+  "136": "computation-row — page-1 calc sub-total, derived",
+  "137": "computation-row — page-1 calc sub-total, derived",
+  "139": "computation-row — page-1 calc sub-total, derived",
+  "140": "computation-row — page-1 calc sub-total, derived",
+  "148": "computation-row — page-1 calc sub-total, derived",
+  "151": "computation-row — page-1 calc sub-total, derived",
+  "153": "computation-row — page-1 calc sub-total, derived",
+  "155": "computation-row — page-1 calc sub-total, derived",
+  "159": "computation-row — page-1 calc sub-total, derived",
+  "160": "computation-row — page-1 calc sub-total, derived",
+  "163": "computation-row — page-1 calc sub-total, derived",
+  "165": "computation-row — page-1 calc sub-total, derived",
+  "166": "computation-row — page-1 capital-loss duplicate (drawn at code 067)",
+  "167": "computation-row — page-1 sub-total, derived",
+  "168": "computation-row — page-1 sub-total, derived",
+  "173": "computation-row — page-1 sub-total, derived",
+  "174": "computation-row — page-1 sub-total, derived",
+  "179": "computation-row — page-1 sub-total, derived",
+  "180": "computation-row — page-1 sub-total, derived",
+  "182": "computation-row — page-1 sub-total, derived",
+  "183": "computation-row — page-1 sub-total, derived",
+  "184": "computation-row — page-1 sub-total, derived",
+  "185": "computation-row — page-1 sub-total, derived",
+  "186": "computation-row — page-1 sub-total, derived",
+  "187": "computation-row — page-1 sub-total, derived",
+  "190": "computation-row — page-1 partial-year months",
+  "194": "computation-row — page-1 sub-total, derived",
+  "195": "computation-row — page-1 sub-total, derived",
+  "196": "computation-row — page-1 sub-total, derived",
+  "199": "computation-row — page-1 sub-total, derived",
+  "202": "computation-row — page-2 business sub-total, derived",
+  "204": "computation-row — page-2 business sub-total, derived",
+  "205": "computation-row — page-2 business sub-total, derived",
+  "206": "computation-row — page-2 business sub-total, derived",
+  "207": "computation-row — page-2 business sub-total, derived",
+  "209": "computation-row — page-2 business sub-total, derived",
+  "212": "computation-row — page-2 sub-total, derived",
+  "213": "computation-row — page-2 sub-total, derived",
+  "214": "computation-row — page-2 sub-total, derived",
+  "217": "computation-row — page-2 sub-total, derived",
+  "220": "computation-row — page-2 sub-total, derived",
+  "222": "computation-row — page-2 sub-total, derived",
+  "225": "computation-row — page-2 sub-total, derived",
+  "226": "computation-row — page-2 sub-total, derived",
+  "227": "computation-row — page-2 sub-total, derived",
+  "228": "computation-row — page-2 sub-total, derived",
+  "232": "computation-row — page-2 sub-total, derived",
+  "235": "computation-row — page-2 sub-total, derived",
+  "236": "computation-row — page-2 sub-total, derived",
+  "237": "computation-row — page-2 sub-total, derived",
+  "238": "computation-row — page-2 sub-total, derived",
+  "239": "computation-row — page-2 sub-total, derived",
+  "240": "computation-row — page-2 sub-total, derived",
+  "241": "computation-row — page-2 sub-total, derived",
+  "242": "computation-row — page-2 sub-total, derived",
+  "250": "computation-row — page-2 secondary-employer net, derived",
+  "255": "computation-row — page-2 sub-total, derived",
+  "256": "computation-row — page-2 capital-gain duplicate (drawn at code 060)",
+  "257": "computation-row — page-2 sub-total, derived",
+  "259": "computation-row — page-2 sub-total, derived",
+  "262": "computation-row — page-2 sub-total, derived",
+  "263": "computation-row — page-2 sub-total, derived",
+  "268": "computation-row — page-2 sub-total, derived",
+  "269": "computation-row — page-2 sub-total, derived",
+  "270": "computation-row — page-2 sub-total, derived",
+  "271": "computation-row — page-2 sub-total, derived",
+  "275": "computation-row — page-3 sub-total, derived",
+  "276": "computation-row — page-3 sub-total, derived",
+  "279": "computation-row — page-3 sub-total, derived",
+  "284": "computation-row — page-3 sub-total, derived",
+  "285": "computation-row — page-3 sub-total, derived",
+  "286": "computation-row — page-3 sub-total, derived",
+  "287": "computation-row — page-3 sub-total, derived",
+  "288": "computation-row — page-3 sub-total, derived",
+  "290": "computation-row — page-3 sub-total, derived",
+  "291": "computation-row — page-3 sub-total, derived",
+  "292": "computation-row — page-3 sub-total, derived",
+  "294": "computation-row — page-3 sub-total, derived",
+  "295": "computation-row — page-3 sub-total, derived",
+  "296": "computation-row — page-3 sub-total, derived",
+  "299": "computation-row — page-3 sub-total, derived",
+  "302": "computation-row — page-3 sub-total, derived",
+  "304": "computation-row — page-3 sub-total, derived",
+  "305": "computation-row — page-3 sub-total, derived",
+  "307": "computation-row — page-3 sub-total, derived",
+  "309": "computation-row — page-3 sub-total, derived",
+  "311": "computation-row — page-3 sub-total, derived",
+  "312": "computation-row — page-3 sub-total, derived",
+  "313": "computation-row — page-3 sub-total, derived",
+  "314": "computation-row — page-3 sub-total, derived",
+  "317": "computation-row — page-3 sub-total, derived",
+  "319": "computation-row — page-3 sub-total, derived",
+  "323": "computation-row — page-3 sub-total, derived",
+  "324": "computation-row — page-3 sub-total, derived",
+  "325": "computation-row — page-3 sub-total, derived",
+  "326": "computation-row — page-3 sub-total, derived",
+  "327": "computation-row — page-3 sub-total, derived",
+  "328": "computation-row — page-3 sub-total, derived",
+  "331": "computation-row — page-3 sub-total, derived",
+  "332": "computation-row — page-4 footer total, derived",
+  "336": "computation-row — page-4 sub-total, derived",
+  "337": "computation-row — page-4 sub-total, derived",
+  "338": "computation-row — page-4 sub-total, derived",
+  "339": "computation-row — page-4 sub-total, derived",
+  "340": "computation-row — page-4 sub-total, derived",
+  "341": "computation-row — page-4 sub-total, derived",
+  "342": "computation-row — page-4 sub-total, derived",
+  "343": "computation-row — page-4 sub-total, derived",
+  "344": "computation-row — page-4 sub-total, derived",
+  "345": "computation-row — page-4 sub-total, derived",
+  "346": "computation-row — page-4 sub-total, derived",
+  "347": "computation-row — page-4 sub-total, derived",
+  "350": "computation-row — page-4 sub-total, derived",
+  "351": "computation-row — page-4 sub-total, derived",
+  "352": "computation-row — page-4 sub-total, derived",
+  "357": "computation-row — page-4 sub-total, derived",
+  "358": "computation-row — page-4 sub-total, derived",
+  "361": "computation-row — page-4 sub-total, derived",
+  "362": "computation-row — page-4 sub-total, derived",
+  "363": "computation-row — page-4 sub-total, derived",
+  "364": "computation-row — page-4 sub-total, derived",
+  "365": "computation-row — page-4 sub-total, derived",
+  "366": "computation-row — page-4 sub-total, derived",
+  "367": "computation-row — page-4 sub-total, derived",
+  "369": "computation-row — page-4 sub-total, derived",
+  "370": "computation-row — page-4 sub-total, derived",
+  "372": "computation-row — page-4 sub-total, derived",
+  "441": "computation-row — page-4 footer total",
+  "442": "computation-row — page-4 footer total",
+  "443": "computation-row — page-4 footer total",
+
+  // ── Phase-1 / out-of-scope source data ───────────────────────────────────
+  "005": "phase-1 — page-1 form-version code; auto-set by ITA",
+  "006": "phase-1 — page-1 sub-classification flag; not in TaxPayer model",
+  "011": "phase-1 — phone (mobile) capture; Phase 1 §1.A questionnaire add",
+  "014": "phase-1 — תושב ישראל לכל השנה Y/N (single-cell on 1301); Phase 1 §1.A",
+  "020": "phase-1 — מצב משפחתי checkbox row; Phase 1 §1.A spouse-column completion",
+  "021": "phase-1 — birthDate field; auto-scanned coords need recalibration",
+  "025": "phase-1 — תושב חוזר flag; Phase 1 §1.A returning-resident",
+  "026": "phase-1 — marital-status sub-row; Phase 1 §1.A",
+  "028": "phase-1 — alternate residency reason; Phase 1 §1.A",
+  "029": "phase-1 — alternate residency reason; Phase 1 §1.A",
+  "030": "phase-1 — pension type subdivision",
+  "034": "phase-1 — page-1 secondary-residence flag",
+  "036": "computation-row — page-1 life-insurance duplicate (drawn at p3 via code 036)",
+  "038": "phase-1 — credit-point sub-classification box",
+  "041": "phase-1 — page-1 secondary-employer hours flag",
+  "045": "computation-row — page-1 pension duplicate (drawn at p3 via code 045)",
+  "046": "phase-1 — page-1 severance type-1 sub-classification",
+  "048": "phase-1 — page-1 severance type-2 sub-classification",
+  "050": "computation-row — page-1 capital-gain net subtotal (drawn at code 060)",
+  "051": "phase-1 — page-1 capital-gain sub-classification",
+  "052": "phase-1 — page-1 capital-gain sub-classification",
+  "054": "computation-row — page-2 sub-total, derived",
+  "056": "phase-1 — page-1 reserve-currency capital-gain",
+  "059": "phase-1 — page-1 capital-gain sub-classification",
+  "061": "phase-1 — page-1 capital-gain sub-classification",
+  "065": "phase-1 — page-1 trust capital-gain",
+  "077": "phase-1 — page-1 deduction sub-classification",
+  "079": "phase-1 — page-1 donation type-2",
+  "080": "phase-1 — page-1 donation type-3",
+  "081": "phase-1 — life-insurance sub-classification",
+  "082": "phase-1 — pension sub-classification",
+  "083": "phase-1 — page-1 deduction sub-classification",
+  "084": "phase-1 — page-1 deduction sub-classification",
+  "085": "phase-1 — page-1 deduction sub-classification",
+  "087": "phase-1 — page-1 disability deduction",
+  "088": "phase-1 — page-1 footer Yes/No row",
+  "089": "phase-1 — page-1 footer Yes/No row",
+  "092": "phase-1 — page-2 alternate-income classification",
+  "096": "phase-1 — page-2 footer Yes/No row",
+  "097": "phase-1 — page-2 alternate-income classification",
+  "117": "phase-1 — דיבידנד; 1301 page-2 (engine surfaces \"\" today; 1.K IBKR split)",
+  "124": "phase-1 — ריבית ני\"ע סחירים; engine surfaces \"\" today; 1.K IBKR split",
+  "126": "computation-row — page-1 life-insurance duplicate (drawn at p3 via code 036)",
+  "142": "computation-row — page-1 individual-pension duplicate (drawn via 045_p3)",
+  "170": "phase-1 — page-1 secondary-employer column gross",
+  "218": "phase-1 — קה\"ש חייבת חלק מעסיק (Form 106 expansion needed; 1.C)",
+  "219": "phase-1 — קה\"ש חייבת חלק עובד (Form 106 expansion needed; 1.C)",
+  "244": "phase-1 — קה\"ש פטורה (Form 106 expansion needed; 1.C)",
+  "245": "phase-1 — נקודות זיכוי בגין ילדים (positional draw covers 1301 page-2)",
+  "248": "phase-1 — קה\"ש חייבת חלק מעסיק; Form 106 expansion (1.C)",
+  "249": "phase-1 — קה\"ש חייבת חלק עובד; Form 106 expansion (1.C)",
+  "086": "phase-1 — מענק פטור Sec 9(7א) (positional draw covers 1301 page-2)",
+
+  // ── Form-internal / SHAAM scanner reference ──────────────────────────────
+  "702": "form-internal — SHAAM scanner reference, never stamped by filer",
+  "858": "form-internal — SHAAM scanner reference, never stamped by filer",
+};
 
 async function handle(req: NextRequest): Promise<Response> {
   if (!fs.existsSync(TEMPLATE_PATH)) {
@@ -115,60 +480,25 @@ async function handle(req: NextRequest): Promise<Response> {
       }
     }
 
-    // ── Draw-list — one entry per field code (+ optional column) ──────────────
-    const draws: FieldDraw[] = [
-      // Personal (page 1 ID row, page 2-3 details)
-      { key: "taxpayerId278", text: vals["012"],               code: "278", size: 10, align: "right" },
-      { key: "spouseId277",   text: vals["013"],               code: "277", size: 10, align: "right" },
-      { key: "idPersonal",    text: vals["012"],               code: "012", size: 10, align: "right" },
-      { key: "lastName",      text: hebrewForPdf(vals["032"]), code: "032", size: 10, heb: true, align: "left" },
-      { key: "city",          text: hebrewForPdf(vals["022"]), code: "022", size: 10, heb: true, align: "left" },
-      { key: "street",        text: hebrewForPdf(vals["023"]), code: "023", size: 10, heb: true, align: "left" },
-      { key: "houseNumber",   text: vals["024"],               code: "024", size: 10, align: "right" },
-
-      // Employment — main vs 2nd employer (center vs left column, same codes)
-      { key: "grossSalaryMain", text: vals["158_main"],        code: "158", size: 11, align: "right" },
-      { key: "grossSalary2nd",  text: vals["172_2nd"],         code: "172", size: 11, align: "right" },
-      { key: "taxWithheldMain", text: vals["068_main"],        code: "068", size: 11, align: "right" },
-      { key: "taxWithheld2nd",  text: vals["069_2nd"],         code: "069", size: 11, align: "right" },
-      { key: "pensionMain",     text: vals["258_main"],        code: "258", size: 10, align: "right" },
-      { key: "severance",       text: vals["272"],             code: "272", size: 10, align: "right" },
-
-      // Business
-      { key: "bizIncomeMain", text: vals["201"],               code: "201", size: 11, align: "right" },
-      { key: "bizIncome2nd",  text: vals["301"],               code: "301", size: 11, align: "right" },
-
-      // Capital gains
-      { key: "capitalGainRight",  text: vals["060"],           code: "060", size: 11, align: "right" },
-      { key: "capitalGainCenter", text: vals["211"],           code: "211", size: 11, align: "right" },
-      { key: "capitalLoss",       text: vals["067"],           code: "067", size: 11, align: "right" },
-      { key: "foreignTaxCode157", text: vals["157"],           code: "157", size: 10, align: "right" },
-      { key: "foreignTaxCode055", text: vals["055_1301"],      code: "055", size: 10, align: "right" },
-      { key: "otherIncome",       text: vals["141"],           code: "141", size: 10, align: "right" },
-
-      // Deductions — page 1
-      { key: "donations",       text: vals["078"],             code: "078", size: 10, align: "right" },
-      { key: "lifeInsurance",   text: vals["126"],             code: "126", size: 10, align: "right" },
-      { key: "indPension",      text: vals["142"],             code: "142", size: 10, align: "right" },
-      { key: "totalDeductions", text: vals["335"],             code: "335", size: 10, align: "right" },
-
-      // Deductions — page 3/4 (ITA cross-check)
-      { key: "lifeInsP3",          text: vals["036_p3"],       code: "036", size: 10, align: "right" },
-      { key: "pensionDeductionP3", text: vals["045_p3"],       code: "045", size: 10, align: "right" },
-      { key: "donationsP3",        text: vals["037_p3"],       code: "037", size: 10, align: "right" },
-
-      // Bank details
-      { key: "bankNumber",    text: vals["274"],               code: "274", size: 10, align: "right" },
-      { key: "branchNumber",  text: vals["273"],               code: "273", size: 10, align: "right" },
-      { key: "accountNumber", text: vals["044"],               code: "044", size: 10, align: "right" },
-    ];
+    // Helper: resolve a draw's text from buildForm1301Fields output. The
+    // valueKey indirection lets the coverage test validate DRAW_LIST_1301
+    // statically without invoking the engine.
+    const valueFor = (
+      key: string,
+      heb: boolean | undefined,
+    ): string => {
+      const v = (vals as unknown as Record<string, string | undefined>)[key] ?? "";
+      return heb ? hebrewForPdf(v) : v;
+    };
 
     const pageHeight = map.page_size.height;
     const drawn: { key: string; code: string; page: number }[] = [];
     const missing: string[] = [];
 
-    for (const d of draws) {
-      if (!d.text || d.text === "0") continue;
+    // ── Coordinate-anchored draws (resolved through the field-code map) ──────
+    for (const d of DRAW_LIST_1301) {
+      const text = valueFor(d.valueKey, d.heb);
+      if (!text || text === "0") continue;
 
       const field = findField(map, d.code, d.column);
       if (!field) {
@@ -183,12 +513,12 @@ async function handle(req: NextRequest): Promise<Response> {
       const yBaseline = pageHeight - field.value_box.y_bottom + 2;
       let x = field.value_box.x_left + 2;
       if ((d.align ?? "right") === "right") {
-        const width = font.widthOfTextAtSize(d.text, size);
+        const width = font.widthOfTextAtSize(text, size);
         x = field.value_box.x_right - width - 2;
       }
 
       try {
-        page.drawText(d.text, { x, y: yBaseline, font, size, color: TEXT_COLOR });
+        page.drawText(text, { x, y: yBaseline, font, size, color: TEXT_COLOR });
         drawn.push({ key: d.key, code: d.code, page: field.page });
       } catch (e) {
         console.warn(`[form-1301] field "${d.key}"(${d.code}): ${e instanceof Error ? e.message : e}`);
@@ -198,6 +528,32 @@ async function handle(req: NextRequest): Promise<Response> {
         try {
           page.drawText(`→${d.key}:${d.code}`, {
             x: field.value_box.x_left, y: yBaseline + size + 1,
+            font: latinReg, size: 6, color: CAL_COLOR,
+          });
+        } catch { /* non-critical */ }
+      }
+    }
+
+    // ── Positional draws (codes the auto-scanner could not anchor) ────────────
+    for (const p of POSITIONAL_DRAWS_1301) {
+      const text = valueFor(p.valueKey, p.reverse);
+      if (!text) continue;
+      if (p.page < 0 || p.page >= pdfDoc.getPageCount()) continue;
+
+      const page = pdfDoc.getPage(p.page);
+      const font: PDFFont = p.heb ? hebrewFont : latinBold;
+      const size = p.size ?? 10;
+      try {
+        page.drawText(text, { x: p.x, y: p.y, font, size, color: TEXT_COLOR });
+        drawn.push({ key: p.key, code: p.code, page: p.page + 1 });
+      } catch (e) {
+        console.warn(`[form-1301] positional "${p.key}"(${p.code}): ${e instanceof Error ? e.message : e}`);
+      }
+
+      if (calibrate) {
+        try {
+          page.drawText(`→${p.key}:${p.code}`, {
+            x: p.x, y: p.y + size + 1,
             font: latinReg, size: 6, color: CAL_COLOR,
           });
         } catch { /* non-critical */ }

@@ -160,6 +160,44 @@ export function generateOptimizations(
     });
   }
 
+  // 8. F-030 — מענק עבודה (Earned Income Tax Credit / EITC) eligibility nudge.
+  // סעיף 60א + חוק להגדלת ההכנסה החודשית מעבודה (מענק עבודה).
+  // Paid by ביטוח לאומי (not רשות המסים), but a common refund scenario for the
+  // target audience. Eligibility tiers (2025 figures):
+  //   • Low-income (gross < ~₪75K/yr) parent with at least 1 child  → up to ~₪626/mo (~₪7,500/yr).
+  //   • Low-income (gross < ~₪75K/yr) single parent / 55+              → richer tier (~₪9,000/yr).
+  //   • Low-income (~₪25K-₪75K/yr) without children                    → ~₪1,500/yr.
+  // We surface the nudge when income is plausibly inside the band; the actual
+  // grant is computed by ביטוח לאומי, so this is purely a discovery nudge.
+  const annualGross = result.totalGrossIncome;
+  const hasChild = taxpayer.children.length > 0;
+  const isSingleParent =
+    taxpayer.maritalStatus !== "married" && hasChild;
+  if (annualGross >= 25_000 && annualGross <= 75_000) {
+    let estimatedAnnualGrant: number;
+    let title: string;
+    if (isSingleParent) {
+      estimatedAnnualGrant = 9_000; // upper-tier single-parent estimate
+      title = "מענק עבודה — הורה עצמאי בעל הכנסה נמוכה";
+    } else if (hasChild) {
+      estimatedAnnualGrant = 7_500; // family-with-children estimate
+      title = "מענק עבודה — משפחה עם ילדים";
+    } else {
+      estimatedAnnualGrant = 1_500; // no-children base estimate
+      title = "מענק עבודה — עובד בהכנסה נמוכה";
+    }
+    suggestions.push({
+      id: "opt-eitc",
+      title,
+      description:
+        `על-בסיס שכר ברוטו של ₪${annualGross.toLocaleString("he-IL")} ייתכן שאתם זכאים ל"מענק עבודה" (מס שלילי) של עד כ-₪${estimatedAnnualGrant.toLocaleString("he-IL")} בשנה. המענק משולם ע"י ביטוח לאומי (לא רשות המסים) — יש להגיש בקשה ב-MyGov או בסניף ביטוח לאומי. סעיף 60א + חוק מענק עבודה.`,
+      estimatedSaving: estimatedAnnualGrant,
+      priority: isSingleParent ? "high" : "medium",
+      action: "review_credits",
+      actionPayload: { type: "eitc_maanak_avoda" },
+    });
+  }
+
   // Sort by estimated saving descending
   return suggestions.sort((a, b) => b.estimatedSaving - a.estimatedSaving).slice(0, 6);
 }

@@ -1,0 +1,51 @@
+{
+    "tax_year": 2023,
+    "credit_point_monthly_value": 235,
+    "credit_point_annual_value": 2820,
+    "tax_brackets": [
+        {
+            "bracket": 1,
+            "rate": 0.10,
+            "min": 0,
+            "max": 81480
+        },
+        {
+            "bracket": 2,
+            "rate": 0.14,
+            "min": 81481,
+            "max": 116760
+        },
+        {
+            "bracket": 3,
+            "rate": 0.20,
+            "min": 116761,
+            "max": 187440
+        },
+        {
+            "bracket": 4,
+            "rate": 0.31,
+            "min": 187441,
+            "max": 260520
+        },
+        {
+            "bracket": 5,
+            "rate": 0.35,
+            "min": 260521,
+            "max": 542160
+        },
+        {
+            "bracket": 6,
+            "rate": 0.47,
+            "min": 542161,
+            "max": 698280
+        },
+        {
+            "bracket": 7,
+            "rate": 0.50,
+            "min": 698281,
+            "max": 9999999
+        }
+    ],
+    "_source": "ITA חוזר מס הכנסה 1/2023 (תיאומי הצמדה לסעיף 121, indexation +5.3% from 2022); credit_point_annual_value = 12 × monthly ₪235 published by ITA Jan 2023.",
+    "_verification_status": "BEST-EFFORT — bracket boundaries derived from public ITA indexation circulars; CPA/user should re-verify against the original חוזר before relying on these values for filings older than 2024."
+}

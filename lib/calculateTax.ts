@@ -25,27 +25,124 @@
  *   • F-012 Single-parent extends to רווק/ה — סעיף 40(ב)(1) post-2024
  *   • F-016 carriedForwardLoss wired into capital-gains calc — סעיף 92
  *
- * Data source: app/data/tax_brackets_2024_2025.json (Bank of Israel / ITA figures)
- *              app/data/credit_points_{2024,2025}.json
+ * Data source: app/data/tax_brackets_{2020..2025}.json (Bank of Israel / ITA figures)
+ *              app/data/credit_points_{2020..2025}.json
  *              app/data/periphery_postcodes.json (postcode → tier; percentage logic in code)
+ *
+ * Phase 1 §1.B (audit F-031): support the full 6-year claim window per סעיף 160(א).
+ * Each year is a separate JSON file; `loadYearData()` is the year-keyed loader.
+ * Years 2020–2023 brackets are best-effort (ITA indexation circulars) and bear a
+ * `_verification_status` field — the engine accepts them but a CPA should
+ * re-verify before reliance on a filing older than 2024.
+ *
+ * Phase 1 §1.A (P1 tax-math batch). Closes findings:
+ *   • F-013 Severance §9(7א) pre-tax exemption (last salary × years × ceiling).
+ *   • F-020 §46 donation carry-forward over 3 years (excess above 30% / cap).
+ *   • F-021 §45a life/LTC ceiling: 5% of income + ₪108k absolute cap.
+ *   • F-022 קרן השתלמות — שכיר receives NO זיכוי (study_fund_sec3e3 zeroed).
+ *   • F-023 Multi-employer overlap-month over-withholding effect.
+ *   • F-024 §67א foreign-salary credit (capped by Israeli source attribution).
+ *   • F-025 §9א pension exemption — 52% of qualifying pension exempt at retirement.
+ *   • F-026 Disability §9(5) for 50%-89% — verified relative-exemption (already in 0.C).
+ *   • F-027 ילד נטל מיוחד — automatic 2 nq per child (תיקון 196).
+ *   • F-028 Joint custody (משמורת משותפת) — 0.5 nq each parent — סעיף 66א(א1).
+ *   • Per-year `pensionIncomeCeiling` table (was 2025?283000:270000 — extended).
  */
 
-import taxData from "@/data/tax_brackets_2024_2025.json";
+import brackets2020 from "@/data/tax_brackets_2020.json";
+import brackets2021 from "@/data/tax_brackets_2021.json";
+import brackets2022 from "@/data/tax_brackets_2022.json";
+import brackets2023 from "@/data/tax_brackets_2023.json";
+import brackets2024 from "@/data/tax_brackets_2024.json";
+import brackets2025 from "@/data/tax_brackets_2025.json";
 import peripheryData from "@/data/periphery_postcodes.json";
+import { getFxRate } from "@/lib/fx";
 import type { TaxPayer, PersonalDeduction } from "@/types";
+
+// ─── Year-keyed loader (F-031) ────────────────────────────────────────────────
+
+/**
+ * Shape of a per-year `tax_brackets_<year>.json` file.
+ * The `_source` / `_verification_status` keys are documentation-only.
+ */
+export interface YearTaxData {
+  tax_year: number;
+  credit_point_monthly_value: number;
+  credit_point_annual_value: number;
+  tax_brackets: { bracket: number; rate: number; min: number; max: number }[];
+  _source?: string;
+  _verification_status?: string;
+}
+
+const YEAR_DATA: Record<number, YearTaxData> = {
+  2020: brackets2020 as YearTaxData,
+  2021: brackets2021 as YearTaxData,
+  2022: brackets2022 as YearTaxData,
+  2023: brackets2023 as YearTaxData,
+  2024: brackets2024 as YearTaxData,
+  2025: brackets2025 as YearTaxData,
+};
+
+/**
+ * Resolve year-specific tax data. For an unsupported year the engine falls
+ * back to the closest supported year (2020 floor / 2025 ceiling) — a
+ * conservative behaviour that prevents silent NaN propagation while making
+ * the deviation observable in test coverage.
+ */
+export function loadYearData(year: number): YearTaxData {
+  if (YEAR_DATA[year]) return YEAR_DATA[year];
+  if (year < 2020) return YEAR_DATA[2020];
+  return YEAR_DATA[2025];
+}
+
+/**
+ * Set of years the engine fully supports. Mirrors `SupportedTaxYear` in
+ * `currentTaxYear.ts`. Kept as a runtime list so tests can iterate it.
+ */
+export const SUPPORTED_TAX_YEARS = [2020, 2021, 2022, 2023, 2024, 2025] as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CalculationResult {
   totalGrossIncome: number;
-  incomeDeductions: number;     // Sec. 9A alimony + Sec. 47(ב)(1) + Sec. 9(5) — reduce taxable income
+  incomeDeductions: number;     // Sec. 9A alimony + Sec. 47(ב)(1) + Sec. 9(5) + Sec. 9א pension
   taxableIncome: number;        // totalGrossIncome − incomeDeductions
   calculatedTax: number;        // raw progressive bracket tax on taxableIncome
   creditPointsValue: number;    // total credit point value in ILS
   deductionCredits: number;     // total deduction credits in ILS (45a, 46, 47(ב)(2), …)
   peripheryDiscount: number;    // tax-discount under צו 2023 / סעיף 11 (NOT credit-points)
-  netTaxOwed: number;           // calculatedTax − credits − peripheryDiscount (floored at 0)
-  taxPaid: number;              // sum of all employer taxWithheld
+  /** F-024: סעיף 67א foreign-salary credit (capped by Israeli source attribution). */
+  foreignSalaryCredit: number;
+  /** F-013: §9(7א) severance exempt portion (auto-computed when fields present). */
+  severanceExemption: number;
+  /** F-013: net taxable severance after the §9(7א) exemption (informational). */
+  taxableSeverance: number;
+  /** F-025: §9א qualifying-pension exemption (52% × קצבה מזכה). */
+  qualifyingPensionExemption: number;
+  /** F-020: per-year donation excess to carry forward to subsequent years (סעיף 46(ב2)). */
+  donationCarryForwardExcess: number;
+  /** F-020: prior-year carry-forward consumed in this calculation. */
+  donationCarryForwardConsumed: { year: number; consumed: number }[];
+  /** F-023: estimated refund-add-on from multi-employer overlap-month over-withholding. */
+  multiEmployerOverlapRefund: number;
+  /**
+   * Phase 1 §1.I (F-018) — שכר במשמרות tax discount per תקנה 5.
+   * Subtracted from `calculatedTax` AFTER bracket calc.
+   */
+  shiftWorkDiscount: number;
+  /**
+   * Phase 1 §1.I (חל"ת) — un-earned-income slice removed from `taxableIncome`
+   * BEFORE bracket calc per תקנה 5(ג)(4) reconciliation.
+   */
+  chaltAdjustment: number;
+  /**
+   * Phase 1 §1.I (F-019) — un-earned-income slice removed from `taxableIncome`
+   * BEFORE bracket calc per תקנות 168/174 reconciliation. The דמי לידה
+   * grant from BL is NEVER added to taxable income (סעיף 9(7)(ב)).
+   */
+  maternityLeaveAdjustment: number;
+  netTaxOwed: number;           // calculatedTax − credits − peripheryDiscount − foreignSalaryCredit
+  taxPaid: number;              // sum of all employer taxWithheld + F-023 overlap refund
   refundFromEmployment: number; // taxPaid − netTaxOwed
   capitalGainsTax: number;      // net capital gains tax owed after foreign credit
   netRefund: number;            // refundFromEmployment − capitalGainsTax
@@ -59,13 +156,29 @@ export interface CalculationResult {
 }
 
 // Year-keyed constants. Keep mutable per audit; for years outside the table the
-// 2025 value acts as the conservative default (a safer over-estimate than 0).
+// nearest-supported value acts as the conservative default.
+//
+// Phase 1 §1.B (F-031): 2020–2023 ceilings are best-effort (ITA indexation
+// circulars). They mirror the values in `data/credit_points_<year>.json`.
 const DISABILITY_INCOME_CAP: Record<number, number> = {
+  2020: 573_600,  // best-effort — ITA 2020 indexation
+  2021: 580_680,  // best-effort — ITA 2021 indexation
+  2022: 596_400,  // best-effort — ITA 2022 indexation
+  2023: 605_640,  // best-effort — ITA 2023 indexation
   2024: 615_840,  // ITA published 2024 ceiling
   2025: 645_360,  // ITA published 2025 ceiling
 };
 
+// Periphery percentage-discount under צו 2023 only takes effect from tax year
+// 2024 onwards. For 2020–2023 the cap is intentionally 0 — the calculator
+// returns 0 discount, which is the conservative no-claim outcome. Pre-2024
+// claims that were eligible under the legacy flat-points model are out of
+// scope for the percentage-discount engine and require a future migration.
 const PERIPHERY_INCOME_CAP: Record<number, number> = {
+  2020: 0,
+  2021: 0,
+  2022: 0,
+  2023: 0,
   2024: 236_520,  // ITA published 2024 ceiling
   2025: 241_920,  // ITA published 2025 ceiling
 };
@@ -86,21 +199,79 @@ const MA_PROFESSIONAL_KEYS = new Set([
   "חינוך",
 ]);
 
+// ─── Per-year ceilings (Phase 1 §1.A) ────────────────────────────────────────
+// Pension income ceiling for סעיף 47 self-employed credit (16% × min(income, cap)).
+// Best-effort indexed values per ITA circulars; 2025 published is ₪283,000.
+// Sourced from יד הפועלים / ITA תקנות תיאומי הצמדה published per year.
+const PENSION_INCOME_CEILING: Record<number, number> = {
+  2020: 211_200,  // best-effort — ITA 2020 indexation
+  2021: 213_840,  // best-effort — ITA 2021 indexation
+  2022: 220_320,  // best-effort — ITA 2022 indexation
+  2023: 223_920,  // best-effort — ITA 2023 indexation
+  2024: 270_000,  // ITA published 2024 ceiling
+  2025: 283_000,  // ITA published 2025 ceiling
+};
+
+// סעיף 46(ב) absolute donation cap. Indexed annually; 2025 is ₪10,453,805.
+const DONATION_ABSOLUTE_CAP: Record<number, number> = {
+  2020: 9_295_000,   // best-effort — ITA 2020 indexation
+  2021: 9_350_000,   // best-effort — ITA 2021 indexation
+  2022: 9_649_780,   // best-effort — ITA 2022 indexation
+  2023: 9_877_000,   // best-effort — ITA 2023 indexation
+  2024: 10_354_180,  // ITA published 2024 ceiling
+  2025: 10_453_805,  // ITA published 2025 ceiling
+};
+
+// סעיף 45א absolute ceiling on life + LTC insurance premium TOTAL eligible
+// for the 25% credit (in addition to the 5%-of-income relative cap).
+const LIFE_INSURANCE_ABSOLUTE_CAP: Record<number, number> = {
+  2020: 100_000,     // best-effort — ITA 2020 indexation
+  2021: 100_000,     // best-effort — ITA 2021 indexation
+  2022: 102_000,     // best-effort — ITA 2022 indexation
+  2023: 104_000,     // best-effort — ITA 2023 indexation
+  2024: 106_000,     // best-effort — ITA 2024 indexation
+  2025: 108_000,     // ITA 2025 (audit F-021)
+};
+
+// סעיף 9(7א) — annual exemption ceiling per year of service for severance.
+// The exempt portion is min(grossSeverance, lastMonthlySalary × yearsOfService × cap[year]).
+const SEVERANCE_CEILING_PER_YEAR: Record<number, number> = {
+  2020: 12_420,    // best-effort — ITA 2020 indexation
+  2021: 12_640,    // best-effort — ITA 2021 indexation
+  2022: 12_944,    // best-effort — ITA 2022 indexation
+  2023: 13_310,    // best-effort — ITA 2023 indexation
+  2024: 13_750,    // ITA published 2024 ceiling
+  2025: 13_750,    // ITA published 2025 ceiling
+};
+
+// סעיף 9א (קצבה מזכה) — exempt percentage of qualifying pension at retirement.
+// 52% from 2025 onwards (תיקון 190); pre-2025 mostly 52% (post-2024 transition).
+const QUALIFYING_PENSION_EXEMPT_PCT: Record<number, number> = {
+  2020: 0.52,
+  2021: 0.52,
+  2022: 0.52,
+  2023: 0.52,
+  2024: 0.52,
+  2025: 0.52,
+};
+
+// Period (years) over which excess donations are carryable per סעיף 46(ב2).
+const DONATION_CARRY_FORWARD_YEARS = 3;
+
 // ─── 1. Tax Bracket Calculation ───────────────────────────────────────────────
 
 /**
  * Calculate progressive income tax using Israeli tax brackets.
  *
  * @param grossIncome Annual gross income in ILS
- * @param year        Tax year (2024 or 2025)
+ * @param year        Tax year (2020-2025; year-keyed loader picks the right table)
  * @returns           Raw tax liability in ILS (before any credits)
  */
 export function calculateTaxOnIncome(
   grossIncome: number,
-  year: 2024 | 2025
+  year: number
 ): { tax: number; byBracket: CalculationResult["breakdown"]["byBracket"] } {
-  const yearStr = String(year) as "2024" | "2025";
-  const brackets = taxData[yearStr].tax_brackets;
+  const brackets = loadYearData(year).tax_brackets;
 
   let rawTax = 0;
   let prevMax = 0;
@@ -161,6 +332,89 @@ export function calculatePeripheryDiscount(
   return Math.round(eligibleIncome * pct);
 }
 
+// ─── 3b. Severance §9(7א) exemption helper (F-013) ───────────────────────────
+
+/**
+ * Compute the §9(7א) pre-tax exemption on a severance grant.
+ *
+ * Formula: min(grossSeverance, lastMonthlySalary × yearsOfService × ceilingPerYear[year]).
+ * The cap per year of service is published annually by the ITA — ₪13,750 in 2025.
+ *
+ * @param grossSeverance     Gross severance grant (ILS) before any tax.
+ * @param lastMonthlySalary  Last monthly salary at the paying employer (ILS).
+ * @param yearsOfService     Years of service that produced the grant (may be fractional).
+ * @param year               Tax year of payment.
+ * @returns                  The exempt portion (ILS), bounded by the gross.
+ */
+export function calculateSeveranceExemption(
+  grossSeverance: number,
+  lastMonthlySalary: number,
+  yearsOfService: number,
+  year: number
+): number {
+  if (grossSeverance <= 0) return 0;
+  if (lastMonthlySalary <= 0 || yearsOfService <= 0) return 0;
+  const ceiling = SEVERANCE_CEILING_PER_YEAR[year] ?? SEVERANCE_CEILING_PER_YEAR[2025];
+  // The statutory base uses the LOWER of the actual last salary and the
+  // per-year ceiling — the per-year cap functions as the maximum-recognised
+  // monthly salary, not as a multiplier on top of an arbitrary salary.
+  const recognisedMonthly = Math.min(lastMonthlySalary, ceiling);
+  const fullExemption = Math.round(recognisedMonthly * yearsOfService);
+  return Math.min(fullExemption, grossSeverance);
+}
+
+// ─── 3c. Pension §9א qualifying-pension exemption helper (F-025) ────────────
+
+/**
+ * Compute the §9א exemption on a qualifying pension (קצבה מזכה).
+ * Per 2025 settings: 52% of the qualifying pension is exempt for taxpayers
+ * who reached pension-eligible age. The exemption applies only when
+ * `isPensionEligible` is set (gate the call from the engine).
+ *
+ * @param qualifyingPension Annual קצבה מזכה (ILS).
+ * @param year              Tax year (year-keyed exemption-pct).
+ */
+export function calculateQualifyingPensionExemption(
+  qualifyingPension: number,
+  year: number
+): number {
+  if (qualifyingPension <= 0) return 0;
+  const pct = QUALIFYING_PENSION_EXEMPT_PCT[year] ?? QUALIFYING_PENSION_EXEMPT_PCT[2025];
+  return Math.round(qualifyingPension * pct);
+}
+
+// ─── 3d. §67א foreign-salary credit helper (F-024) ──────────────────────────
+
+/**
+ * Compute the foreign-tax credit on a foreign salary (סעיף 67א + 199-210).
+ *
+ * The credit is the LOWER of:
+ *   (a) the actual foreign tax paid on the foreign salary (`foreignSalaryTaxPaid`), and
+ *   (b) the Israeli tax attributable to that foreign-source slice of income —
+ *       i.e. `(foreignSalaryGross / totalTaxableIncome) × calculatedIsraelTax`.
+ *
+ * Source-by-source cap follows סעיף 200(ג) — foreign credit cannot reduce
+ * Israeli tax on Israeli-source income.
+ *
+ * @param foreignSalaryGross    Foreign salary gross in ILS.
+ * @param foreignSalaryTaxPaid  Foreign tax paid in ILS.
+ * @param israeliTaxOnTotal     Israeli bracket tax on TOTAL taxable income.
+ * @param totalTaxableIncome    Taxable income (denominator for attribution).
+ */
+export function calculateForeignSalaryCredit(
+  foreignSalaryGross: number,
+  foreignSalaryTaxPaid: number,
+  israeliTaxOnTotal: number,
+  totalTaxableIncome: number
+): number {
+  if (foreignSalaryGross <= 0 || foreignSalaryTaxPaid <= 0) return 0;
+  if (totalTaxableIncome <= 0 || israeliTaxOnTotal <= 0) return 0;
+  const attribution = Math.round(
+    (foreignSalaryGross / totalTaxableIncome) * israeliTaxOnTotal
+  );
+  return Math.min(foreignSalaryTaxPaid, attribution);
+}
+
 // ─── 4. Credit Points ─────────────────────────────────────────────────────────
 
 /**
@@ -203,10 +457,7 @@ export function calculateCreditPoints(
   taxpayer: TaxPayer,
   year: number
 ): { points: number; annualValue: number; breakdown: Record<string, number> } {
-  const creditPointAnnualValue =
-    year === 2025
-      ? taxData["2025"].credit_point_annual_value
-      : taxData["2024"].credit_point_annual_value;
+  const creditPointAnnualValue = loadYearData(year).credit_point_annual_value;
 
   const breakdown: Record<string, number> = {};
   let points = 0;
@@ -244,6 +495,13 @@ export function calculateCreditPoints(
   }
 
   // ── Children ──────────────────────────────────────────────────────────────
+  // F-028 joint custody (משמורת משותפת) — סעיף 66א(א1): each parent in joint
+  // custody receives 0.5 nq for the otherwise-1.0 child credit. Birth-year
+  // (1.5) and daycare (1.0) credits remain unsplit; only the standard
+  // under-18 credit is halved per the statute.
+  const jointCustodyMultiplier =
+    (taxpayer as { jointCustody?: boolean }).jointCustody === true ? 0.5 : 1.0;
+
   for (const child of taxpayer.children) {
     const birthYear = child.birthDate
       ? new Date(child.birthDate).getFullYear()
@@ -261,12 +519,22 @@ export function calculateCreditPoints(
       breakdown[`child_${child.id}_daycare_03`] = 1.0;
       points += 1.0;
     } else if (birthYear > year - 18) {
-      // Standard child credit (under 18)
-      breakdown[`child_${child.id}`] = 1.0;
-      points += 1.0;
+      // F-028: Standard child credit (under 18) — halved under joint custody.
+      const standard = +(1.0 * jointCustodyMultiplier).toFixed(4);
+      breakdown[`child_${child.id}`] = standard;
+      points += standard;
     }
     // F-010: ages 3-5 in daycare get the standard under-18 credit (handled above).
     // No separate `child_*_daycare_35` key anymore.
+
+    // F-027: ילד נטל מיוחד — automatic 2 nq per parent (תיקון 196 לסעיף 45).
+    // This is in ADDITION to the standard child credit (and to any §45
+    // disabled-child expense deduction). Joint custody does NOT halve the
+    // נטל-מיוחד credit — it is granted to each parent regardless.
+    if (child.hasSpecialNeeds) {
+      breakdown[`child_${child.id}_special_needs`] = 2.0;
+      points += 2.0;
+    }
   }
 
   // ── Academic degrees (1 year STRICTLY AFTER completion) ──────────────────
@@ -411,59 +679,169 @@ export function calculateIncomeDeductions(
 }
 
 /**
+ * Per-year minimum donation for סעיף 46 eligibility (₪).
+ * Phase 1 §1.B (F-031): extended to 2020–2025 per ITA published indexation.
+ * Source: `data/credit_points_<year>.json :: rules.donation_min_sec46.amount`.
+ */
+const DONATION_MIN_SEC46: Record<number, number> = {
+  2020: 199,
+  2021: 200,
+  2022: 207,
+  2023: 209,
+  2024: 207,
+  2025: 214,
+};
+
+/**
+ * Optional context for `calculateDeductionCredits` introduced in Phase 1 §1.A.
+ * Lets the engine pass a prior-year donation carry-forward stack (F-020) and
+ * a "is salaried (שכיר)" flag for the קרן השתלמות gate (F-022). Both are
+ * fully optional so existing callers / tests keep their behaviour unchanged.
+ */
+export interface DeductionCreditContext {
+  /** F-020: ordered list of prior years' un-credited donation excesses (ILS). */
+  donationCarryForward?: { year: number; remaining: number }[];
+  /**
+   * F-022: when true, study-fund (קרן השתלמות) קבלות get NO זיכוי.
+   * שכיר never receives זיכוי for קרן השתלמות per סעיף 3(ה3). Default true
+   * because the engine is salaried-first.
+   */
+  isSalaried?: boolean;
+}
+
+/**
  * Calculate tax credits from personal deductions.
  *
- * Credit rules:
- *   donation_sec46             35% credit; min ₪207 (2024) / ₪214 (2025); cap 30% of income
- *   life_insurance_sec45a      25% credit; no minimum
- *   ltc_insurance_sec45a       25% credit (long-term care, same section)
- *   pension_sec47              35% credit on capped deposit (Sec. 47(ב)(2) זיכוי)
- *   self_employed_pension_sec47 35% credit; cap = min(income, ₪283k) × 16%
- *   provident_fund_sec47       35% credit; capped at ₪10,000 above employer match
- *   disabled_child_sec45       35% credit on qualifying expenses (capped ₪35,000)
- *   study_fund_sec3e3          35% credit (legacy)
+ * Credit rules (Phase 0 + 1.A):
+ *   donation_sec46             35% credit; min varies by year (DONATION_MIN_SEC46);
+ *                              cap = min(30% × income, DONATION_ABSOLUTE_CAP[year]).
+ *                              Excess (over the cap) is returned via `carryForwardExcess`
+ *                              for the engine to persist for up to 3 years (F-020).
+ *                              Prior-year carry-forward is consumed first (FIFO),
+ *                              within the same 30%/absolute cap envelope.
+ *   life_insurance_sec45a      25% credit; F-021: combined-with-LTC cap =
+ *                              min(5% × income, LIFE_INSURANCE_ABSOLUTE_CAP[year]).
+ *   ltc_insurance_sec45a       25% credit (shares the same §45א ceiling).
+ *   pension_sec47              35% credit on capped deposit (Sec. 47(ב)(2) זיכוי).
+ *   self_employed_pension_sec47 35% credit; cap = min(income, PENSION_INCOME_CEILING[year]) × 16%.
+ *   provident_fund_sec47       35% credit; capped at ₪10,000 above employer match.
+ *   disabled_child_sec45       35% credit on qualifying expenses (capped ₪35,000).
+ *   study_fund_sec3e3          F-022: שכיר (default) receives 0 credit.
+ *                              Caller can opt-out by passing `isSalaried:false`.
  *
  * Skipped here (handled in calculateIncomeDeductions):
- *   alimony_sec9a              — INCOME deduction (spouse-portion)
- *   pension_sec47_deduction    — Sec. 47(ב)(1) ניכוי (F-005)
+ *   alimony_sec9a              — INCOME deduction (spouse-portion).
+ *   pension_sec47_deduction    — Sec. 47(ב)(1) ניכוי (F-005).
  */
 export function calculateDeductionCredits(
   deductions: PersonalDeduction[],
   grossIncome: number,
-  year: number
-): { total: number; breakdown: Record<string, number> } {
-  const minDonation = year === 2025 ? 214 : 207;
+  year: number,
+  context: DeductionCreditContext = {}
+): {
+  total: number;
+  breakdown: Record<string, number>;
+  /** F-020: per-year excess of donations over the §46 cap, to carry forward. */
+  carryForwardExcess: number;
+  /** F-020: per-prior-year carry-forward consumed in this calc (for state mutation). */
+  carryForwardConsumed: { year: number; consumed: number }[];
+} {
+  // Default to the 2024 floor (₪207) for any year not in the table — keeps
+  // legacy assumptions intact while explicitly supporting 2020–2025.
+  const minDonation = DONATION_MIN_SEC46[year] ?? 207;
   const maxDonationPct = 0.30;
   const maxPensionDeposit = 10_000;
-  const pensionIncomeCeiling = year === 2025 ? 283_000 : 270_000;
+  // Phase 1 §1.A — replaces the legacy `year === 2025 ? 283_000 : 270_000`.
+  const pensionIncomeCeiling = PENSION_INCOME_CEILING[year] ?? PENSION_INCOME_CEILING[2025];
   const maxSelfEmployedPension = Math.round(Math.min(grossIncome, pensionIncomeCeiling) * 0.16);
   const maxDisabledChild = 35_000;
   const maxProvident = 10_000;
 
+  // F-020: donation absolute cap (סעיף 46(ב)).
+  const donationAbsoluteCap = DONATION_ABSOLUTE_CAP[year] ?? DONATION_ABSOLUTE_CAP[2025];
+  // F-021: §45א combined ceiling (life + LTC) — min of 5% × income and absolute cap.
+  const lifeInsuranceAbsoluteCap = LIFE_INSURANCE_ABSOLUTE_CAP[year] ?? LIFE_INSURANCE_ABSOLUTE_CAP[2025];
+  const lifeInsuranceCeiling = Math.min(
+    Math.round(grossIncome * 0.05),
+    lifeInsuranceAbsoluteCap
+  );
+
+  // The salaried-default for F-022. Callers (engine + tests) can opt-out
+  // by passing `{ isSalaried: false }`. Default = true (salaried-first engine).
+  const isSalaried = context.isSalaried !== false;
+
   const breakdown: Record<string, number> = {};
   let total = 0;
+  let lifeAndLtcAccumulated = 0;        // F-021: running sum, capped together.
+
+  // F-020 step A: combine current-year donations and consume prior-year carry-forwards.
+  // First we walk the deductions, summing eligible donation amounts, then we apply
+  // the §46 30%/absolute cap once; excess feeds carryForwardExcess; remainder of
+  // cap headroom consumes carry-forwards FIFO.
+  let currentYearDonationGross = 0;
+  for (const ded of deductions) {
+    if (ded.type === "donation_sec46" && ded.amount >= minDonation) {
+      currentYearDonationGross += ded.amount;
+    }
+  }
+  const donationCap = Math.min(grossIncome * maxDonationPct, donationAbsoluteCap);
+  // Eligible from the current year, before consuming carry-forwards.
+  const eligibleCurrentYear = Math.min(currentYearDonationGross, donationCap);
+  const excessCurrentYear = Math.max(0, currentYearDonationGross - donationCap);
+  // The remaining cap headroom can be filled by prior-year carry-forwards.
+  let remainingHeadroom = Math.max(0, donationCap - eligibleCurrentYear);
+
+  const carryForwardConsumed: { year: number; consumed: number }[] = [];
+  let carryForwardEligible = 0;
+  if (Array.isArray(context.donationCarryForward)) {
+    // FIFO: oldest year first (per סעיף 46(ב2) "first-in-first-out").
+    const sorted = [...context.donationCarryForward].sort((a, b) => a.year - b.year);
+    for (const entry of sorted) {
+      if (remainingHeadroom <= 0) break;
+      // Only entries from the trailing 3 years are still eligible per סעיף 46(ב2).
+      if (year - entry.year > DONATION_CARRY_FORWARD_YEARS) continue;
+      const take = Math.min(entry.remaining, remainingHeadroom);
+      if (take > 0) {
+        carryForwardConsumed.push({ year: entry.year, consumed: take });
+        carryForwardEligible += take;
+        remainingHeadroom -= take;
+      }
+    }
+  }
+
+  if (eligibleCurrentYear > 0 || carryForwardEligible > 0) {
+    const totalDonationEligible = eligibleCurrentYear + carryForwardEligible;
+    const donationCredit = Math.round(totalDonationEligible * 0.35);
+    // Attribute the credit to the first donation_sec46 deduction id (the
+    // breakdown dictionary mirrors per-deduction credits — for current-year
+    // donations split across multiple receipts, callers see the aggregated
+    // line).
+    const firstDonationId = deductions.find(
+      (d) => d.type === "donation_sec46" && d.amount >= minDonation
+    )?.id;
+    if (firstDonationId) breakdown[firstDonationId] = donationCredit;
+    else if (carryForwardEligible > 0) breakdown.donation_carry_forward = donationCredit;
+    total += donationCredit;
+  }
 
   for (const ded of deductions) {
     const dt = ded.type as string;
     // F-005 + F-006: skip income-deduction variants (handled separately).
     if (dt === "alimony_sec9a") continue;
     if (dt === "pension_sec47_deduction") continue;
+    // F-020: donations are aggregated above; skip the per-row pass here.
+    if (dt === "donation_sec46") continue;
 
     switch (ded.type) {
-      case "donation_sec46": {
-        if (ded.amount >= minDonation) {
-          const cappedAmount = Math.min(ded.amount, grossIncome * maxDonationPct);
-          const credit = Math.round(cappedAmount * 0.35);
-          breakdown[ded.id] = credit;
-          total += credit;
-        }
-        break;
-      }
       case "life_insurance_sec45a":
       case "ltc_insurance_sec45a": {
-        const credit = Math.round(ded.amount * 0.25);
+        // F-021: enforce the combined §45א ceiling against the running total.
+        const headroom = Math.max(0, lifeInsuranceCeiling - lifeAndLtcAccumulated);
+        const eligible = Math.min(ded.amount, headroom);
+        const credit = Math.round(eligible * 0.25);
         breakdown[ded.id] = credit;
         total += credit;
+        lifeAndLtcAccumulated += eligible;
         break;
       }
       case "pension_sec47": {
@@ -495,29 +873,269 @@ export function calculateDeductionCredits(
         break;
       }
       case "study_fund_sec3e3": {
-        const credit = Math.round(ded.amount * 0.35);
-        breakdown[ded.id] = credit;
-        total += credit;
+        // F-022: שכיר receives NO זיכוי for קרן השתלמות per סעיף 3(ה3).
+        // The legacy 35% calc was a fabrication. Self-employed עצמאי has a
+        // separate ניכוי route (4.5% of income up to ~₪19,920) — that is
+        // out of scope for the salaried-first engine; opt-out via
+        // `context.isSalaried = false` keeps the legacy 35% path for callers
+        // who explicitly opt in.
+        if (isSalaried) {
+          breakdown[ded.id] = 0;
+        } else {
+          const credit = Math.round(ded.amount * 0.35);
+          breakdown[ded.id] = credit;
+          total += credit;
+        }
         break;
       }
     }
   }
 
-  return { total, breakdown };
+  return { total, breakdown, carryForwardExcess: excessCurrentYear, carryForwardConsumed };
+}
+
+// ─── 5b. Phase 1 §1.I — משמרות / חל"ת / חופשת לידה helpers ───────────────────
+
+/**
+ * Standard return-shape for the Phase 1 §1.I helpers (audit F-018, F-019, חל"ת
+ * 41-42). Each helper computes a single ILS adjustment and reports the
+ * statutory citation + a Hebrew explanation that the dashboard / 135 review
+ * surface can use directly. `adjustment` is signed POSITIVE when it INCREASES
+ * the user's refund (i.e. it is added to `netRefund` or subtracted from
+ * `calculatedTax`/`taxableIncome` upstream).
+ */
+export interface LifeEventAdjustment {
+  /** ILS amount of the adjustment (positive when it benefits the refund). */
+  adjustment: number;
+  /** Statutory citation in Hebrew (e.g. "תקנה 5 לתקנות מס הכנסה"). */
+  cite: string;
+  /** Hebrew explanation of how the adjustment was derived. */
+  explanation: string;
+}
+
+/**
+ * F-018: Compute the שכר במשמרות tax discount.
+ *
+ * Statutory basis: תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) +
+ * הוראת ביצוע 24/2002. A worker who performs eligible משמרות where the
+ * monthly hours fall in the 175-200 band receives a 15% discount on the
+ * marginal tax attributable to those shift hours, capped at 200 hours / month.
+ *
+ * Model (intentionally simple — the law sets a band, not a per-minute meter):
+ *   1. Eligibility floor = 175 hours / month. Below the floor → no discount.
+ *   2. Recognised hours / month = min(avgHoursPerMonth, 200) − 175. (0–25 band).
+ *   3. Total recognised shift hours = recognisedPerMonth × months.
+ *   4. Effective marginal rate = calculatedTax / max(1, taxableIncome).
+ *   5. Shift-portion income ≈ recognised hours × (taxableIncome / 1900) per
+ *      ITA standard 1900 work-hours/year proxy (190h × 10 months baseline).
+ *   6. Discount = 15% × effectiveMarginalRate × shiftPortionIncome.
+ *
+ * The result is an additive ILS amount (refund-side). The caller subtracts it
+ * from `calculatedTax` (the brief mandates "shift discount adjusts
+ * calculatedTax AFTER bracket calc").
+ *
+ * @param taxpayer    TaxPayer (reads `lifeEvents.shiftWorkHours`).
+ * @param taxableIncome Annual taxable income post-deductions (ILS).
+ * @param calculatedTax Annual progressive bracket tax on `taxableIncome` (ILS).
+ * @returns           {adjustment, cite, explanation}. `adjustment` = 0 when not eligible.
+ */
+export function calculateShiftWorkDiscount(
+  taxpayer: TaxPayer,
+  taxableIncome: number,
+  calculatedTax: number
+): LifeEventAdjustment {
+  const cite = "תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) + הוראת ביצוע 24/2002";
+  const sw = taxpayer.lifeEvents?.shiftWorkHours;
+  if (!sw || taxableIncome <= 0 || calculatedTax <= 0) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: "אין נתוני משמרות מוכרות (175-200 שעות לחודש) — לא חושב זיכוי משמרות.",
+    };
+  }
+
+  const months = Math.max(0, Math.min(12, sw.months));
+  const avg = Math.max(0, sw.avgHoursPerMonth);
+
+  // Eligibility floor: ≥ 175 hours/month. Below the floor — no discount.
+  if (months <= 0 || avg < 175) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: `לא קיימת זכאות: עבודה במשמרות מוכרת מ-175 שעות לחודש ומעלה (חודשים: ${months}, ממוצע: ${avg}).`,
+    };
+  }
+
+  // Recognised band: 175-200 hours / month → up to 25 eligible hours / month.
+  const recognisedPerMonth = Math.min(avg, 200) - 175;
+  const totalRecognisedHours = recognisedPerMonth * months;
+
+  // Standard ITA proxy for full-year work hours (190h × 10 base months).
+  const ANNUAL_WORK_HOURS = 1_900;
+  const effectiveMarginalRate = calculatedTax / Math.max(1, taxableIncome);
+  // Shift-portion income ≈ proportional slice of taxable income.
+  const shiftPortionIncome = (totalRecognisedHours / ANNUAL_WORK_HOURS) * taxableIncome;
+  // 15% discount per תקנה 5.
+  const discount = Math.round(0.15 * effectiveMarginalRate * shiftPortionIncome);
+  // Bound by the actual tax on the shift portion (cannot refund more than was due).
+  const shiftPortionTax = Math.round(effectiveMarginalRate * shiftPortionIncome);
+  const adjustment = Math.max(0, Math.min(discount, shiftPortionTax));
+
+  return {
+    adjustment,
+    cite,
+    explanation:
+      `זיכוי 15% על שעות משמרות מוכרות (175-200 שעות לחודש): ${totalRecognisedHours.toFixed(1)} שעות שנתיות, ` +
+      `מס שולי אפקטיבי ${(effectiveMarginalRate * 100).toFixed(1)}%, חיסכון ${adjustment.toLocaleString("he-IL")} ₪.`,
+  };
+}
+
+/**
+ * חל"ת: Compute the תקנה 5(ג)(4) reconciliation adjustment.
+ *
+ * When ניכוי במקור was withheld during worked months on the assumption of a
+ * full 12-month income trajectory, but the worker was actually on חל"ת for
+ * some months, the engine recognises the over-withheld slice as a refund.
+ *
+ * Model (per the brief):
+ *   1. Treat `taxableIncome` as the *projected* annual taxable income
+ *      (the basis the employer used for withholding).
+ *   2. monthsWorked = 12 − chaltMonths.
+ *   3. actualEarnedSlice = taxableIncome × (monthsWorked / 12).
+ *   4. The leave fraction (chaltMonths / 12) of taxableIncome is income that
+ *      was NOT actually earned but that the projection-based withholding
+ *      already taxed at the marginal rate. The reconciliation REDUCES
+ *      `taxableIncome` by the un-earned slice.
+ *
+ * Returns the ILS amount to SUBTRACT from `taxableIncome` BEFORE bracket calc
+ * (positive value = un-earned income to remove).
+ *
+ * @param taxpayer    TaxPayer (reads `lifeEvents.chaltMonths`).
+ * @param taxableIncome Projected annual taxable income (ILS).
+ * @returns           {adjustment, cite, explanation}.
+ */
+export function calculateChaltAdjustment(
+  taxpayer: TaxPayer,
+  taxableIncome: number
+): LifeEventAdjustment {
+  const cite = 'תקנה 5(ג)(4) לתקנות מס הכנסה (תיאום מס לאחר חזרה מחל"ת)';
+  const months = taxpayer.lifeEvents?.chaltMonths;
+  if (!months || months <= 0 || taxableIncome <= 0) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: 'אין חודשי חל"ת בשנת המס — לא חושבה התאמה.',
+    };
+  }
+  if (months >= 12) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: 'חל"ת מלא לשנה — אין הכנסה אמיתית; ההתאמה מחושבת ברמת הנתונים, לא כאן.',
+    };
+  }
+
+  const cappedMonths = Math.min(12, months);
+  const leaveFraction = cappedMonths / 12;
+  const adjustment = Math.round(taxableIncome * leaveFraction);
+
+  return {
+    adjustment,
+    cite,
+    explanation:
+      `חל"ת — ${cappedMonths} חודשים מתוך 12. מההכנסה החייבת המוצהרת מורד נתח של ` +
+      `${(leaveFraction * 100).toFixed(1)}% (₪${adjustment.toLocaleString("he-IL")}) ` +
+      `שלא נכנס בפועל בגלל החל"ת, ולכן ניכוי המס שבוצע עליו חוזר כהחזר.`,
+  };
+}
+
+/**
+ * F-019: Compute the חופשת לידה reconciliation adjustment.
+ *
+ * Statutory basis: תקנות 168 + 174 (תיאום מס לאחר חופשת לידה) +
+ * סעיף 9(7)(ב) — דמי לידה ששולמו על-ידי המוסד לביטוח לאומי הם פטורים ממס.
+ *
+ * Same reconciliation arithmetic as חל"ת (the projection-based withholding
+ * vs. actual months worked). The maternity allowance grant from BL is
+ * EXCLUDED from `taxableIncome` (per the §9(7)(ב) exemption); the engine
+ * never adds it to the gross.
+ *
+ * Returns the ILS amount to SUBTRACT from `taxableIncome` BEFORE bracket calc.
+ *
+ * @param taxpayer    TaxPayer (reads `lifeEvents.maternityLeaveMonths` +
+ *                    `lifeEvents.maternityLeaveAllowanceIls`).
+ * @param taxableIncome Projected annual taxable income (ILS).
+ * @returns           {adjustment, cite, explanation}.
+ */
+export function calculateMaternityLeaveAdjustment(
+  taxpayer: TaxPayer,
+  taxableIncome: number
+): LifeEventAdjustment {
+  const cite = 'תקנות 168 + 174 + סעיף 9(7)(ב) (פטור על דמי לידה)';
+  const months = taxpayer.lifeEvents?.maternityLeaveMonths;
+  if (!months || months <= 0 || taxableIncome <= 0) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: "אין ימי חופשת לידה בשנת המס — לא חושבה התאמה.",
+    };
+  }
+  if (months >= 12) {
+    return {
+      adjustment: 0,
+      cite,
+      explanation: "שנת המס כולה בחופשת לידה — אין הכנסה אמיתית; ההתאמה מחושבת ברמת הנתונים, לא כאן.",
+    };
+  }
+
+  const cappedMonths = Math.min(12, months);
+  const leaveFraction = cappedMonths / 12;
+  const adjustment = Math.round(taxableIncome * leaveFraction);
+  const allowance = Math.max(0, taxpayer.lifeEvents?.maternityLeaveAllowanceIls ?? 0);
+
+  const allowanceNote = allowance > 0
+    ? ` דמי לידה מבל"ל בסך ₪${allowance.toLocaleString("he-IL")} פטורים ממס לפי סעיף 9(7)(ב) ולא נוספו להכנסה החייבת.`
+    : "";
+
+  return {
+    adjustment,
+    cite,
+    explanation:
+      `חופשת לידה — ${cappedMonths} חודשים מתוך 12. מההכנסה החייבת המוצהרת מורד נתח של ` +
+      `${(leaveFraction * 100).toFixed(1)}% (₪${adjustment.toLocaleString("he-IL")}) ` +
+      `שלא נכנס בפועל בגלל חופשת הלידה.${allowanceNote}`,
+  };
 }
 
 // ─── 6. USD → ILS Conversion ─────────────────────────────────────────────────
 
 /**
- * Convert a USD amount to ILS using the Bank of Israel annual average rate.
- * Used when ingesting foreign broker data (IBKR Activity Statement).
- * Do NOT call this inside calculateFullRefund — stored capitalGains values are already in ILS.
+ * Convert a USD amount to ILS using the Bank of Israel publish rate.
  *
- * NOTE: F-017 (annual-mean → daily-rate) is in scope for Phase 1 §1.F.
+ * Phase 1 §1.F (audit F-017) migrated this from annual-mean to daily-rate
+ * conversion: the new signature accepts an optional transaction-date and,
+ * when supplied, dispatches to `lib/fx.ts#getFxRate` for the שער יציג of
+ * that day (with prior-business-day fallback per תקנות מס הכנסה / המרה).
+ *
+ * Backward compat: when called with `(usdAmount, year)` the old shape, the
+ * function falls back to the year's BoI annual mean (sourced from
+ * `data/fx/usd_ils_daily.json#annualMean`). New callers should pass a Date.
+ *
+ * Do NOT call this inside `calculateFullRefund` — stored `capitalGains`
+ * values are expected to already be in ILS (converted at ingestion time
+ * by `lib/ibkrParser.ts`, which now uses per-row daily rates).
  */
-export function convertUsdToIls(usdAmount: number, year: number): number {
-  const rates: Record<number, number> = { 2024: 3.71, 2025: 3.65 };
-  const rate = rates[year] ?? 3.71;
+export function convertUsdToIls(
+  usdAmount: number,
+  yearOrDate: number | Date | string
+): number {
+  if (typeof yearOrDate === "number") {
+    // Legacy code path — annual-mean fallback. Use mid-year date so getFxRate
+    // returns the year's annual-mean from the documented dataset.
+    const rate = getFxRate("USD", `${yearOrDate}-06-30`);
+    return Math.round(usdAmount * rate);
+  }
+  const rate = getFxRate("USD", yearOrDate);
   return Math.round(usdAmount * rate);
 }
 
@@ -529,13 +1147,19 @@ export function convertUsdToIls(usdAmount: number, year: number): number {
  * IMPORTANT: taxpayer.capitalGains values must be in ILS before calling this function.
  */
 export function calculateFullRefund(taxpayer: TaxPayer, year: number): CalculationResult {
-  const safeYear: 2024 | 2025 = year >= 2025 ? 2025 : 2024;
+  // Phase 1 §1.B (F-031): all years 2020–2025 dispatch through `loadYearData`;
+  // the legacy `safeYear: 2024 | 2025` clamp is gone.
 
   // Step 1: Total gross income from all employers
-  const totalGrossIncome = taxpayer.employers.reduce(
+  const employerGrossIncome = taxpayer.employers.reduce(
     (s, e) => s + (e.grossSalary ?? 0),
     0
   );
+  // F-024: include foreign-source salary in the gross / taxable base. The
+  // foreign tax already paid abroad is a credit against Israeli tax — applied
+  // in step 5 below — not an exclusion from income.
+  const foreignSalaryGross = Math.max(0, taxpayer.foreignSalaryGross ?? 0);
+  const totalGrossIncome = employerGrossIncome + foreignSalaryGross;
 
   // Step 1b: Income deductions (F-005 47(ב)(1) ניכוי + F-006 alimony spouse-portion)
   const { total: incomeDeductionsCore, warnings: incomeDeductionWarnings } =
@@ -552,14 +1176,57 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     );
   }
 
-  const incomeDeductions = incomeDeductionsCore + disabilityExemption;
-  const taxableIncome = Math.max(0, totalGrossIncome - incomeDeductions);
+  // Step 1d: F-025 §9א qualifying-pension exemption — 52% of qualifying pension
+  // exempt at retirement age. The exempt slice is bounded by the qualifying
+  // pension itself (cannot exempt more than was received).
+  let qualifyingPensionExemption = 0;
+  if (
+    taxpayer.qualifyingPensionAmount &&
+    taxpayer.qualifyingPensionAmount > 0 &&
+    taxpayer.isPensionEligible === true
+  ) {
+    qualifyingPensionExemption = calculateQualifyingPensionExemption(
+      taxpayer.qualifyingPensionAmount,
+      year
+    );
+  }
 
-  // Step 2: Raw progressive bracket tax (on income AFTER income deductions).
-  const { tax: calculatedTax, byBracket } = calculateTaxOnIncome(
-    taxableIncome,
-    safeYear
+  const incomeDeductions = incomeDeductionsCore + disabilityExemption + qualifyingPensionExemption;
+  const preLifeEventTaxableIncome = Math.max(0, totalGrossIncome - incomeDeductions);
+
+  // Step 1e: Phase 1 §1.I — חל"ת + חופשת לידה reconciliation.
+  // Per the brief, both adjustments REDUCE `taxableIncome` BEFORE bracket
+  // calc — the engine treats the user-reported income as the projected
+  // 12-month basis the employer used for withholding, and removes the
+  // leave-month slice that was never earned in practice.
+  const chaltResult = calculateChaltAdjustment(taxpayer, preLifeEventTaxableIncome);
+  // The maternity reconciliation runs against the income AFTER the חל"ת
+  // adjustment so the two leave-month buckets compose correctly when both
+  // are present (rare but possible — e.g. חל"ת directly after maternity).
+  const maternityBase = Math.max(0, preLifeEventTaxableIncome - chaltResult.adjustment);
+  const maternityResult = calculateMaternityLeaveAdjustment(taxpayer, maternityBase);
+  const taxableIncome = Math.max(
+    0,
+    preLifeEventTaxableIncome - chaltResult.adjustment - maternityResult.adjustment
   );
+
+  // Step 2: Raw progressive bracket tax (on income AFTER income deductions
+  // AND חל"ת / maternity reconciliation).
+  const { tax: rawCalculatedTax, byBracket } = calculateTaxOnIncome(
+    taxableIncome,
+    year
+  );
+
+  // Step 2b: Phase 1 §1.I (F-018) — שכר במשמרות discount on bracket tax.
+  // Per תקנה 5 the 15% discount applies AFTER the bracket calc. Bound the
+  // discount at the raw tax (cannot reduce calculatedTax below 0).
+  const shiftWorkResult = calculateShiftWorkDiscount(
+    taxpayer,
+    taxableIncome,
+    rawCalculatedTax
+  );
+  const shiftWorkDiscount = Math.min(shiftWorkResult.adjustment, rawCalculatedTax);
+  const calculatedTax = Math.max(0, rawCalculatedTax - shiftWorkDiscount);
 
   // Step 3: Credit points (now WITHOUT periphery / disability / kibbutz).
   const {
@@ -569,8 +1236,17 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   } = calculateCreditPoints(taxpayer, year);
 
   // Step 4: Personal deduction credits (use taxableIncome for caps).
-  const { total: deductionCredits, breakdown: deductionsBreakdown } =
-    calculateDeductionCredits(taxpayer.personalDeductions, taxableIncome, year);
+  const {
+    total: deductionCredits,
+    breakdown: deductionsBreakdown,
+    carryForwardExcess: donationCarryForwardExcess,
+    carryForwardConsumed: donationCarryForwardConsumed,
+  } = calculateDeductionCredits(taxpayer.personalDeductions, taxableIncome, year, {
+    // F-020: pass any prior-year donation carry-forward stack from the taxpayer.
+    donationCarryForward: taxpayer.donationCarryForward,
+    // F-022: שכיר default — the engine is salaried-first.
+    isSalaried: true,
+  });
 
   // Step 4b: F-007 Periphery percentage-discount.
   let peripheryDiscount = 0;
@@ -587,14 +1263,62 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     }
   }
 
+  // Step 4c: F-024 §67א foreign-salary credit. Calculated against the
+  // pre-credit Israeli bracket tax with attribution by income share, capped
+  // by the foreign tax actually paid (סעיף 200(ג) source-by-source).
+  let foreignSalaryCredit = 0;
+  if (foreignSalaryGross > 0 && (taxpayer.foreignSalaryTaxPaid ?? 0) > 0) {
+    foreignSalaryCredit = calculateForeignSalaryCredit(
+      foreignSalaryGross,
+      taxpayer.foreignSalaryTaxPaid ?? 0,
+      calculatedTax,
+      taxableIncome
+    );
+  }
+
   // Step 5: Net tax owed (floored at 0).
   const netTaxOwed = Math.max(
     0,
-    calculatedTax - creditPointsValue - deductionCredits - peripheryDiscount
+    calculatedTax
+      - creditPointsValue
+      - deductionCredits
+      - peripheryDiscount
+      - foreignSalaryCredit
   );
 
   // Step 6: Tax already paid via employer withholding.
-  const taxPaid = taxpayer.employers.reduce((s, e) => s + (e.taxWithheld ?? 0), 0);
+  const employerTaxWithheld = taxpayer.employers.reduce(
+    (s, e) => s + (e.taxWithheld ?? 0),
+    0
+  );
+
+  // F-023: multi-employer overlap-month over-withholding. When two employers
+  // both withheld at the highest marginal rate during overlap months without
+  // prior תיאום מס, the secondary's withholding on those months is largely
+  // refundable (47% withheld vs. effective marginal often <31%). The engine
+  // estimates the refundable slice as the difference between the secondary's
+  // monthly withholding and the year's effective marginal rate × secondary
+  // monthly gross — surfaced as a refund add-on so it is not silently lost
+  // in the bracket math (which only sees the totals, not the timing).
+  let overlapOverWithholding = 0;
+  const overlapMonths = taxpayer.lifeEvents?.multiEmployerOverlapMonths ?? 0;
+  if (overlapMonths > 0 && taxpayer.employers.length >= 2 && taxableIncome > 0) {
+    // Identify the secondary employer (smallest gross) for attribution.
+    const sortedByGross = [...taxpayer.employers].sort(
+      (a, b) => (a.grossSalary ?? 0) - (b.grossSalary ?? 0)
+    );
+    const secondary = sortedByGross[0];
+    if (secondary && (secondary.grossSalary ?? 0) > 0 && (secondary.monthsWorked ?? 0) > 0) {
+      const monthlyGross = (secondary.grossSalary ?? 0) / (secondary.monthsWorked ?? 12);
+      const monthlyWithheld = (secondary.taxWithheld ?? 0) / (secondary.monthsWorked ?? 12);
+      const effectiveMarginal = calculatedTax / Math.max(1, taxableIncome);
+      // Refundable per overlap month = withholding done minus the effective
+      // marginal liability at that income level. Floored at 0.
+      const perMonthRefund = Math.max(0, monthlyWithheld - monthlyGross * effectiveMarginal);
+      overlapOverWithholding = Math.round(perMonthRefund * Math.min(overlapMonths, secondary.monthsWorked ?? 12));
+    }
+  }
+  const taxPaid = employerTaxWithheld + overlapOverWithholding;
 
   // Step 7: Refund from employment income.
   const refundFromEmployment = taxPaid - netTaxOwed;
@@ -618,6 +1342,28 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   // Step 9: Final net refund.
   const netRefund = refundFromEmployment - capitalGainsTax;
 
+  // Step 10: F-013 §9(7א) auto-compute severance exemption + emit a warning
+  // when the user-entered `taxableSeverancePay` (Field 272) appears to ignore
+  // the statutory exemption. This does NOT alter `netRefund` — severance is
+  // taxed via spreading on Form 161 (1.E owns) — but it surfaces the
+  // exemption headline so downstream code can prefill correctly.
+  let severanceExemption = 0;
+  let taxableSeverance = taxpayer.lifeEvents?.taxableSeverancePay ?? 0;
+  const grossSev = taxpayer.lifeEvents?.grossSeverancePay ?? 0;
+  const lastMonthly = taxpayer.lifeEvents?.lastMonthlySalary ?? 0;
+  const yos = taxpayer.lifeEvents?.yearsOfService ?? 0;
+  if (grossSev > 0 && lastMonthly > 0 && yos > 0) {
+    severanceExemption = calculateSeveranceExemption(grossSev, lastMonthly, yos, year);
+    const computedTaxable = Math.max(0, grossSev - severanceExemption);
+    if (taxpayer.lifeEvents?.taxableSeverancePay === undefined) {
+      taxableSeverance = computedTaxable;
+    } else if (Math.abs(computedTaxable - taxableSeverance) > 1) {
+      incomeDeductionWarnings.push(
+        `severance §9(7א): user-entered taxableSeverancePay (${taxableSeverance}) differs from auto-computed ${computedTaxable} (gross ${grossSev} − exempt ${severanceExemption}). אנא ודאו את הסכום החייב במס.`
+      );
+    }
+  }
+
   return {
     totalGrossIncome,
     incomeDeductions,
@@ -626,6 +1372,16 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     creditPointsValue,
     deductionCredits,
     peripheryDiscount,
+    foreignSalaryCredit,
+    severanceExemption,
+    taxableSeverance,
+    qualifyingPensionExemption,
+    donationCarryForwardExcess,
+    donationCarryForwardConsumed,
+    multiEmployerOverlapRefund: overlapOverWithholding,
+    shiftWorkDiscount,
+    chaltAdjustment: chaltResult.adjustment,
+    maternityLeaveAdjustment: maternityResult.adjustment,
     netTaxOwed,
     taxPaid,
     refundFromEmployment,
@@ -651,10 +1407,7 @@ export function buildInsightsFromResult(
   taxpayer: TaxPayer,
   year: number
 ): import("@/types").TaxInsight[] {
-  const creditPointAnnualValue =
-    year === 2025
-      ? taxData["2025"].credit_point_annual_value
-      : taxData["2024"].credit_point_annual_value;
+  const creditPointAnnualValue = loadYearData(year).credit_point_annual_value;
 
   const insights: import("@/types").TaxInsight[] = [];
 
@@ -824,7 +1577,11 @@ export function buildInsightsFromResult(
   if (taxpayer.capitalGains) {
     const { totalRealizedProfit, totalRealizedLoss, carriedForwardLoss = 0 } = taxpayer.capitalGains;
     const netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
-    const usdRate = year === 2025 ? 3.65 : 3.71;
+    // F-017: ILS sums on `result` are derived from per-trade daily rates by
+    // the IBKR parser. The display headline uses the year's documented BoI
+    // annual mean (data/fx/usd_ils_daily.json#annualMean) so users see one
+    // recognisable summary number rather than a meaningless per-row average.
+    const usdRate = getFxRate("USD", `${year}-06-30`);
 
     insights.push({
       id: "insight-capital-markets",

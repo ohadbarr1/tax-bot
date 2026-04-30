@@ -183,6 +183,21 @@ async function main() {
       out:    path.join(ROOT, "templates/maps/1301_2025.json"),
       formId: "1301_2025",
     });
+    // Phase 1 §1.E — when the official ITA templates are dropped at the paths
+    // below, --all will auto-generate maps for 161 and 1214 too. Until then,
+    // the SKIP branch below logs them and the routes return 503
+    // TEMPLATE_MISSING (templates/maps/{161,1214}_2025.json carry placeholder
+    // empty `fields` registries).
+    jobs.push({
+      pdf:    path.join(ROOT, "public/templates/form_161_2025.pdf"),
+      out:    path.join(ROOT, "templates/maps/161_2025.json"),
+      formId: "161_2025",
+    });
+    jobs.push({
+      pdf:    path.join(ROOT, "public/templates/form_1214_2025.pdf"),
+      out:    path.join(ROOT, "templates/maps/1214_2025.json"),
+      formId: "1214_2025",
+    });
   } else if (args.length === 2) {
     jobs.push({
       pdf:    path.resolve(args[0]),

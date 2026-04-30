@@ -4,48 +4,93 @@
  * Regression tests for the IBKR Activity Statement CSV parser.
  * Ground-truth values are computed by hand from the canonical sample at
  * /tax-bot/ibkr_sample_activity_statement.csv.
+ *
+ * Phase 1 §1.F (audit F-017 / סעיף 91(ג)): the parser now converts each row
+ * to ILS at the **transaction-date** Bank-of-Israel publish rate via
+ * `lib/fx.ts#getFxRate`. Tests that previously asserted a single year-uniform
+ * rate now seed an in-memory FX dataset so per-row rates are deterministic.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { parseIbkrCsv, getExchangeRateForYear } from "../ibkrParser";
+import {
+  __setFxDatasetForTesting,
+  __resetFxDatasetForTesting,
+} from "../fx";
 
 const SAMPLE_PATH = join(__dirname, "fixtures", "ibkr_sample.csv");
 const sampleCsv = readFileSync(SAMPLE_PATH, "utf-8");
 
+// Per-trade publish rates for the dates that appear in the canonical sample.
+// Values approximate published BoI rates and are deterministic for tests.
+const SAMPLE_USD_FIXTURE = {
+  currency: "USD" as const,
+  base: "ILS",
+  source: "test fixture (ibkr_sample dates)",
+  annualMean: { "2024": 3.71, "2025": 3.65 },
+  rates: {
+    "2024-01-15": 3.62,
+    "2024-03-15": 3.66,
+    "2024-03-20": 3.67,
+    "2024-06-15": 3.74,
+    "2024-08-15": 3.74,
+    "2024-12-10": 3.61,
+  },
+};
+
 describe("parseIbkrCsv — canonical sample (Trades section path)", () => {
-  const result = parseIbkrCsv({ csv: sampleCsv });
+  beforeEach(() => __setFxDatasetForTesting("USD", SAMPLE_USD_FIXTURE));
+  afterEach(() => __resetFxDatasetForTesting());
 
   it("detects the 2024 tax year from the Trades dates", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
     // Sample has no Statement/Data period row → falls back to current year.
     // We assert it at least returns a valid 4-digit year.
     expect(result.taxYear).toBeGreaterThanOrEqual(2023);
   });
 
   it("extracts Trades/Data Realized P/L profit (SPY: +698)", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
     expect(result.totalProfitUSD).toBe(698);
   });
 
   it("extracts Trades/Data Realized P/L loss (TSLA: -152 → abs 152)", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
     expect(result.totalLossUSD).toBe(152);
   });
 
   it("sums positive Dividends (15.50 + 16.20 = 31.70)", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
     expect(result.dividendsUSD).toBe(31.7);
   });
 
   it("sums negative Withholding Tax as abs (3.87 + 4.05 = 7.92)", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
     expect(result.foreignTaxUSD).toBe(7.92);
   });
 
-  it("converts USD to ILS using year-sensitive rate", () => {
-    const expectedRate = getExchangeRateForYear(result.taxYear);
-    expect(result.exchangeRate).toBe(expectedRate);
-    expect(result.totalRealizedProfit).toBe(Math.round(698   * expectedRate));
-    expect(result.totalRealizedLoss  ).toBe(Math.round(152   * expectedRate));
-    expect(result.dividendsILS       ).toBe(Math.round(31.70 * expectedRate));
-    expect(result.foreignTaxWithheld ).toBe(Math.round(7.92  * expectedRate));
+  it("F-017: converts each row to ILS using the per-trade-date publish rate", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
+    // SPY closing trade 2024-12-10: +698 USD × 3.61 = 2519.78 → 2520
+    expect(result.totalRealizedProfit).toBe(Math.round(698 * 3.61));
+    // TSLA closing trade 2024-08-15: 152 USD × 3.74 = 568.48 → 568
+    expect(result.totalRealizedLoss).toBe(Math.round(152 * 3.74));
+    // Dividends 2024-03-15 (15.50 × 3.66) + 2024-06-15 (16.20 × 3.74)
+    // Implementation sums unrounded per-row ILS then rounds once → 117.
+    expect(result.dividendsILS).toBe(
+      Math.round(15.5 * 3.66 + 16.2 * 3.74)
+    );
+    // WHT 2024-03-15 (3.87 × 3.66) + 2024-06-15 (4.05 × 3.74)
+    expect(result.foreignTaxWithheld).toBe(
+      Math.round(3.87 * 3.66 + 4.05 * 3.74)
+    );
+  });
+
+  it("`exchangeRate` field still reports the legacy annual-mean for display", () => {
+    const result = parseIbkrCsv({ csv: sampleCsv });
+    expect(result.exchangeRate).toBe(getExchangeRateForYear(result.taxYear));
   });
 });
 

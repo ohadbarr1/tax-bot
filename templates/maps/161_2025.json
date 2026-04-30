@@ -1,0 +1,9 @@
+{
+  "form_id": "161_2025",
+  "template": "form_161_2025.pdf",
+  "page_size": { "width": 595.275, "height": 841.89 },
+  "generated": "PLACEHOLDER",
+  "_status": "TEMPLATE_MISSING",
+  "_dataGap": "public/templates/form_161_2025.pdf is not present. Acquire the official ITA blank PDF (טופס 161 — חישוב פריסת פיצויים), place at the templates path, then run `node scripts/build-field-map.mjs public/templates/form_161_2025.pdf templates/maps/161_2025.json` to overwrite this file with the auto-extracted field map. Until then, the route returns 503 TEMPLATE_MISSING and falls back to the positional draws defined in data/form161_2025_fields.json.",
+  "fields": {}
+}

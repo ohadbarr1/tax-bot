@@ -65,6 +65,17 @@ const ROUTES: Array<{ name: string; load: () => Promise<{ POST: (req: Request) =
     load: () => import("@/app/api/generate/form-161/route") as unknown as Promise<{ POST: (req: Request) => Promise<Response> }>,
     jsonBody: { taxableSeverance: 1 },
   },
+  {
+    name: "/api/generate/form-1214",
+    load: () => import("@/app/api/generate/form-1214/route") as unknown as Promise<{ POST: (req: Request) => Promise<Response> }>,
+    jsonBody: {
+      incomeKind: "bonus",
+      amount: 1,
+      receivedYear: 2024,
+      spreadYears: 1,
+      baselineIncome: 100_000,
+    },
+  },
 ];
 
 describe("auth-required gate (JSON routes) — F-1 / F1.2.1, F1.2.2, F1.2.6", () => {

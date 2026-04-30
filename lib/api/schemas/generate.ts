@@ -173,12 +173,83 @@ export type Form135PayloadParsed = z.infer<typeof Form135PayloadSchema>;
 export const Form1301PayloadSchema = Form135PayloadSchema;
 export type Form1301PayloadParsed = z.infer<typeof Form1301PayloadSchema>;
 
+/**
+ * Form 161 payload — סעיף 8(ג)(3) severance spreading.
+ *
+ * Required:
+ *   • taxableSeverance — חלק חייב במס of the severance lump sum (after the
+ *     §9(7א) exemption is subtracted by the calc engine).
+ *
+ * Optional but feeds the math:
+ *   • terminationYear — the year of separation. The spreading window starts
+ *     at terminationYear + 1 (forward, per §8(ג)(3); audit F-014). Defaults
+ *     to `currentTaxYear()`.
+ *   • spreadYears — 1..6 (statutory cap = 6 years from termination).
+ *   • currentYearIncome — used to size the marginal-rate slice for the
+ *     termination year ONLY (the spread itself does NOT add to that year).
+ *   • perYearIncomeForecast — array, per-year expected income for the
+ *     spreading window (length must equal spreadYears). When supplied the
+ *     marginal rate per slice is computed against the forecast for THAT
+ *     year, not against `currentYearIncome` (closes audit F-014.2).
+ *
+ * §9(7א) inputs (let the engine compute the exemption when supplied):
+ *   • lastMonthlySalary, yearsOfService — when both > 0 the route calls
+ *     `calculateSeveranceExemption(...)` from lib/calculateTax to derive the
+ *     exempt amount. The route still honors the caller-provided
+ *     `taxableSeverance` (treated as the after-exemption residual).
+ */
 export const Form161PayloadSchema = z.object({
   taxableSeverance: z.number().min(0.01).max(MAX_AMOUNT),
+  /**
+   * Year of termination / separation. Spreading window is the 5 years
+   * FOLLOWING this year (forward), not the 5 prior years. Closes F-014.1.
+   * Backwards-compat: `currentYear` accepted as alias.
+   */
+  terminationYear: z.number().int().min(2000).max(2100).optional(),
   currentYear: z.number().int().min(2000).max(2100).optional(),
   spreadYears: z.number().int().min(1).max(6).optional(),
   currentYearIncome: z.number().min(0).max(MAX_AMOUNT).optional(),
+  /** Per-year income forecast for each year of the spread. Closes F-014.2. */
+  perYearIncomeForecast: z.array(z.number().min(0).max(MAX_AMOUNT)).max(6).optional(),
+  /** §9(7א) inputs (optional — engine recomputes exemption when supplied). */
+  lastMonthlySalary: z.number().min(0).max(MAX_AMOUNT).optional(),
+  yearsOfService: z.number().min(0).max(80).optional(),
   taxpayerName: z.string().max(128).optional(),
   idNumber: z.string().max(16).optional(),
+  calibrate: z.boolean().optional(),
 });
 export type Form161PayloadParsed = z.infer<typeof Form161PayloadSchema>;
+
+/**
+ * Form 1214 payload — בקשה לפריסת הכנסה (income-spreading election).
+ *
+ * Form 1214 is the ITA election form a taxpayer submits to declare that an
+ * irregular lump (annual bonus, accumulated overtime, retro pay, severance
+ * portion not covered by 161) should be spread across multiple tax years
+ * under סעיף 8(ג)(1) / 8(ג)(2). It is filed alongside (or instead of) Form
+ * 161 depending on which sub-paragraph applies.
+ */
+export const Form1214PayloadSchema = z.object({
+  /** סוג ההכנסה — "severance" / "bonus" / "retro" / "other". */
+  incomeKind: z.enum(["severance", "bonus", "retro", "other"]),
+  /** Lump-sum amount in ILS (gross, before any exemption). */
+  amount: z.number().min(0.01).max(MAX_AMOUNT),
+  /** Year the lump was actually received. */
+  receivedYear: z.number().int().min(2000).max(2100),
+  /** Years across which the user elects to spread the lump (1..6). */
+  spreadYears: z.number().int().min(1).max(6),
+  /**
+   * Optional per-year income forecast — same semantics as Form 161. When
+   * absent, route falls back to `baselineIncome` for every year, with a
+   * console.warn noting the forecast gap.
+   */
+  perYearIncomeForecast: z.array(z.number().min(0).max(MAX_AMOUNT)).max(6).optional(),
+  /** Single fallback baseline income when no forecast is supplied. */
+  baselineIncome: z.number().min(0).max(MAX_AMOUNT).optional(),
+  /** Reason / explanation (Hebrew text, max 1k chars) shown on the form. */
+  justification: z.string().max(1000).optional(),
+  taxpayerName: z.string().max(128).optional(),
+  idNumber: z.string().max(16).optional(),
+  calibrate: z.boolean().optional(),
+});
+export type Form1214PayloadParsed = z.infer<typeof Form1214PayloadSchema>;

@@ -1,0 +1,29 @@
+{
+  "tax_year": 2023,
+  "credit_point_annual_value": 2820,
+  "credit_point_monthly_value": 235,
+  "rules": {
+    "resident": { "points": 2.25, "description": "תושב ישראל" },
+    "married": { "points": 1.0, "description": "נשוי/אה" },
+    "non_working_spouse": { "points": 0.5, "description": "בן/בת זוג שאינו/ה עובד/ת" },
+    "single_parent": { "points": 1.0, "description": "הורה עצמאי (כל סטטוס שאינו נשוי, עם ילדים, ללא בן/בת זוג)" },
+    "child_birth_year": { "points": 1.5, "description": "ילד שנולד בשנת המס" },
+    "child_under_18": { "points": 1.0, "description": "ילד עד גיל 18" },
+    "child_daycare_age0_3": { "points": 1.0, "description": "פעוט במעון יום מוכר (גיל 0-3) — סעיף 40א", "law": "סעיף 40א לפקודה" },
+    "degree_ba": { "points": 1.0, "description": "תואר ראשון (שנה אחרי סיום) — סעיף 40ג(א)", "eligible_year_offset": 1, "law": "סעיף 40ג(א)" },
+    "degree_ma": { "points": 0.5, "description": "תואר שני (שנה אחרי סיום)", "eligible_year_offset": 1, "law": "סעיף 40ג(ב)" },
+    "degree_ma_professional": { "points": 1.0, "description": "תואר שני בריאות/משפטים/חינוך — שנה אחרי סיום (1.0 נק' לשנתיים)", "eligible_year_offset": 1, "law": "סעיף 40ג(ב)" },
+    "degree_phd": { "points": 1.5, "description": "דוקטורט (שנה אחרי סיום) — סעיף 40ג(ב1)", "eligible_year_offset": 1, "law": "סעיף 40ג(ב1)" },
+    "soldier_pro_rata_per_month": { "points_per_month": 0.16667, "annual_cap": 2.0, "description": "שירות צבאי — 1/12 נק' לחודש שירות, עד 2.0 נק' לשנה למשך שנתיים", "law": "סעיף 11 + הוראת ביצוע 32/2014" },
+    "oleh_chadash_months_0_18": { "points": 3.0, "description": "עולה חדש — 18 חודש ראשונים", "law": "סעיף 35" },
+    "oleh_chadash_months_18_30": { "points": 2.0, "description": "עולה חדש — חודשים 19-30", "law": "סעיף 35" },
+    "oleh_chadash_months_30_42": { "points": 1.0, "description": "עולה חדש — חודשים 31-42", "law": "סעיף 35" },
+    "oleh_chadash_months_42_54": { "points": 0.0, "description": "עולה חדש — חודשים 43-54 (אין נקודות אחרי 42)", "law": "סעיף 35" },
+    "periphery_tier1_pct": { "discount_pct": 0.0, "annual_income_cap": 0, "description": "ישוב פריפריה דרגה א' — צו 2023 חל רק החל מ-2024; לפני 2024 המודל היה נקודות זיכוי שטוחות (deprecated במערכת זו).", "law": "סעיף 11 (לפני צו 2023)", "_todo": "data_gap_pre_2024_periphery — verify legacy 1.0/0.5-pt model with CPA before claiming for 2020-2023 filings" },
+    "periphery_tier2_pct": { "discount_pct": 0.0, "annual_income_cap": 0, "description": "ישוב פריפריה דרגה ב' — צו 2023 חל רק החל מ-2024 (deprecated במערכת זו).", "law": "סעיף 11 (לפני צו 2023)", "_todo": "data_gap_pre_2024_periphery" },
+    "disability_exemption": { "annual_income_cap": 605640, "description": "נכות סעיף 9(5) — פטור על הכנסה מיגיעה אישית עד תקרה × אחוז נכות (2023 לנכות 100%)", "law": "סעיף 9(5)", "_verification_status": "BEST-EFFORT — derived from ITA indexation, verify with CPA" },
+    "donation_min_sec46": { "amount": 209, "description": "סף תרומה מזכה 2023 — סעיף 46", "law": "סעיף 46(ב)" }
+  },
+  "_source": "ITA תקנות תיאומי הצמדה 2023 + הוראת ביצוע 30/2018",
+  "_verification_status": "BEST-EFFORT — values from publicly-known ITA indexation circulars. CPA should re-verify before reliance on filings older than 2024."
+}

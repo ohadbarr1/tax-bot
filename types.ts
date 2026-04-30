@@ -4,6 +4,13 @@ export interface Child {
   id: string;
   birthDate: string; // ISO format
   inDaycare?: boolean; // attending licensed daycare / גן ילדים מוכר
+  /**
+   * Phase 1 §1.A (F-027) — ילד עם נטל מיוחד / מוגבלות נפשית-שכלית.
+   * Per סעיף 45 לפקודה (תיקון 196), each parent automatically receives
+   * 2 credit-points for a child classified as נטל מיוחד by the ITA / Bituach Leumi.
+   * This is in ADDITION to any §45 disabled-child expense deduction.
+   */
+  hasSpecialNeeds?: boolean;
 }
 
 export interface Degree {
@@ -85,6 +92,63 @@ export interface LifeEvent {
   hasForm161: boolean;
   /** Phase 3 — taxable portion of severance (Field 272) */
   taxableSeverancePay?: number;
+  /**
+   * Phase 1 §1.A (F-013) — gross severance grant pre-tax (סעיף 9(7א)).
+   * The exempt portion is computed by the engine as
+   *   min(grossSeverance, lastMonthlySalary × yearsOfService × ceilingFactor[year]).
+   */
+  grossSeverancePay?: number;
+  /**
+   * Phase 1 §1.A (F-013) — last monthly salary at the employer who paid the
+   * severance (used as the §9(7א) exemption base).
+   */
+  lastMonthlySalary?: number;
+  /**
+   * Phase 1 §1.A (F-013) — total years of service that produced the
+   * severance grant (used as the §9(7א) exemption multiplier).
+   */
+  yearsOfService?: number;
+  /**
+   * Phase 1 §1.A (F-023) — number of overlap months where two or more
+   * employers withheld at the highest marginal rate without prior תיאום.
+   * The engine uses this to size the over-withholding refund slice.
+   */
+  multiEmployerOverlapMonths?: number;
+  /**
+   * Phase 1 §1.I (F-018) — שכר במשמרות (shift-work tax discount).
+   * תקנה 5 לתקנות מס הכנסה (שיעור המס על הכנסה ממשמרות) +
+   * הוראת ביצוע 24/2002 — 15% הנחה ממס שולי על שעות שעיקרן בטווח
+   * 175-200 לחודש. The engine uses `months` × `avgHoursPerMonth` to
+   * compute the eligible shift-hour band and applies a 15% discount on
+   * the bracket-tax slice attributable to those hours.
+   */
+  shiftWorkHours?: {
+    /** Number of months the worker performed eligible משמרות in the tax year (1–12). */
+    months: number;
+    /** Average hours-per-month worked in the eligible shift band. */
+    avgHoursPerMonth: number;
+  };
+  /**
+   * Phase 1 §1.I (חל"ת) — חופשה ללא תשלום months in the tax year.
+   * תקנה 5(ג)(4) — when withholding was based on a 12-month projection
+   * but the worker was on חל"ת for some months, the over-withheld slice
+   * is refundable. The engine reduces `taxableIncome` by the leave-month
+   * fraction BEFORE bracket calc to surface the refund.
+   */
+  chaltMonths?: number;
+  /**
+   * Phase 1 §1.I (F-019) — חופשת לידה months in the tax year.
+   * תקנות 168 + 174 — same reconciliation logic as חל"ת. The דמי לידה
+   * grant from ביטוח לאומי is tax-exempt under סעיף 9(7)(ב) and is
+   * NOT added to taxable income.
+   */
+  maternityLeaveMonths?: number;
+  /**
+   * Phase 1 §1.I (F-019) — דמי לידה grant amount paid by ביטוח לאומי
+   * (informational only; the grant is tax-exempt under סעיף 9(7)(ב)
+   * and never added to taxable income).
+   */
+  maternityLeaveAllowanceIls?: number;
 }
 
 // Phase 3 ─────────────────────────────────────────────────────────────────────
@@ -194,6 +258,45 @@ export interface TaxPayer {
   postcode?: string;
   /** True if taxpayer is a kibbutz / moshav member */
   kibbutzMember?: boolean;
+  // ── Phase 1 §1.A (audit P1 batch) ────────────────────────────────────────
+  /**
+   * Phase 1 §1.A (F-028) — Joint custody flag (משמורת משותפת).
+   * Per סעיף 66א(א1), each parent in joint custody receives 0.5 nq for the
+   * child instead of one parent receiving the full 1.0 nq. Mutually exclusive
+   * with the rest of the single-parent / standard child credit logic.
+   */
+  jointCustody?: boolean;
+  /**
+   * Phase 1 §1.A (F-024) — Foreign-source salary gross (ILS) for סעיף 67א.
+   * Required to scope the foreign-tax credit to the slice of Israeli tax
+   * attributable to that foreign salary income (סעיף 200(ג) source-by-source).
+   */
+  foreignSalaryGross?: number;
+  /**
+   * Phase 1 §1.A (F-024) — Foreign tax actually paid on the foreign salary
+   * (ILS). Becomes a tax credit against Israeli liability, capped per
+   * סעיף 200(ג) at the Israeli-tax-on-the-same-source attribution.
+   */
+  foreignSalaryTaxPaid?: number;
+  /**
+   * Phase 1 §1.A (F-025) — Annual qualifying pension income (ILS) under
+   * סעיף 9א (קצבה מזכה). The engine exempts the year-keyed
+   * `qualifyingPensionExemptPct` of this amount from taxable income.
+   */
+  qualifyingPensionAmount?: number;
+  /**
+   * Phase 1 §1.A (F-025) — True when the user is at or past pension-eligible
+   * age (גיל פרישה לקצבה). The §9א exemption only applies to a קצבה paid
+   * after the user reached the qualifying retirement age.
+   */
+  isPensionEligible?: boolean;
+  /**
+   * Phase 1 §1.A (F-020) — Section 46 donation carry-forward (סעיף 46(ב2)).
+   * When current-year donations exceed the 30%-of-income / ₪10,453,805 cap,
+   * the excess can be carried forward up to 3 tax years. Each entry records
+   * the donating year and the remaining (un-credited) amount.
+   */
+  donationCarryForward?: { year: number; remaining: number }[];
 }
 
 // ─── Financial / Dashboard Data ───────────────────────────────────────────────
@@ -479,18 +582,67 @@ export interface IbkrParseResponse {
   error?: string;
 }
 
-/** Response from POST /api/parse/form-106 */
+/** ITA Form 106 field 033 — סוג הכנסה (income-type) code. */
+export type Form106IncomeTypeCode = 1 | 2 | 3 | 5 | 8;
+
+/**
+ * Response from POST /api/parse/form-106.
+ *
+ * Phase 1 §1.C expanded the payload from the original 5 fields (gross / tax /
+ * pension / employerName / monthsWorked) to the full canonical ITA-code set
+ * (closes ingestion-F-1, F-2). Legacy fields are kept for back-compat with
+ * the existing FileDropzone consumer; new fields are optional and downstream
+ * consumers MUST treat absence as "not parsed" (NOT zero).
+ */
 export interface Form106ParseResponse {
   success: boolean;
   data?: {
     employerName: string;
     monthsWorked: number;
-    /** Field 158 — gross salary */
+    /** Field 158 (regular) — משכורת חייבת רגילה (regular taxable salary). */
     grossSalary: number;
-    /** Field 042 — income tax withheld */
+    /** Field 042 — מס הכנסה שנוכה במקור (income tax withheld). */
     taxWithheld: number;
-    /** Field 045 — pension deduction */
+    /** Field 045 — ניכוי לקופ"ג לקצבה כעמית שכיר (pension deduction). */
     pensionDeduction: number;
+
+    // ─── Phase 1 §1.C — full 14-code extraction ─────────────────────────────
+    /**
+     * Field 158 (תיאום) — משכורת חייבת במס - נוספת/לפי תאום.
+     * Present only when the employer ran a tax coordination. MUST be summed
+     * with `grossSalary` for total taxable salary. Closes ingestion-F-2.
+     */
+    field158Coordinated?: number;
+    /** Field 086 — דמי ביטוח לאומי + מס בריאות שנוכו (sum). */
+    nationalInsuranceWithheld?: number;
+    /** Field 219 — משכורת לצורך הפקדות לקרן השתלמות. */
+    studyFundSalary?: number;
+    /** Field 218 — הפרשת המעסיק לקרן השתלמות. */
+    studyFundEmployer?: number;
+    /** Field 245 — משכורת מבוטחת לקופ"ג לקצבה. */
+    pensionInsuredSalary?: number;
+    /** Field 244 — מענק שולי / חד-פעמי. */
+    severanceMargin?: number;
+    /** Field 249 — סך הפרשות מעסיק לקצבה (total). */
+    employerPensionTotal?: number;
+    /** Field 248 — הפרשות מעסיק לקצבה - ניכוי. */
+    employerPensionDeduct?: number;
+    /** Field 272 — פיצויי פיטורין חייבים במס. */
+    severanceTaxable?: number;
+    /** Field 037 — תרומות שהמעסיק העביר. */
+    employerDonations?: number;
+    /** Field 044 — ערך נקודות זיכוי שניתנו (ILS value). */
+    creditPointsValue?: number;
+    /** Field 044 (count) — count of credit points (e.g. 6.75). */
+    creditPointsCount?: number;
+    /** Field 004 — מספר תיק ניכויים. */
+    taxFileNumber?: string;
+    /** Field 033 — סוג הכנסה (1=שכר, 2=פנסיה, 3=קצבת זקנה, 5=פיצויים, 8=אחר). */
+    incomeType?: Form106IncomeTypeCode;
+    /** Field 089 — חלק פטור לפי סע' 9א/9(7א)/9(5). */
+    exemptionSection9a?: number;
+    /** Field 090 — חלק פטור (שני). */
+    exemptionSection9b?: number;
   };
   error?: string;
 }

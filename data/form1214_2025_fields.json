@@ -1,0 +1,86 @@
+{
+  "formId": "1214",
+  "year": 2025,
+  "template": "form_1214_2025.pdf",
+  "_status": "TEMPLATE_MISSING",
+  "_dataGap": "public/templates/form_1214_2025.pdf is not present in the repo. Acquire the official ITA blank PDF (טופס 1214 — בקשה לפריסת הכנסה) from taxes.gov.il, place at the templates path, then run `npm run forms:rebuild-maps` (extend scripts/build-field-map.mjs to include 1214) to regenerate templates/maps/1214_2025.json. The route currently returns 503 TEMPLATE_MISSING when the PDF is absent.",
+  "pageSize": { "width": 595.275, "height": 841.89 },
+  "notes": {
+    "origin": "PDF bottom-left for pdf-lib drawText. Coordinates are placeholders — calibrate against real template.",
+    "fontStrategy": "latin-bold = HelveticaBold for digits / IDs / dates. hebrew = Assistant-Regular.ttf for Hebrew text.",
+    "lawCitation": "סעיף 8(ג)(1) — מענק עבודה / שכר עבודה רטרואקטיבי. סעיף 8(ג)(2) — פריסת מענקים אחרים. Defaults to forward spreading from receivedYear + 1."
+  },
+  "fields": {
+    "taxpayerName": {
+      "pg": 0, "x": 380, "y": 760, "sz": 10, "font": "hebrew",
+      "label": "שם הנישום", "fieldCode": "name"
+    },
+    "idNumber": {
+      "pg": 0, "x": 380, "y": 740, "sz": 10, "font": "latin-bold",
+      "label": "מספר זהות", "fieldCode": "012"
+    },
+    "incomeKindLabel": {
+      "pg": 0, "x": 380, "y": 700, "sz": 10, "font": "hebrew",
+      "label": "סוג ההכנסה", "fieldCode": "kind"
+    },
+    "amount": {
+      "pg": 0, "x": 380, "y": 680, "sz": 11, "font": "latin-bold",
+      "label": "סכום ההכנסה לפריסה", "fieldCode": "amt"
+    },
+    "receivedYear": {
+      "pg": 0, "x": 380, "y": 660, "sz": 10, "font": "latin-bold",
+      "label": "שנת קבלה", "fieldCode": "rcvYear"
+    },
+    "spreadYearsCount": {
+      "pg": 0, "x": 380, "y": 640, "sz": 10, "font": "latin-bold",
+      "label": "מספר שנות פריסה", "fieldCode": "spreadCount"
+    },
+
+    "spread_y1_year": { "pg": 0, "x": 480, "y": 560, "sz": 9, "font": "latin-bold", "label": "שנה 1", "fieldCode": "y1" },
+    "spread_y1_amount": { "pg": 0, "x": 360, "y": 560, "sz": 9, "font": "latin-bold", "label": "סכום שנה 1", "fieldCode": "y1amt" },
+    "spread_y1_rate": { "pg": 0, "x": 240, "y": 560, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 1", "fieldCode": "y1rate" },
+    "spread_y1_tax": { "pg": 0, "x": 120, "y": 560, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 1", "fieldCode": "y1tax" },
+
+    "spread_y2_year": { "pg": 0, "x": 480, "y": 540, "sz": 9, "font": "latin-bold", "label": "שנה 2", "fieldCode": "y2" },
+    "spread_y2_amount": { "pg": 0, "x": 360, "y": 540, "sz": 9, "font": "latin-bold", "label": "סכום שנה 2", "fieldCode": "y2amt" },
+    "spread_y2_rate": { "pg": 0, "x": 240, "y": 540, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 2", "fieldCode": "y2rate" },
+    "spread_y2_tax": { "pg": 0, "x": 120, "y": 540, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 2", "fieldCode": "y2tax" },
+
+    "spread_y3_year": { "pg": 0, "x": 480, "y": 520, "sz": 9, "font": "latin-bold", "label": "שנה 3", "fieldCode": "y3" },
+    "spread_y3_amount": { "pg": 0, "x": 360, "y": 520, "sz": 9, "font": "latin-bold", "label": "סכום שנה 3", "fieldCode": "y3amt" },
+    "spread_y3_rate": { "pg": 0, "x": 240, "y": 520, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 3", "fieldCode": "y3rate" },
+    "spread_y3_tax": { "pg": 0, "x": 120, "y": 520, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 3", "fieldCode": "y3tax" },
+
+    "spread_y4_year": { "pg": 0, "x": 480, "y": 500, "sz": 9, "font": "latin-bold", "label": "שנה 4", "fieldCode": "y4" },
+    "spread_y4_amount": { "pg": 0, "x": 360, "y": 500, "sz": 9, "font": "latin-bold", "label": "סכום שנה 4", "fieldCode": "y4amt" },
+    "spread_y4_rate": { "pg": 0, "x": 240, "y": 500, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 4", "fieldCode": "y4rate" },
+    "spread_y4_tax": { "pg": 0, "x": 120, "y": 500, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 4", "fieldCode": "y4tax" },
+
+    "spread_y5_year": { "pg": 0, "x": 480, "y": 480, "sz": 9, "font": "latin-bold", "label": "שנה 5", "fieldCode": "y5" },
+    "spread_y5_amount": { "pg": 0, "x": 360, "y": 480, "sz": 9, "font": "latin-bold", "label": "סכום שנה 5", "fieldCode": "y5amt" },
+    "spread_y5_rate": { "pg": 0, "x": 240, "y": 480, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 5", "fieldCode": "y5rate" },
+    "spread_y5_tax": { "pg": 0, "x": 120, "y": 480, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 5", "fieldCode": "y5tax" },
+
+    "spread_y6_year": { "pg": 0, "x": 480, "y": 460, "sz": 9, "font": "latin-bold", "label": "שנה 6", "fieldCode": "y6" },
+    "spread_y6_amount": { "pg": 0, "x": 360, "y": 460, "sz": 9, "font": "latin-bold", "label": "סכום שנה 6", "fieldCode": "y6amt" },
+    "spread_y6_rate": { "pg": 0, "x": 240, "y": 460, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 6", "fieldCode": "y6rate" },
+    "spread_y6_tax": { "pg": 0, "x": 120, "y": 460, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 6", "fieldCode": "y6tax" },
+
+    "totalSpreadTax": {
+      "pg": 0, "x": 120, "y": 420, "sz": 11, "font": "latin-bold",
+      "label": "סך מס בפריסה", "fieldCode": "totalSpread"
+    },
+    "justification": {
+      "pg": 0, "x": 100, "y": 320, "sz": 9, "font": "hebrew",
+      "label": "הסבר / נימוק", "fieldCode": "just"
+    },
+    "signatureName": {
+      "pg": 0, "x": 100, "y": 80, "sz": 10, "font": "hebrew",
+      "label": "חתימת הנישום", "fieldCode": "sig"
+    },
+    "signatureDate": {
+      "pg": 0, "x": 280, "y": 80, "sz": 10, "font": "latin-bold",
+      "label": "תאריך חתימה", "fieldCode": "sigDate"
+    }
+  }
+}
