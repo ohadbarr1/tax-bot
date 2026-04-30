@@ -1,0 +1,97 @@
+{
+  "formId": "161",
+  "year": 2025,
+  "template": "form_161_2025.pdf",
+  "_status": "TEMPLATE_MISSING",
+  "_dataGap": "public/templates/form_161_2025.pdf is not present in the repo. Acquire the official ITA blank PDF (טופס 161 — חישוב פריסת פיצויים) from taxes.gov.il, place at the templates path, then run `npm run forms:rebuild-maps` (extend scripts/build-field-map.mjs to include 161) to regenerate templates/maps/161_2025.json. The route currently returns 503 TEMPLATE_MISSING when the PDF is absent.",
+  "pageSize": { "width": 595.275, "height": 841.89 },
+  "notes": {
+    "origin": "PDF bottom-left for pdf-lib drawText. y-coords below are placeholders awaiting template calibration; they DO NOT reflect the real ITA layout.",
+    "fontStrategy": "latin-bold = HelveticaBold for digits / IDs / dates. hebrew = Assistant-Regular.ttf for Hebrew labels.",
+    "spreadingDirection": "FORWARD per סעיף 8(ג)(3) — spread starts at terminationYear + 1, runs through terminationYear + spreadYears. Closes audits/tax-domain F-014.1.",
+    "perYearForecast": "Each spread row carries its own marginal-rate based on perYearIncomeForecast[i]. Closes F-014.2."
+  },
+  "fields": {
+    "taxpayerName": {
+      "pg": 0, "x": 380, "y": 760, "sz": 10, "font": "hebrew",
+      "label": "שם הנישום (placeholder coords)",
+      "fieldCode": "name"
+    },
+    "idNumber": {
+      "pg": 0, "x": 380, "y": 740, "sz": 10, "font": "latin-bold",
+      "label": "מספר זהות (placeholder coords)",
+      "fieldCode": "012"
+    },
+    "terminationYear": {
+      "pg": 0, "x": 380, "y": 720, "sz": 10, "font": "latin-bold",
+      "label": "שנת סיום העסקה",
+      "fieldCode": "termYear"
+    },
+    "taxableSeverance": {
+      "pg": 0, "x": 380, "y": 680, "sz": 11, "font": "latin-bold",
+      "label": "סכום פיצויים חייב במס",
+      "fieldCode": "272"
+    },
+    "exemptSeverance": {
+      "pg": 0, "x": 380, "y": 660, "sz": 11, "font": "latin-bold",
+      "label": "מענק פטור (סעיף 9(7א))",
+      "fieldCode": "086"
+    },
+    "spreadYearsCount": {
+      "pg": 0, "x": 380, "y": 640, "sz": 10, "font": "latin-bold",
+      "label": "מספר שנות פריסה",
+      "fieldCode": "spreadCount"
+    },
+    "spread_y1_year": { "pg": 0, "x": 480, "y": 560, "sz": 9, "font": "latin-bold", "label": "פריסה — שנה 1", "fieldCode": "y1" },
+    "spread_y1_amount": { "pg": 0, "x": 360, "y": 560, "sz": 9, "font": "latin-bold", "label": "סכום שנה 1", "fieldCode": "y1amt" },
+    "spread_y1_rate": { "pg": 0, "x": 240, "y": 560, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 1", "fieldCode": "y1rate" },
+    "spread_y1_tax": { "pg": 0, "x": 120, "y": 560, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 1", "fieldCode": "y1tax" },
+
+    "spread_y2_year": { "pg": 0, "x": 480, "y": 540, "sz": 9, "font": "latin-bold", "label": "פריסה — שנה 2", "fieldCode": "y2" },
+    "spread_y2_amount": { "pg": 0, "x": 360, "y": 540, "sz": 9, "font": "latin-bold", "label": "סכום שנה 2", "fieldCode": "y2amt" },
+    "spread_y2_rate": { "pg": 0, "x": 240, "y": 540, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 2", "fieldCode": "y2rate" },
+    "spread_y2_tax": { "pg": 0, "x": 120, "y": 540, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 2", "fieldCode": "y2tax" },
+
+    "spread_y3_year": { "pg": 0, "x": 480, "y": 520, "sz": 9, "font": "latin-bold", "label": "פריסה — שנה 3", "fieldCode": "y3" },
+    "spread_y3_amount": { "pg": 0, "x": 360, "y": 520, "sz": 9, "font": "latin-bold", "label": "סכום שנה 3", "fieldCode": "y3amt" },
+    "spread_y3_rate": { "pg": 0, "x": 240, "y": 520, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 3", "fieldCode": "y3rate" },
+    "spread_y3_tax": { "pg": 0, "x": 120, "y": 520, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 3", "fieldCode": "y3tax" },
+
+    "spread_y4_year": { "pg": 0, "x": 480, "y": 500, "sz": 9, "font": "latin-bold", "label": "פריסה — שנה 4", "fieldCode": "y4" },
+    "spread_y4_amount": { "pg": 0, "x": 360, "y": 500, "sz": 9, "font": "latin-bold", "label": "סכום שנה 4", "fieldCode": "y4amt" },
+    "spread_y4_rate": { "pg": 0, "x": 240, "y": 500, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 4", "fieldCode": "y4rate" },
+    "spread_y4_tax": { "pg": 0, "x": 120, "y": 500, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 4", "fieldCode": "y4tax" },
+
+    "spread_y5_year": { "pg": 0, "x": 480, "y": 480, "sz": 9, "font": "latin-bold", "label": "פריסה — שנה 5", "fieldCode": "y5" },
+    "spread_y5_amount": { "pg": 0, "x": 360, "y": 480, "sz": 9, "font": "latin-bold", "label": "סכום שנה 5", "fieldCode": "y5amt" },
+    "spread_y5_rate": { "pg": 0, "x": 240, "y": 480, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 5", "fieldCode": "y5rate" },
+    "spread_y5_tax": { "pg": 0, "x": 120, "y": 480, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 5", "fieldCode": "y5tax" },
+
+    "spread_y6_year": { "pg": 0, "x": 480, "y": 460, "sz": 9, "font": "latin-bold", "label": "פריסה — שנה 6", "fieldCode": "y6" },
+    "spread_y6_amount": { "pg": 0, "x": 360, "y": 460, "sz": 9, "font": "latin-bold", "label": "סכום שנה 6", "fieldCode": "y6amt" },
+    "spread_y6_rate": { "pg": 0, "x": 240, "y": 460, "sz": 9, "font": "latin-bold", "label": "שיעור מס שולי שנה 6", "fieldCode": "y6rate" },
+    "spread_y6_tax": { "pg": 0, "x": 120, "y": 460, "sz": 9, "font": "latin-bold", "label": "מס לתשלום שנה 6", "fieldCode": "y6tax" },
+
+    "totalSpreadTax": {
+      "pg": 0, "x": 120, "y": 420, "sz": 11, "font": "latin-bold",
+      "label": "סך מס בפריסה", "fieldCode": "totalSpread"
+    },
+    "lumpSumTax": {
+      "pg": 0, "x": 120, "y": 400, "sz": 11, "font": "latin-bold",
+      "label": "סך מס ללא פריסה (לסימוכין)", "fieldCode": "totalLump"
+    },
+    "savings": {
+      "pg": 0, "x": 120, "y": 380, "sz": 11, "font": "latin-bold",
+      "label": "חיסכון", "fieldCode": "savings"
+    },
+
+    "signatureName": {
+      "pg": 0, "x": 100, "y": 80, "sz": 10, "font": "hebrew",
+      "label": "חתימת הנישום", "fieldCode": "sig"
+    },
+    "signatureDate": {
+      "pg": 0, "x": 280, "y": 80, "sz": 10, "font": "latin-bold",
+      "label": "תאריך חתימה", "fieldCode": "sigDate"
+    }
+  }
+}
