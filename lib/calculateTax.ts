@@ -25,14 +25,68 @@
  *   • F-012 Single-parent extends to רווק/ה — סעיף 40(ב)(1) post-2024
  *   • F-016 carriedForwardLoss wired into capital-gains calc — סעיף 92
  *
- * Data source: app/data/tax_brackets_2024_2025.json (Bank of Israel / ITA figures)
- *              app/data/credit_points_{2024,2025}.json
+ * Data source: app/data/tax_brackets_{2020..2025}.json (Bank of Israel / ITA figures)
+ *              app/data/credit_points_{2020..2025}.json
  *              app/data/periphery_postcodes.json (postcode → tier; percentage logic in code)
+ *
+ * Phase 1 §1.B (audit F-031): support the full 6-year claim window per סעיף 160(א).
+ * Each year is a separate JSON file; `loadYearData()` is the year-keyed loader.
+ * Years 2020–2023 brackets are best-effort (ITA indexation circulars) and bear a
+ * `_verification_status` field — the engine accepts them but a CPA should
+ * re-verify before reliance on a filing older than 2024.
  */
 
-import taxData from "@/data/tax_brackets_2024_2025.json";
+import brackets2020 from "@/data/tax_brackets_2020.json";
+import brackets2021 from "@/data/tax_brackets_2021.json";
+import brackets2022 from "@/data/tax_brackets_2022.json";
+import brackets2023 from "@/data/tax_brackets_2023.json";
+import brackets2024 from "@/data/tax_brackets_2024.json";
+import brackets2025 from "@/data/tax_brackets_2025.json";
 import peripheryData from "@/data/periphery_postcodes.json";
+import { getFxRate } from "@/lib/fx";
 import type { TaxPayer, PersonalDeduction } from "@/types";
+
+// ─── Year-keyed loader (F-031) ────────────────────────────────────────────────
+
+/**
+ * Shape of a per-year `tax_brackets_<year>.json` file.
+ * The `_source` / `_verification_status` keys are documentation-only.
+ */
+export interface YearTaxData {
+  tax_year: number;
+  credit_point_monthly_value: number;
+  credit_point_annual_value: number;
+  tax_brackets: { bracket: number; rate: number; min: number; max: number }[];
+  _source?: string;
+  _verification_status?: string;
+}
+
+const YEAR_DATA: Record<number, YearTaxData> = {
+  2020: brackets2020 as YearTaxData,
+  2021: brackets2021 as YearTaxData,
+  2022: brackets2022 as YearTaxData,
+  2023: brackets2023 as YearTaxData,
+  2024: brackets2024 as YearTaxData,
+  2025: brackets2025 as YearTaxData,
+};
+
+/**
+ * Resolve year-specific tax data. For an unsupported year the engine falls
+ * back to the closest supported year (2020 floor / 2025 ceiling) — a
+ * conservative behaviour that prevents silent NaN propagation while making
+ * the deviation observable in test coverage.
+ */
+export function loadYearData(year: number): YearTaxData {
+  if (YEAR_DATA[year]) return YEAR_DATA[year];
+  if (year < 2020) return YEAR_DATA[2020];
+  return YEAR_DATA[2025];
+}
+
+/**
+ * Set of years the engine fully supports. Mirrors `SupportedTaxYear` in
+ * `currentTaxYear.ts`. Kept as a runtime list so tests can iterate it.
+ */
+export const SUPPORTED_TAX_YEARS = [2020, 2021, 2022, 2023, 2024, 2025] as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,13 +113,29 @@ export interface CalculationResult {
 }
 
 // Year-keyed constants. Keep mutable per audit; for years outside the table the
-// 2025 value acts as the conservative default (a safer over-estimate than 0).
+// nearest-supported value acts as the conservative default.
+//
+// Phase 1 §1.B (F-031): 2020–2023 ceilings are best-effort (ITA indexation
+// circulars). They mirror the values in `data/credit_points_<year>.json`.
 const DISABILITY_INCOME_CAP: Record<number, number> = {
+  2020: 573_600,  // best-effort — ITA 2020 indexation
+  2021: 580_680,  // best-effort — ITA 2021 indexation
+  2022: 596_400,  // best-effort — ITA 2022 indexation
+  2023: 605_640,  // best-effort — ITA 2023 indexation
   2024: 615_840,  // ITA published 2024 ceiling
   2025: 645_360,  // ITA published 2025 ceiling
 };
 
+// Periphery percentage-discount under צו 2023 only takes effect from tax year
+// 2024 onwards. For 2020–2023 the cap is intentionally 0 — the calculator
+// returns 0 discount, which is the conservative no-claim outcome. Pre-2024
+// claims that were eligible under the legacy flat-points model are out of
+// scope for the percentage-discount engine and require a future migration.
 const PERIPHERY_INCOME_CAP: Record<number, number> = {
+  2020: 0,
+  2021: 0,
+  2022: 0,
+  2023: 0,
   2024: 236_520,  // ITA published 2024 ceiling
   2025: 241_920,  // ITA published 2025 ceiling
 };
@@ -92,15 +162,14 @@ const MA_PROFESSIONAL_KEYS = new Set([
  * Calculate progressive income tax using Israeli tax brackets.
  *
  * @param grossIncome Annual gross income in ILS
- * @param year        Tax year (2024 or 2025)
+ * @param year        Tax year (2020-2025; year-keyed loader picks the right table)
  * @returns           Raw tax liability in ILS (before any credits)
  */
 export function calculateTaxOnIncome(
   grossIncome: number,
-  year: 2024 | 2025
+  year: number
 ): { tax: number; byBracket: CalculationResult["breakdown"]["byBracket"] } {
-  const yearStr = String(year) as "2024" | "2025";
-  const brackets = taxData[yearStr].tax_brackets;
+  const brackets = loadYearData(year).tax_brackets;
 
   let rawTax = 0;
   let prevMax = 0;
@@ -203,10 +272,7 @@ export function calculateCreditPoints(
   taxpayer: TaxPayer,
   year: number
 ): { points: number; annualValue: number; breakdown: Record<string, number> } {
-  const creditPointAnnualValue =
-    year === 2025
-      ? taxData["2025"].credit_point_annual_value
-      : taxData["2024"].credit_point_annual_value;
+  const creditPointAnnualValue = loadYearData(year).credit_point_annual_value;
 
   const breakdown: Record<string, number> = {};
   let points = 0;
@@ -411,10 +477,24 @@ export function calculateIncomeDeductions(
 }
 
 /**
+ * Per-year minimum donation for סעיף 46 eligibility (₪).
+ * Phase 1 §1.B (F-031): extended to 2020–2025 per ITA published indexation.
+ * Source: `data/credit_points_<year>.json :: rules.donation_min_sec46.amount`.
+ */
+const DONATION_MIN_SEC46: Record<number, number> = {
+  2020: 199,
+  2021: 200,
+  2022: 207,
+  2023: 209,
+  2024: 207,
+  2025: 214,
+};
+
+/**
  * Calculate tax credits from personal deductions.
  *
  * Credit rules:
- *   donation_sec46             35% credit; min ₪207 (2024) / ₪214 (2025); cap 30% of income
+ *   donation_sec46             35% credit; min varies by year (DONATION_MIN_SEC46); cap 30% of income
  *   life_insurance_sec45a      25% credit; no minimum
  *   ltc_insurance_sec45a       25% credit (long-term care, same section)
  *   pension_sec47              35% credit on capped deposit (Sec. 47(ב)(2) זיכוי)
@@ -432,7 +512,9 @@ export function calculateDeductionCredits(
   grossIncome: number,
   year: number
 ): { total: number; breakdown: Record<string, number> } {
-  const minDonation = year === 2025 ? 214 : 207;
+  // Default to the 2024 floor (₪207) for any year not in the table — keeps
+  // legacy assumptions intact while explicitly supporting 2020–2025.
+  const minDonation = DONATION_MIN_SEC46[year] ?? 207;
   const maxDonationPct = 0.30;
   const maxPensionDeposit = 10_000;
   const pensionIncomeCeiling = year === 2025 ? 283_000 : 270_000;
@@ -509,15 +591,32 @@ export function calculateDeductionCredits(
 // ─── 6. USD → ILS Conversion ─────────────────────────────────────────────────
 
 /**
- * Convert a USD amount to ILS using the Bank of Israel annual average rate.
- * Used when ingesting foreign broker data (IBKR Activity Statement).
- * Do NOT call this inside calculateFullRefund — stored capitalGains values are already in ILS.
+ * Convert a USD amount to ILS using the Bank of Israel publish rate.
  *
- * NOTE: F-017 (annual-mean → daily-rate) is in scope for Phase 1 §1.F.
+ * Phase 1 §1.F (audit F-017) migrated this from annual-mean to daily-rate
+ * conversion: the new signature accepts an optional transaction-date and,
+ * when supplied, dispatches to `lib/fx.ts#getFxRate` for the שער יציג of
+ * that day (with prior-business-day fallback per תקנות מס הכנסה / המרה).
+ *
+ * Backward compat: when called with `(usdAmount, year)` the old shape, the
+ * function falls back to the year's BoI annual mean (sourced from
+ * `data/fx/usd_ils_daily.json#annualMean`). New callers should pass a Date.
+ *
+ * Do NOT call this inside `calculateFullRefund` — stored `capitalGains`
+ * values are expected to already be in ILS (converted at ingestion time
+ * by `lib/ibkrParser.ts`, which now uses per-row daily rates).
  */
-export function convertUsdToIls(usdAmount: number, year: number): number {
-  const rates: Record<number, number> = { 2024: 3.71, 2025: 3.65 };
-  const rate = rates[year] ?? 3.71;
+export function convertUsdToIls(
+  usdAmount: number,
+  yearOrDate: number | Date | string
+): number {
+  if (typeof yearOrDate === "number") {
+    // Legacy code path — annual-mean fallback. Use mid-year date so getFxRate
+    // returns the year's annual-mean from the documented dataset.
+    const rate = getFxRate("USD", `${yearOrDate}-06-30`);
+    return Math.round(usdAmount * rate);
+  }
+  const rate = getFxRate("USD", yearOrDate);
   return Math.round(usdAmount * rate);
 }
 
@@ -529,7 +628,8 @@ export function convertUsdToIls(usdAmount: number, year: number): number {
  * IMPORTANT: taxpayer.capitalGains values must be in ILS before calling this function.
  */
 export function calculateFullRefund(taxpayer: TaxPayer, year: number): CalculationResult {
-  const safeYear: 2024 | 2025 = year >= 2025 ? 2025 : 2024;
+  // Phase 1 §1.B (F-031): all years 2020–2025 dispatch through `loadYearData`;
+  // the legacy `safeYear: 2024 | 2025` clamp is gone.
 
   // Step 1: Total gross income from all employers
   const totalGrossIncome = taxpayer.employers.reduce(
@@ -558,7 +658,7 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   // Step 2: Raw progressive bracket tax (on income AFTER income deductions).
   const { tax: calculatedTax, byBracket } = calculateTaxOnIncome(
     taxableIncome,
-    safeYear
+    year
   );
 
   // Step 3: Credit points (now WITHOUT periphery / disability / kibbutz).
@@ -651,10 +751,7 @@ export function buildInsightsFromResult(
   taxpayer: TaxPayer,
   year: number
 ): import("@/types").TaxInsight[] {
-  const creditPointAnnualValue =
-    year === 2025
-      ? taxData["2025"].credit_point_annual_value
-      : taxData["2024"].credit_point_annual_value;
+  const creditPointAnnualValue = loadYearData(year).credit_point_annual_value;
 
   const insights: import("@/types").TaxInsight[] = [];
 
@@ -824,7 +921,11 @@ export function buildInsightsFromResult(
   if (taxpayer.capitalGains) {
     const { totalRealizedProfit, totalRealizedLoss, carriedForwardLoss = 0 } = taxpayer.capitalGains;
     const netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
-    const usdRate = year === 2025 ? 3.65 : 3.71;
+    // F-017: ILS sums on `result` are derived from per-trade daily rates by
+    // the IBKR parser. The display headline uses the year's documented BoI
+    // annual mean (data/fx/usd_ils_daily.json#annualMean) so users see one
+    // recognisable summary number rather than a meaningless per-row average.
+    const usdRate = getFxRate("USD", `${year}-06-30`);
 
     insights.push({
       id: "insight-capital-markets",

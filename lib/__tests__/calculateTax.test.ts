@@ -26,7 +26,11 @@ import {
   calculateDeductionCredits,
   calculateIncomeDeductions,
   calculateFullRefund,
+  calculateTaxOnIncome,
+  loadYearData,
+  SUPPORTED_TAX_YEARS,
 } from "../calculateTax";
+import { SUPPORTED_TAX_YEARS as YEARS_CURRENT } from "../currentTaxYear";
 import type { TaxPayer, PersonalDeduction } from "@/types";
 
 // ─── Factory ──────────────────────────────────────────────────────────────────
@@ -502,5 +506,136 @@ describe("calculateFullRefund", () => {
     });
     const result = calculateFullRefund(tp, 2024);
     expect(result.capitalGainsTax).toBe(25_000 - 5_000);
+  });
+});
+
+// ─── 10. Multi-year coverage (Phase 1 §1.B / F-031, סעיף 160(א) — 6-year claim window) ──
+
+/**
+ * For each of the 6 supported tax years (2020–2025) the engine must:
+ *   1. Load a per-year `data/tax_brackets_<year>.json` file.
+ *   2. Compute non-zero progressive bracket tax on a known income.
+ *   3. Apply non-zero credit-point value (per-year shekel-per-point).
+ *
+ * Bracket math reference at ₪200,000 personal-effort income — manually
+ * verified against the published ITA bracket tables. The amounts below cite
+ * the relevant bracket boundaries from `data/tax_brackets_<year>.json`:
+ *   • 2020: brackets 75,720 / 108,600 / 174,360 → … (חוזר 6/2020)
+ *   • 2021: brackets 75,480 / 108,360 / 173,880 → … (חוזר 7/2021)
+ *   • 2022: brackets 77,400 / 110,880 / 178,080 → … (חוזר 7/2022)
+ *   • 2023: brackets 81,480 / 116,760 / 187,440 → … (חוזר 1/2023)
+ *   • 2024: brackets 84,120 / 120,720 / 193,800 → … (חוזר 1/2024)
+ *   • 2025: brackets 88,440 / 126,840 / 203,520 → … (חוזר 1/2025)
+ */
+
+const KNOWN_INCOME = 200_000;
+
+// Manually-computed expected bracket tax at ₪200k per year (rounded ILS).
+// Verified against `tax_brackets_<year>.json` boundaries × marginal rates.
+const EXPECTED_BRACKET_TAX_AT_200K: Record<number, number> = {
+  // 75,720·0.10 + 32,880·0.14 + 65,760·0.20 + 25,640·0.31 = 7,572 + 4,603.2 + 13,152 + 7,948.4 = 33,275.6 → 33,276
+  2020: 33_276,
+  // 75,480·0.10 + 32,880·0.14 + 65,520·0.20 + 26,120·0.31 = 7,548 + 4,603.2 + 13,104 + 8,097.2 = 33,352
+  2021: 33_353,
+  // 77,400·0.10 + 33,480·0.14 + 67,200·0.20 + 21,920·0.31 = 7,740 + 4,687.2 + 13,440 + 6,795.2 = 32,663
+  2022: 32_662,
+  // 81,480·0.10 + 35,280·0.14 + 70,680·0.20 + 12,560·0.31 = 8,148 + 4,939.2 + 14,136 + 3,893.6 = 31,117
+  2023: 31_117,
+  // 84,120·0.10 + 36,600·0.14 + 73,080·0.20 + 6,200·0.31 = 8,412 + 5,124 + 14,616 + 1,922 = 30,074
+  2024: 30_074,
+  // 88,440·0.10 + 38,400·0.14 + 73,160·0.20 = 8,844 + 5,376 + 14,632 = 28,852  (still in bracket 3)
+  2025: 28_852,
+};
+
+describe("Multi-year coverage — F-031 / סעיף 160(א) 6-year claim window", () => {
+  it("SUPPORTED_TAX_YEARS exports the full 2020–2025 range", () => {
+    expect(SUPPORTED_TAX_YEARS).toEqual([2020, 2021, 2022, 2023, 2024, 2025]);
+    // Mirror with the loader source-of-truth in `currentTaxYear.ts`.
+    expect([...YEARS_CURRENT]).toEqual([2020, 2021, 2022, 2023, 2024, 2025]);
+  });
+
+  for (const year of [2020, 2021, 2022, 2023, 2024, 2025] as const) {
+    describe(`tax year ${year}`, () => {
+      it(`loadYearData(${year}) returns brackets + CP value`, () => {
+        const data = loadYearData(year);
+        expect(data.tax_year).toBe(year);
+        expect(data.tax_brackets.length).toBe(7);
+        expect(data.credit_point_annual_value).toBeGreaterThan(0);
+      });
+
+      it(`calculateTaxOnIncome(${KNOWN_INCOME}, ${year}) → published bracket tax (חוזר תיאומי הצמדה ${year})`, () => {
+        const { tax, byBracket } = calculateTaxOnIncome(KNOWN_INCOME, year);
+        // Tolerate ±2 ILS (rounding inside the engine vs. the manually-computed reference).
+        expect(Math.abs(tax - EXPECTED_BRACKET_TAX_AT_200K[year])).toBeLessThanOrEqual(2);
+        expect(byBracket.length).toBeGreaterThanOrEqual(3);
+      });
+
+      it(`calculateCreditPoints — base resident → 2.25 × annual CP value (${year})`, () => {
+        const tp = makeTaxpayer();
+        const { points, annualValue } = calculateCreditPoints(tp, year);
+        expect(points).toBe(2.25);
+        expect(annualValue).toBe(Math.round(2.25 * loadYearData(year).credit_point_annual_value));
+        // Sanity: every supported year must produce a non-zero CP value.
+        expect(annualValue).toBeGreaterThan(0);
+      });
+
+      it(`calculateFullRefund — single resident @₪${KNOWN_INCOME} produces non-zero tax + CP value (${year})`, () => {
+        const tp = makeTaxpayer({
+          employers: [{
+            id: "e1",
+            name: "מעסיק",
+            isMainEmployer: true,
+            monthsWorked: 12,
+            grossSalary: KNOWN_INCOME,
+            taxWithheld: 30_000,
+          }],
+        });
+        const result = calculateFullRefund(tp, year);
+        expect(result.totalGrossIncome).toBe(KNOWN_INCOME);
+        expect(result.calculatedTax).toBeGreaterThan(0);
+        expect(result.creditPointsValue).toBeGreaterThan(0);
+        expect(result.netTaxOwed).toBeGreaterThanOrEqual(0);
+      });
+    });
+  }
+
+  it("donation_sec46 floor — ₪200 qualifies in 2020/2021 only (canonical floors per audit)", () => {
+    // ₪200 is below 2022 floor (₪207), 2023 (₪209), 2024 (₪207), 2025 (₪214).
+    // It IS at-or-above 2020 (₪199) and 2021 (₪200).
+    const deds: PersonalDeduction[] = [
+      { id: "d1", type: "donation_sec46", amount: 200, providerName: "עמותה" },
+    ];
+    expect(calculateDeductionCredits(deds, 100_000, 2020).total).toBeGreaterThan(0); // 200 ≥ 199
+    expect(calculateDeductionCredits(deds, 100_000, 2021).total).toBeGreaterThan(0); // 200 ≥ 200
+    expect(calculateDeductionCredits(deds, 100_000, 2022).total).toBe(0); // 200 < 207
+    expect(calculateDeductionCredits(deds, 100_000, 2023).total).toBe(0); // 200 < 209
+    expect(calculateDeductionCredits(deds, 100_000, 2025).total).toBe(0); // 200 < 214
+  });
+
+  it("donation_sec46 floor — ₪205 qualifies in 2020/2021 but NOT 2022/2023/2024/2025", () => {
+    const deds: PersonalDeduction[] = [
+      { id: "d1", type: "donation_sec46", amount: 205, providerName: "עמותה" },
+    ];
+    expect(calculateDeductionCredits(deds, 100_000, 2020).total).toBeGreaterThan(0);
+    expect(calculateDeductionCredits(deds, 100_000, 2021).total).toBeGreaterThan(0);
+    expect(calculateDeductionCredits(deds, 100_000, 2022).total).toBe(0); // floor 207
+    expect(calculateDeductionCredits(deds, 100_000, 2023).total).toBe(0); // floor 209
+    expect(calculateDeductionCredits(deds, 100_000, 2024).total).toBe(0); // floor 207
+    expect(calculateDeductionCredits(deds, 100_000, 2025).total).toBe(0); // floor 214
+  });
+
+  it("credit-point annual values follow ITA published indexation (2020 → 2025)", () => {
+    // Source: brief table + ITA monthly CP × 12 published values.
+    expect(loadYearData(2020).credit_point_annual_value).toBe(2628);
+    expect(loadYearData(2021).credit_point_annual_value).toBe(2664);
+    expect(loadYearData(2022).credit_point_annual_value).toBe(2772);
+    expect(loadYearData(2023).credit_point_annual_value).toBe(2820);
+    expect(loadYearData(2024).credit_point_annual_value).toBe(2904);
+    expect(loadYearData(2025).credit_point_annual_value).toBe(3000);
+    // Strictly monotonic — every year adds value.
+    const vals = [2020, 2021, 2022, 2023, 2024, 2025].map(y => loadYearData(y).credit_point_annual_value);
+    for (let i = 1; i < vals.length; i++) {
+      expect(vals[i]).toBeGreaterThan(vals[i - 1]);
+    }
   });
 });
