@@ -62,35 +62,34 @@ env:
     availability: [RUNTIME]
 
   # ── Sentry (observability, closes audit performance §1.6) ───────────────
-  # Stored in Google Cloud Secret Manager. Set via:
+  # Provisioning required before uncommenting (App Hosting fails the BUILD
+  # if a `secret:` reference can't resolve in Secret Manager). Run:
   #   firebase apphosting:secrets:set SENTRY_DSN
   #   firebase apphosting:secrets:set SENTRY_AUTH_TOKEN
-  # SENTRY_DSN is read at runtime by `lib/sentry.server.ts` and
-  # `lib/sentry.client.ts` (the latter via NEXT_PUBLIC_SENTRY_DSN — set both
-  # to the same DSN value; only NEXT_PUBLIC_* is exposed to the browser
-  # bundle). SENTRY_AUTH_TOKEN is used at BUILD time by `withSentryConfig`
-  # to upload source maps; without it, the build still succeeds but client
-  # stack traces in Sentry won't be symbolicated. See DEPLOY.md.
-  - variable: SENTRY_DSN
-    secret: SENTRY_DSN
-    availability: [RUNTIME]
-  - variable: NEXT_PUBLIC_SENTRY_DSN
-    secret: SENTRY_DSN
-    availability: [BUILD, RUNTIME]
-  - variable: SENTRY_AUTH_TOKEN
-    secret: SENTRY_AUTH_TOKEN
-    availability: [BUILD]
+  # then uncomment. Until then `lib/sentry.{server,client}.ts` no-op and
+  # `withSentryConfig` is bypassed (next.config.ts gates on SENTRY_AUTH_TOKEN).
+  # NEXT_PUBLIC_SENTRY_DSN should reference the same secret as SENTRY_DSN.
+  # - variable: SENTRY_DSN
+  #   secret: SENTRY_DSN
+  #   availability: [RUNTIME]
+  # - variable: NEXT_PUBLIC_SENTRY_DSN
+  #   secret: SENTRY_DSN
+  #   availability: [BUILD, RUNTIME]
+  # - variable: SENTRY_AUTH_TOKEN
+  #   secret: SENTRY_AUTH_TOKEN
+  #   availability: [BUILD]
 
   # ── Upstash Redis (rate limiting, closes audit F-2 / F1.2.1) ─────────────
-  # Stored in Google Cloud Secret Manager. Set via:
+  # Same provisioning prerequisite. Run:
   #   firebase apphosting:secrets:set UPSTASH_REDIS_REST_URL
   #   firebase apphosting:secrets:set UPSTASH_REDIS_REST_TOKEN
-  # Both are RUNTIME-only — the build step never reads them. When unset,
-  # `lib/api/withRateLimit.ts` falls back to a no-op + warning so dev/test
-  # environments work without provisioning Upstash. See DEPLOY.md.
-  - variable: UPSTASH_REDIS_REST_URL
-    secret: UPSTASH_REDIS_REST_URL
-    availability: [RUNTIME]
-  - variable: UPSTASH_REDIS_REST_TOKEN
-    secret: UPSTASH_REDIS_REST_TOKEN
-    availability: [RUNTIME]
+  # then uncomment. Until then `lib/api/withRateLimit.ts` no-ops with a
+  # console.warn — auth via withUser still gates every route, so the
+  # cost-DoS surface is small but non-zero (an authenticated attacker can
+  # still spam Anthropic). Treat provisioning as a launch-blocker.
+  # - variable: UPSTASH_REDIS_REST_URL
+  #   secret: UPSTASH_REDIS_REST_URL
+  #   availability: [RUNTIME]
+  # - variable: UPSTASH_REDIS_REST_TOKEN
+  #   secret: UPSTASH_REDIS_REST_TOKEN
+  #   availability: [RUNTIME]
