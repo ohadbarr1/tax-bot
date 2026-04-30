@@ -1,13 +1,14 @@
 {
-  "_comment": "Phase 1 §1.J semantic-golden fixture for Form 1301. See semanticGolden135.expected.json for the layout description, Hebrew-glyph-reversal caveat, and 1.D BiDi-rewrite TODO. `stampedPerPage[i]` is the ORDERED list of values the route paints at the tail of page (i+1). `requiredCodes` is the set of 3-digit codes from the route's draws[] list that the template MUST still print (subset; codes 277/278 are spouse / taxpayer ID page-3 duplicates that the template prints).",
+  "_comment": "Phase 1 §1.D semantic-golden fixture for Form 1301 — REGENERATED after the BiDi-correct hebrewForPdf rewrite + the route's DRAW_LIST_1301 / POSITIONAL_DRAWS_1301 refactor. See semanticGolden135.expected.json for the layout description and BiDi rationale. Hebrew strings now appear in LOGICAL Unicode order (\"בר\", \"תל\", \"אביב\", \"דיזנגוף\", \"אוהד\") because lib/bidi.ts:shapeForPdf() retired the codepoint-reversal hack. The page-3 entry now also includes \"אוהד\" before the tax-year because the new POSITIONAL_DRAWS_1301 entry for code 031 (first name) lands on page 1 (tail of page 1's text stream). Page 4 now carries the signature block (\"אוהד\", \"בר\", date, \"X\") that the new POSITIONAL_DRAWS_1301 entry adds — Phase 1 §1.D's signature/declaration parity with Form 135. `requiredCodes` is the set of 3-digit codes the route's draws[] list expects the template to still print.",
   "stampedPerPage": [
     [
       "123456782",
       "987654323",
+      "אוהד",
       "2024"
     ],
     [
-      "רב",
+      "בר",
       "480,000",
       "60,000",
       "96,000",
@@ -24,9 +25,9 @@
       "14,600"
     ],
     [
-      "ביבא",
-      "לת",
-      "ףוגנזיד",
+      "תל",
+      "אביב",
+      "דיזנגוף",
       "100"
     ],
     [
@@ -35,7 +36,11 @@
       "5,000",
       "12",
       "123",
-      "456789"
+      "456789",
+      "אוהד",
+      "בר",
+      "29/04/2026",
+      "X"
     ]
   ],
   "requiredCodes": [

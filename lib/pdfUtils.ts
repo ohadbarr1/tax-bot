@@ -1,52 +1,54 @@
 /**
- * pdfUtils.ts — Phase 3 PDF Utilities
+ * pdfUtils.ts — PDF Utilities for Form 135 / 1301 stampers.
  *
- * RTL STRATEGY (revised after empirical testing):
+ * RTL STRATEGY (Phase 1 §1.D rewrite — closes audits/generation.md §1.5)
+ * ──────────────────────────────────────────────────────────────────────
  *
- *   Problem 1 — "111111 ₪":
- *     The @fontsource/assistant Hebrew-subset woff2 contains ONLY Hebrew Unicode
- *     block glyphs (U+0590–U+05FF). Digits 0–9 and Latin characters are absent,
- *     so pdf-lib maps them to the "missing glyph" slot which renders as "1".
- *     Fix: Use StandardFonts.Helvetica for all numeric / Latin content.
+ * Pre-Phase-1, hebrewForPdf() did `text.split("").reverse()` — a blind
+ * codepoint reversal. That broke (a) SHAAM intake OCR (every Hebrew name
+ * stored as "דהוא" instead of "אוהד") and (b) mixed-content strings (a
+ * house-number embedded in a street name had its digits flipped: "100"
+ * became "001"). See `lib/bidi.ts` for the full rationale.
  *
- *   Problem 2 — "דהוא" instead of "אוהד":
- *     macOS Preview / Chrome PDF viewer do NOT automatically apply Unicode BiDi
- *     to embedded-font text streams. Our previous character-by-character reversal
- *     stored "דהוא" and the viewer displayed it LTR — visually wrong.
- *     Fix: Store Hebrew strings in logical Unicode order (no reversal).
- *          Prepend U+200F (RIGHT-TO-LEFT MARK) so viewers that DO support BiDi
- *          apply correct visual ordering, and viewers that don't will still show
- *          natural Hebrew glyph shapes at worst.
+ * Now hebrewForPdf() delegates to shapeForPdf() from `lib/bidi.ts`,
+ * which runs the proper Unicode Bidirectional Algorithm (UAX #9) via
+ * bidi-js and emits LOGICAL-ORDER text with an RTL_MARK hint for
+ * BiDi-aware viewers. The PDF stream now matches what pdf-parse
+ * re-extracts, so `lib/__tests__/semanticGolden.test.ts` can assert the
+ * round-trip against logical Hebrew strings.
  *
- *   prepareHebrewTextForPdf() is kept as a no-op for API compatibility.
+ * Numeric / Latin content still routes through StandardFonts.Helvetica
+ * (the @fontsource/assistant Hebrew-only subset has no digit glyphs).
+ *
+ * The legacy prepareHebrewTextForPdf no-op shim was retired in this
+ * rewrite (audit F-25); no in-repo callers remained.
  */
 
 import type { TaxPayer, FinancialData } from "@/types";
 import peripheryData from "@/data/periphery_postcodes.json";
+import { shapeForPdf } from "@/lib/bidi";
 
 // ─── 1. RTL Text Helpers ──────────────────────────────────────────────────────
 
-/** Unicode RIGHT-TO-LEFT MARK — signals bidirectional context to PDF viewers */
-const RTL_MARK = "\u200F";
-
 /**
- * Reverse Hebrew characters for visual RTL order in pdf-lib.
- * pdf-lib's drawText() renders LTR only — it does NOT run the Unicode
- * BiDi algorithm. We reverse the string so that the visual output
- * reads right-to-left as expected.
+ * Shape a Hebrew (or mixed Hebrew + Latin) string for pdf-lib's
+ * drawText(). Replaces the pre-Phase-1 codepoint-reversal hack with the
+ * proper Unicode Bidirectional Algorithm (UAX #9, via bidi-js). The
+ * function NAME and SIGNATURE are preserved for caller-site backward
+ * compatibility — only the implementation changes. See `lib/bidi.ts`.
+ *
+ * Output is in LOGICAL Unicode order with an optional RTL_MARK prefix —
+ * SHAAM intake parses the PDF text stream and now sees Hebrew names
+ * "אוהד" rather than the previously-reversed "דהוא". BiDi-aware PDF
+ * viewers (Acrobat, modern Chrome, macOS Preview 12+) render the visual
+ * RTL ordering correctly.
+ *
+ * The legacy `prepareHebrewTextForPdf` no-op shim was retired in this
+ * rewrite (audit F-25); no in-repo callers remained.
  */
 export function hebrewForPdf(text: string): string {
   if (!text) return "";
-  // pdf-lib draws LTR only; reverse characters for visual RTL order in PDF
-  return text.split("").reverse().join("");
-}
-
-/**
- * Kept for backward compatibility. Now a no-op — reversal is NOT applied
- * because PDF viewers show pre-reversed strings LTR (visually wrong).
- */
-export function prepareHebrewTextForPdf(text: string): string {
-  return text ?? "";
+  return shapeForPdf(text);
 }
 
 /**
