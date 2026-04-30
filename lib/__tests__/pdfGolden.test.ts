@@ -1,3 +1,23 @@
+/**
+ * lib/__tests__/pdfGolden.test.ts — INPUT-DICT golden test (legacy).
+ *
+ * Snapshots the dictionary `buildForm135Fields(...)` / `buildForm1301Fields(...)`
+ * RETURNS — i.e. the route's INPUT, not its OUTPUT. Useful as a quick regression
+ * net for a refactor of `pdfUtils.ts` itself, but it does NOT exercise the
+ * stamper or the rendered PDF and therefore CANNOT catch the regression
+ * classes that audits/qa-release.md §3.1.3 and audits/generation.md §1.13
+ * call out:
+ *
+ *   - y-shift in `templates/maps/<form>.json` (value lands on wrong page)
+ *   - code-swap in `DRAW_LIST_135` (value pairs with wrong code)
+ *   - `pdfUtils.hebrewForPdf()` rewrite (glyph ordering changes)
+ *
+ * Phase 1 §1.J adds `lib/__tests__/semanticGolden.test.ts` which CLOSES that
+ * loop by re-extracting the rendered PDF text via pdf-parse and asserting the
+ * stamped-values-per-page dict against a checked-in fixture. Keep this test
+ * as a complementary input-dict snapshot; the semantic-golden test is the
+ * authoritative output check.
+ */
 import { describe, it, expect } from "vitest";
 import { buildForm135Fields, buildForm1301Fields } from "../pdfUtils";
 import type { TaxPayer, FinancialData } from "@/types";

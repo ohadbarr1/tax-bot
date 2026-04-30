@@ -17,7 +17,8 @@
     "axe": "axe http://localhost:3000/ http://localhost:3000/dashboard http://localhost:3000/filing --tags wcag2a,wcag2aa",
     "lhci": "lhci autorun --config=.github/lighthouserc.json",
     "forms:rebuild-maps": "node scripts/build-field-map.mjs --all",
-    "forms:smoke": "node scripts/smoke-generate.mjs"
+    "forms:smoke": "node scripts/smoke-generate.mjs",
+    "forms:smoke:reextract": "node scripts/smoke-generate.mjs --reextract"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
