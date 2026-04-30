@@ -84,11 +84,18 @@ export function buildCsp(nonce: string): string {
     "script-src": [
       "'self'",
       `'nonce-${nonce}'`,
-      // 'strict-dynamic' lets the nonce'd loader pull arbitrary scripts
-      // without re-nonce'ing every chunk emitted by Next's bundler.
-      "'strict-dynamic'",
-      // Next.js ships a dev-only eval shim. In production this is dropped,
-      // but we keep 'unsafe-eval' OFF — modern bundles don't require it.
+      // NOTE on 'strict-dynamic': Phase 0 shipped it with the intent that the
+      // nonce'd loader would pull bundle chunks. Reality: Next 16 emits
+      // <script async src="..."> chunks WITHOUT the nonce (no wire-through
+      // from middleware → RSC → renderer in this version), so 'strict-dynamic'
+      // blocks the entire React hydration → page hangs at SSR shell. Removed.
+      // Tracked for Phase 3 design-system work to re-introduce with proper
+      // nonce wire-through (Next 16 docs: pass nonce via Script component).
+      // 'unsafe-inline' is ignored by the browser when a nonce is present
+      // (spec § "if a 'nonce-source' / 'hash-source' is present, ignore
+      // 'unsafe-inline'"), so it only relaxes inline scripts that LACK a
+      // nonce — currently just Next's tiny theme-detection bootstrap.
+      "'unsafe-inline'",
       ...FIREBASE_HOSTS,
       ...RECAPTCHA_HOSTS,
     ],
