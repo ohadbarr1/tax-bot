@@ -388,12 +388,18 @@ describe("calculateDeductionCredits", () => {
     expect(total).toBe(Math.round(35_000 * 0.35));
   });
 
-  it("study fund → 35% credit on declared amount", () => {
+  it("study fund → 0 credit for שכיר (F-022 corrected; סעיף 3(ה3))", () => {
+    // Phase 1 §1.A (F-022) corrected this baseline. Salaried filers receive
+    // no זיכוי for קרן השתלמות; the legacy 35%-flat rule was a fabrication.
+    // עצמאי opt-in still works via context.isSalaried = false.
     const deds: PersonalDeduction[] = [
       { id: "sf", type: "study_fund_sec3e3", amount: 5_000, providerName: "קרן השתלמות" },
     ];
     const { total } = calculateDeductionCredits(deds, 200_000, 2024);
-    expect(total).toBe(Math.round(5_000 * 0.35));
+    expect(total).toBe(0);
+    // Self-employed opt-out → legacy 35% retained.
+    const { total: selfEmp } = calculateDeductionCredits(deds, 200_000, 2024, { isSalaried: false });
+    expect(selfEmp).toBe(Math.round(5_000 * 0.35));
   });
 
   it("alimony_sec9a is skipped (income deduction, not credit)", () => {
