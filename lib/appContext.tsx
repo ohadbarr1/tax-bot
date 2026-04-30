@@ -298,7 +298,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return {
         ...s,
         questionnaire: newQuestionnaire,
-        currentView: "upload",
+        // Land on the actual Dashboard when the user later clicks
+        // "תמונת מצב" in the sidebar. Previously this was "upload" →
+        // /dashboard rendered <FileDropzone /> (per
+        // app/(app)/dashboard/page.tsx:23) and the user perceived it as
+        // "still being asked to complete the questionnaire".
+        // The questionnaire's handleFinish() pushes to /documents directly,
+        // so we don't need currentView to also drive that surface.
+        currentView: "dashboard",
         financials: newFinancials,
         // Mirror completion into the draft so reloads and switchDraft see it.
         drafts: {

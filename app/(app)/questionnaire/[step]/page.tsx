@@ -1,9 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import { useRouter, redirect } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuestionnaire } from "@/lib/questionnaireContext";
+import { useApp } from "@/lib/appContext";
 import {
   isValidSlug,
   nextSlug,
@@ -29,12 +30,18 @@ export default function StepPage({
   const { step: slug } = use(params);
   const router = useRouter();
   const ctx = useQuestionnaire();
+  const { setQuestionnaireStep } = useApp();
 
   if (!isValidSlug(slug)) {
     redirect("/questionnaire/personal");
   }
 
   const currentStep = getStepBySlug(slug)!;
+
+  // Track last-visited step so /questionnaire (no slug) resumes here.
+  useEffect(() => {
+    setQuestionnaireStep(currentStep.id);
+  }, [currentStep.id, setQuestionnaireStep]);
   const prev = prevSlug(slug);
   const next = nextSlug(slug);
   const isLast = currentStep.id === LAST_STEP_ID;
