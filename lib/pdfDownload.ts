@@ -13,6 +13,7 @@
 
 import type { Form135Payload, TaxPayer, FinancialData, IncomeSourceId } from "@/types";
 import { determineFormType } from "./formTypeSelector";
+import { clientFetch, ClientFetchUnauthenticatedError } from "./api/clientFetch";
 
 export type PdfDownloadStatus =
   | { kind: "ok"; filename: string }
@@ -55,7 +56,10 @@ export async function downloadGeneratedForm(
 
   try {
     const payload: Form135Payload & { calibrate?: boolean } = { taxpayer, financials, calibrate };
-    const res = await fetch(endpoint, {
+    // clientFetch attaches the Firebase ID token. Plain fetch here would
+    // bypass auth and the server would reject with 401 (regression observed
+    // 2026-05-04 — the /filing download button was unusable for every user).
+    const res = await clientFetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -66,7 +70,16 @@ export async function downloadGeneratedForm(
       if (res.status === 503 && json?.error === "TEMPLATE_MISSING") {
         return { kind: "template_missing", formType };
       }
-      return { kind: "error", message: json?.detail ?? `שגיאת שרת: ${res.status}` };
+      // Server-side Zod schema rejects (400 INVALID_INPUT) when the
+      // questionnaire isn't complete — surface a Hebrew message that points
+      // the user back to the right place rather than a raw status code.
+      if (res.status === 400 && json?.error?.code === "INVALID_INPUT") {
+        return {
+          kind: "error",
+          message: "השאלון לא מלא — חזור והשלם את הפרטים האישיים והכלכליים לפני הורדת הטופס.",
+        };
+      }
+      return { kind: "error", message: json?.detail ?? json?.error?.message ?? `שגיאת שרת: ${res.status}` };
     }
 
     const blob = await res.blob();
@@ -81,6 +94,9 @@ export async function downloadGeneratedForm(
 
     return { kind: "ok", filename };
   } catch (err) {
+    if (err instanceof ClientFetchUnauthenticatedError) {
+      return { kind: "error", message: err.message };
+    }
     return {
       kind: "error",
       message: err instanceof Error ? err.message : "אירעה שגיאה. נסה שוב.",
