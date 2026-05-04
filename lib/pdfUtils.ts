@@ -391,16 +391,22 @@ export function buildForm135Fields(
     }
   }
 
-  // ── Periphery flag (code 016) — "X" if eligible postcode ──────────────────
-  // Mirror the lookup in calculateTax.calculateFullRefund step 4b. The form
-  // wants a checkbox mark here; rendering "X" matches Israeli convention.
+  // ── Periphery flag (code 016) — "X" if eligible settlement (סעיף 11) ─────
+  // Mirror the lookup in calculateTax.calculateFullRefund step 4b. We mark the
+  // checkbox if the resolved settlement appears in the relevant year's statute
+  // list. Year preference: declared tax year → fallback prior calendar year.
   let peripheryFlag = "";
-  if (taxpayer.postcode) {
-    const postcodes = (peripheryData as { postcodes: Record<string, { tier: number }> })
-      .postcodes;
-    const entry = postcodes[taxpayer.postcode];
-    if (entry && (entry.tier === 1 || entry.tier === 2)) {
-      peripheryFlag = "X";
+  {
+    const data = peripheryData as {
+      years: Record<string, { settlements: Record<string, unknown> }>;
+      postcodes: Record<string, string>;
+    };
+    const settlement = taxpayer.residenceSettlement ?? data.postcodes?.[taxpayer.postcode ?? ""];
+    if (settlement) {
+      const yearKey = String(financials.taxYears?.[0] ?? new Date().getFullYear() - 1);
+      if (data.years?.[yearKey]?.settlements?.[settlement]) {
+        peripheryFlag = "X";
+      }
     }
   }
 

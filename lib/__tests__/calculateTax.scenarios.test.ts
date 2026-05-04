@@ -237,28 +237,38 @@ describe("F-006 §9א alimony — only spouse-portion deductible", () => {
 
 // ─── F-007: Periphery percentage-discount ─────────────────────────────────────
 
-describe("F-007 Periphery percentage-discount model (צו 2023)", () => {
-  // צו 2023 + סעיף 11 — 11% (tier 2) / 13% (tier 1) מההכנסה
-  // עד תקרה ₪241,920 (2025).
-  it("calculatePeripheryDiscount tier 1 (13%) capped at 241,920 (2025)", () => {
-    expect(calculatePeripheryDiscount(200_000, 1, 2025)).toBe(Math.round(200_000 * 0.13));
-    expect(calculatePeripheryDiscount(300_000, 1, 2025)).toBe(Math.round(241_920 * 0.13));
+describe("F-007 Periphery per-settlement discount (סעיף 11 + הודעת מס הכנסה)", () => {
+  // Statute: each settlement has its own (rate_pct, ceiling) pair set annually
+  // by the Director of the Tax Authority. Rates 7%-20%, ceilings ₪146k-₪268k.
+  // Dimona 2025: 18% / ₪245,400. Sderot 2025: 20% / ₪267,840. Tzfat 2025: 12%/₪213,240.
+  it("calculatePeripheryDiscount Dimona 2025 (18%, ceiling ₪245,400)", () => {
+    expect(calculatePeripheryDiscount(200_000, "דימונה", 2025)).toBe(Math.round(200_000 * 0.18));
+    expect(calculatePeripheryDiscount(300_000, "דימונה", 2025)).toBe(Math.round(245_400 * 0.18));
   });
 
-  it("calculatePeripheryDiscount tier 2 (11%) capped at 241,920 (2025)", () => {
-    expect(calculatePeripheryDiscount(200_000, 2, 2025)).toBe(Math.round(200_000 * 0.11));
-    expect(calculatePeripheryDiscount(300_000, 2, 2025)).toBe(Math.round(241_920 * 0.11));
+  it("calculatePeripheryDiscount Sderot 2025 (20%, ceiling ₪267,840)", () => {
+    expect(calculatePeripheryDiscount(200_000, "שדרות", 2025)).toBe(Math.round(200_000 * 0.20));
+    expect(calculatePeripheryDiscount(400_000, "שדרות", 2025)).toBe(Math.round(267_840 * 0.20));
+  });
+
+  it("calculatePeripheryDiscount unknown settlement → 0", () => {
+    expect(calculatePeripheryDiscount(200_000, "תל אביב", 2025)).toBe(0);
+    expect(calculatePeripheryDiscount(200_000, "נתניה", 2025)).toBe(0);
+  });
+
+  it("calculatePeripheryDiscount empty settlement → 0", () => {
+    expect(calculatePeripheryDiscount(200_000, undefined, 2025)).toBe(0);
+    expect(calculatePeripheryDiscount(200_000, null, 2025)).toBe(0);
   });
 
   it("periphery is NOT in credit-points breakdown anymore (replaced by tax-discount)", () => {
-    const tp = makeTaxpayer({ postcode: "86100" }); // דימונה (tier 1)
+    const tp = makeTaxpayer({ residenceSettlement: "דימונה" });
     const { breakdown } = calculateCreditPoints(tp, 2025);
     expect(breakdown.periphery).toBeUndefined();
   });
 
   it("calculateFullRefund applies periphery discount as tax reduction (Dimona, ₪400k)", () => {
-    // Use a high enough income so the discount is not truncated by the
-    // netTaxOwed floor — i.e. calculatedTax > creditPoints + discount.
+    // High enough income so discount is not clipped by the netTaxOwed floor.
     const tp = makeTaxpayer({
       employers: [
         {
@@ -270,7 +280,7 @@ describe("F-007 Periphery percentage-discount model (צו 2023)", () => {
           taxWithheld: 100_000,
         },
       ],
-      postcode: "86100", // Dimona, tier 1 = 13%
+      residenceSettlement: "דימונה", // 2025: 18% × ₪245,400
     });
     const tpNoPeriphery = makeTaxpayer({
       employers: [
@@ -286,10 +296,27 @@ describe("F-007 Periphery percentage-discount model (צו 2023)", () => {
     });
     const r = calculateFullRefund(tp, 2025);
     const rBase = calculateFullRefund(tpNoPeriphery, 2025);
-    // Discount = 13% × min(400,000, 241,920) = 13% × 241,920 = ₪31,450.
-    const expectedDiscount = Math.round(241_920 * 0.13);
+    const expectedDiscount = Math.round(245_400 * 0.18);
     expect(rBase.netTaxOwed - r.netTaxOwed).toBe(expectedDiscount);
     expect(r.peripheryDiscount).toBe(expectedDiscount);
+  });
+
+  it("postcode fallback resolves to settlement (Dimona 86100)", () => {
+    const tp = makeTaxpayer({
+      employers: [{ id: "e1", name: "מעסיק", isMainEmployer: true, monthsWorked: 12, grossSalary: 400_000, taxWithheld: 100_000 }],
+      postcode: "86100",
+    });
+    const r = calculateFullRefund(tp, 2025);
+    expect(r.peripheryDiscount).toBe(Math.round(245_400 * 0.18));
+  });
+
+  it("center-city postcode does NOT trigger periphery (Netanya, false-positive guard)", () => {
+    const tp = makeTaxpayer({
+      employers: [{ id: "e1", name: "מעסיק", isMainEmployer: true, monthsWorked: 12, grossSalary: 400_000, taxWithheld: 100_000 }],
+      postcode: "42000", // Netanya — NOT in statute
+    });
+    const r = calculateFullRefund(tp, 2025);
+    expect(r.peripheryDiscount).toBe(0);
   });
 });
 

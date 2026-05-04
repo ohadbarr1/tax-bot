@@ -294,13 +294,13 @@ describe("calculateCreditPoints — disability / kibbutz / periphery (post-Phase
   });
 
   it("periphery is no longer a credit-points entry (F-007 → tax-discount)", () => {
-    const tp = makeTaxpayer({ postcode: "86100" }); // דימונה
+    const tp = makeTaxpayer({ residenceSettlement: "דימונה" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.periphery).toBeUndefined();
   });
 
-  it("unknown postcode → no periphery credit", () => {
-    const tp = makeTaxpayer({ postcode: "00000" });
+  it("unknown settlement → no periphery credit", () => {
+    const tp = makeTaxpayer({ residenceSettlement: "תל אביב" });
     const { breakdown } = calculateCreditPoints(tp, 2024);
     expect(breakdown.periphery).toBeUndefined();
   });

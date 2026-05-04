@@ -254,8 +254,14 @@ export interface TaxPayer {
   disabilityType?: DisabilityType;
   /** Disability percentage 0-100 (from ITA/Bituach Leumi) */
   disabilityPercent?: number;
-  /** Israeli postcode — used for periphery credit lookup */
+  /** Israeli postcode — used as fallback for periphery settlement lookup */
   postcode?: string;
+  /**
+   * Eligible settlement name (יישוב מוטב) per the annual ITA notice under
+   * סעיף 11(ב)(2). Preferred over postcode lookup for periphery discount.
+   * Must match a key under data/periphery_postcodes.json years[YEAR].settlements.
+   */
+  residenceSettlement?: string;
   /** True if taxpayer is a kibbutz / moshav member */
   kibbutzMember?: boolean;
   // ── Phase 1 §1.A (audit P1 batch) ────────────────────────────────────────

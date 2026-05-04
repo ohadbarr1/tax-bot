@@ -1,99 +1,7340 @@
 {
-  "description": "Israeli periphery-eligible communities per ITA Section 11 + צו 2023/2024.",
-  "source": "צו מס הכנסה (קביעת ישובים מזכים) (תיקון), התשפ\"ד-2024 — סעיף 11 לפקודה",
-  "source_url": "https://www.gov.il/he/Departments/General/peripheral-localities-list",
-  "last_updated": "2026-04-29",
-  "model": "percentage_discount",
-  "model_description": "Periphery benefit is a percentage discount on personal-effort income up to an annual cap (סעיף 11 + צו 2023/2024). tier 1 = 13%, tier 2 = 11%. NOT credit-points. Caps and rates live in lib/calculateTax.ts (PERIPHERY_INCOME_CAP, PERIPHERY_DISCOUNT_PCT).",
-  "effective_year": 2024,
-  "tiers": {
-    "tier1": { "discount_pct": 0.13, "cap_2024": 236520, "cap_2025": 241920 },
-    "tier2": { "discount_pct": 0.11, "cap_2024": 236520, "cap_2025": 241920 }
-  },
-  "data_gap": "Phase 1 §1.H-data: gov.il / nevo / Reshumot were unreachable from the agent sandbox; the canonical 408-community צו 2024 list could not be auto-ingested. The user must download the official PDF, OCR + clean it into a .tsv with columns name, tier, postcodes, region (see scripts/build-periphery-list.mjs header for shape), and run `node scripts/build-periphery-list.mjs --input <path>` to merge. Current entries are the Phase 0 production-priority subset; do NOT treat absence from this list as evidence a community is non-eligible.",
-  "_meta": {
-    "community_count": 34,
-    "tier1_count": 19,
-    "tier2_count": 15,
-    "postcode_count": 40,
-    "expected_full_count": 408
+  "description": "Israeli periphery tax discount per ITA Section 11 (סעיף 11 לפקודת מס הכנסה).",
+  "source": "הודעת מס הכנסה (רשימת יישובים מוטבים) — annual notice per סעיף 11(ב)(2)",
+  "source_urls": [
+    "https://he.wikisource.org/wiki/הודעת_מס_הכנסה_(רשימת_יישובים_מוטבים_לשנת_2024)",
+    "https://he.wikisource.org/wiki/הודעת_מס_הכנסה_(רשימת_יישובים_מוטבים_לשנת_2025)",
+    "https://he.wikisource.org/wiki/הודעת_מס_הכנסה_(רשימת_יישובים_מוטבים_לשנת_2026)"
+  ],
+  "last_updated": "2026-05-04",
+  "model": "per_settlement_rate_and_ceiling",
+  "model_description": "Each eligible settlement has a year-specific (rate_pct, ceiling) pair set by the Director of the Tax Authority. Discount = min(personal_effort_income, ceiling) × rate_pct. Rates range 7%-20%; ceilings range ₪146,640-₪267,840 (2025). NOT credit-points, NOT a flat tier system.",
+  "model_change_note": "Pre-2026-05-04 schema used a fabricated tier1=13%/tier2=11% model. That model never matched the statute. All consumers (lib/calculateTax.ts, lib/optimizer.ts, lib/pdfUtils.ts) updated.",
+  "pre_2024_handling": "Years 2020-2023 had different lists and a partially different mechanism (per צו פיתוח אזור). Wikisource publishes 2024-2026 lists only. The engine returns 0 discount for those years — conservative no-claim. To file pre-2024 claims, a manual ingest of the relevant year's notice is required.",
+  "years": {
+    "2024": {
+      "settlements": {
+        "א־סייד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "אבו סנאן": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "אבו קרינאת (יישוב)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "אבו תלול": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "אביבים": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 76
+        },
+        "אבירים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אבן מנחם": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אבן שמואל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "אבני איתן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אבנת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אבשלום": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "אדורה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "אדמית": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "אודם": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אוהד": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "אום בטין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "אופקים": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 60
+        },
+        "אור הגנוז": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "אור הנר": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "אורטל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אורים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אחוזם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "איבים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 82
+        },
+        "איילת השחר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "אילון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אילות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "איתן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "אל־רום": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אלומות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אלוני הבשן": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 86
+        },
+        "אלי עד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אליאב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "אליפז": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "אליפלט": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אלמגור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "אלקוש": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אמירים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "אמנון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "אמציה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "אניעם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אספר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "אפיק": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אפיקים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "ארגמן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "ארז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "אשבול": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "אשבל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "אשדות יעקב (איחוד)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אשדות יעקב (מאוחד)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אשחר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "אשכולות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "אשל הנשיא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "אשלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אשרת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "באר אורה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "באר מלכה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "בארי": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 93
+        },
+        "בוסתן הגליל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "בוקעאת׳א": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "בטחה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "ביר הדאג׳": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "ביריה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "בית ג׳ן": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 86
+        },
+        "בית הגדי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "בית הלל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "בית העמק": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "בית הערבה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "בית זרע": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "בית יוסף": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "בית קמה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "בית שאן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 68
+        },
+        "בן עמי": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "בני דקלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "בני יהודה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "בני נצרים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 86
+        },
+        "בענה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 54
+        },
+        "בצת": {
+          "rate_pct": 0.12,
+          "ceiling": 186600,
+          "score": 57
+        },
+        "בר־יוחאי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "ברור חיל": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 22
+        },
+        "ברוש": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "ברעם": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 97
+        },
+        "גבולות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גבים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "גבעולים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "גבעות בר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "גבעת יואב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גברעם": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "גדות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "גונן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "גורן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "גורנות הגליל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "גילון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "גילת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "גינוסר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גיתה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "געתון": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "גרופית": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "גשור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גשר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "גשר הזיו": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "ג׳דיידה–מכר": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "ג׳וליס": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "ג׳ש (גוש חלב)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "דבירה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "דגניה א׳": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "דגניה ב׳": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "דוב״ב": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 76
+        },
+        "דורות": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 22
+        },
+        "דימונה": {
+          "rate_pct": 0.16,
+          "ceiling": 213240,
+          "score": 51
+        },
+        "דיר אל־אסד": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "דיר חנא": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 53
+        },
+        "דישון": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "דלתון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "דן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "דפנה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "דקל": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "דריג׳את": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "האון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "הגושרים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "הילה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "הר עמשא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "הררית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "זיקים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "זמרת": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "זרועה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "חגי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "חד־נס": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "חולית": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "חולתה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "חוסן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "חוסנייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "חוקוק": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "חורה": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "חורפיש": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 76
+        },
+        "חזון": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "חלוץ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "חלץ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "חמדיה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "חמדת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "חניתה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "חספין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "חצבה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "חצור הגלילית": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "חצרים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "חרשים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "טבריה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 53
+        },
+        "טובא–זנר׳רייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 68
+        },
+        "טירת צבי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "טל־אל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "טללים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "טמרה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "טנא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "טפחות": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "יאנוח–ג׳ת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "יבול": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "יד מרדכי": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "יהל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "יובל": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "יובלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "יוטבתה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "יונתן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "יושיביה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "יחיעם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "יכיני": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "יסוד המעלה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "יסעור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "יעד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "יערה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 70
+        },
+        "יפית": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "יפתח": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "יראון": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 76
+        },
+        "ירדנה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "ירוחם": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 61
+        },
+        "ירכא": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "ישע": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "יתד": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "כאבול": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "כברי": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "כדיתה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "כורזים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כחל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כחלה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "כינרת (מושבה)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "כינרת (קבוצה)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כיסופים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "כיסרא–סמיע": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 85
+        },
+        "כישור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כליל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "כלנית": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "כמאנה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "כמהין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "כמון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כנף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "כסיפה": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 75
+        },
+        "כפר בלום": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "כפר גלעדי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כפר הנשיא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כפר חושן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כפר חנניה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "כפר חרוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "כפר יאסיף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "כפר מימון": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "כפר מסריק": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כפר סאלד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "כפר עזה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 57
+        },
+        "כפר ראש הנקרה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "כפר רוזנוולד (זרעית)": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "כפר רופין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "כפר שמאי": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "כרכום": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כרם בן זמרה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כרם שלום": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "כרמי קטיף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "כרמיאל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "כרמיה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "כרמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כרמל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "לבון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "לבנים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "להב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "להבות הבשן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "לוחמי הגטאות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "לוטם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "לוטן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "לימן": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "לפידות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "לקייה": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "מבוא חמה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מבועים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מבטחים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "מבקיעים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": null
+        },
+        "מגאר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "מגדל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "מגן": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "מג׳ד אל־כרום": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "מג׳דל שמס": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "מדרשת בן גוריון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "מולדה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "מורן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מזרעה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "מחולה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מחנה טלי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מחנה יוכבד": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 11
+        },
+        "מחנה יפה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 5
+        },
+        "מחנה יתיר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מחניים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "מטולה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מיצר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "מירון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "מכחול": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "מכמנים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מלילות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "מלכיה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מנוף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מנות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "מנחמיה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מנרה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מסדה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מסלול": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מסעדה": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 97
+        },
+        "מעגלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מעגן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "מעוז חיים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מעון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "מעונה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "מעיין ברוך": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מעלה גמלא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "מעלות–תרשיחא": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "מעליא": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "מפלסים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "מצדות יהודה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "מצובה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "מצפה רמון": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "מצפה שלם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "מרגליות": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מרום גולן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מרחב עם": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "משאבי שדה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "משגב עם": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "משואה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "משכיות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "משמר הירדן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "משמר הנגב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מתת": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "נאות גולן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "נאות הכיכר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "נאות מרדכי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "נאות סמדר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "נבטים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "נגוהות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "נהריה": {
+          "rate_pct": 0.12,
+          "ceiling": 226560,
+          "score": 52
+        },
+        "נוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "נווה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 97
+        },
+        "נווה אור": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נווה אטי״ב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נווה איתן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "נווה זוהר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "נווה זיו": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "נווה חריף": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "נועם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "נחל עוז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 57
+        },
+        "נחף": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "נטועה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "נטור": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "נטע": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "ניצנה (קהילת חינוך)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "ניצני סיני": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "ניר יצחק": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "ניר משה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "ניר עוז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "ניר עם": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "ניר עקיבא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "נירים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "נמרוד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נס עמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "נעמ״ה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "נתיב העשרה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "נתיב השיירה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "נתיבות": {
+          "rate_pct": 0.16,
+          "ceiling": 226560,
+          "score": 50
+        },
+        "סאג׳ור": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 53
+        },
+        "סאסא": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "סוסיה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "סופה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "סח׳נין": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "סלמה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "סמר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "סנסנה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "סעד": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 68
+        },
+        "סער": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "ספיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עבדון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עברון": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 53
+        },
+        "עזוז": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עידן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין אל־אסד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "עין גב": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "עין גדי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "עין הבשור": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "עין המפרץ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "עין הנצי״ב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "עין השלושה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "עין זיוון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עין חצבה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין יהב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין יעקב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין קיניה": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "עין תמר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עיר אובות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 25
+        },
+        "עכו": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "עלומים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 85
+        },
+        "עלמה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "עמוקה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "עמיעד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "עמיעוז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "עמיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עמקה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "עצמון שגב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "עראבה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "עראמשה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 93
+        },
+        "ערב א־נעים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "ערד": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "ערערה בנגב": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 75
+        },
+        "עתניאל": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "פארן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "פדויים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "פוריה (כפר עבודה)": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "פוריה (נווה עובד)": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "פוריה עילית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "פטיש": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "פלך": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "פני חבר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "פסוטה": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 70
+        },
+        "פעמי תש״ז": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "פצאל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "פקיעין (בוקייעה)": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "פקיעין חדשה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "פרוד": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "פרי גן": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "צאלים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "צביה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "צבעון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "צוחר": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "צופר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "צוקים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "צוריאל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "צורית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "צפת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 72
+        },
+        "קדמת צבי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "קדרים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "קורנית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "קטורה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "קלחים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "קליה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "קלע": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "קסר א־סיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "קצרין": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "קריית ארבע": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "קריית שמונה": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 76
+        },
+        "קשת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "ראמה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "ראס אל־עין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "ראש פינה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "רביבים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "רביד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "רגבה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "רהט": {
+          "rate_pct": 0.16,
+          "ceiling": 226560,
+          "score": 57
+        },
+        "רוח מדבר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "רוחמה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "רועי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "רותם": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "רחוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "ריחאנייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "רמות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "רמות נפתלי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "רמת טראמפ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "רמת מגשימים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "רנן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "רעים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "רקפת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "רתמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "ר׳ג׳ר": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "שאר ישוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שבי דרום": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 53
+        },
+        "שבי ציון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שגב שלום": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "שדה אליהו": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "שדה אליעזר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שדה בוקר": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שדה דוד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "שדה נחום": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "שדה נחמיה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שדה ניצן": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "שדה צבי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "שדי אברהם": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "שדי תרומות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "שדמות מחולה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "שדרות": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 58
+        },
+        "שובה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 68
+        },
+        "שובל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שומרה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "שומריה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "שוקדה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "שורשים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שזור": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שחרות": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שיבולים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "שיזף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שיח׳ דנון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "שיטים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 11
+        },
+        "שכניה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שלווה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "שלווה במדבר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שלומי": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 62
+        },
+        "שלומית": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "שמיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שמעה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שמרת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שני": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שניר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שעב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "שעל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שער הגולן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "שפר": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שקף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שרשרת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "שתולה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 70
+        },
+        "תאשור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "תדהר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "תובל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "תושיה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 68
+        },
+        "תל קציר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "תל שבע": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "תל תאומים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "תלם": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 53
+        },
+        "תלמי אליהו": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "תלמי ביל״ו": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "תלמי יוסף": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "תלמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "תפרח": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "תקומה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "תרבין א־ס׳אנע (יישוב)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        }
+      },
+      "_meta": {
+        "count": 481,
+        "rates": [
+          0.07,
+          0.1,
+          0.12,
+          0.14,
+          0.16,
+          0.18,
+          0.2
+        ]
+      }
+    },
+    "2025": {
+      "settlements": {
+        "א־סייד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "אבו סנאן": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "אבו קרינאת (יישוב)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "אבו תלול": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "אביבים": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 76
+        },
+        "אביגיל": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "אבירים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אבן מנחם": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אבן שמואל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "אבני איתן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אבנת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אבשלום": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "אדורה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "אדמית": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "אודם": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אוהד": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "אום בטין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "אופקים": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 60
+        },
+        "אור הגנוז": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "אור הנר": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "אורטל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אורים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אחוזם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "אחיהוד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "איבים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 82
+        },
+        "איילת השחר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "אילון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אילות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "איתן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "אל־רום": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אלומות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אלוני הבשן": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 86
+        },
+        "אלי עד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אליאב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "אליפז": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "אליפלט": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אלמגור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "אלקוש": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אמירים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "אמנון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "אמציה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "אניעם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אספר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "אפיק": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "אפיקים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "ארגמן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "ארז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "אשבול": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "אשבל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "אשדות יעקב (איחוד)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אשדות יעקב (מאוחד)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "אשחר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "אשכולות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "אשל הנשיא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "אשלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "אשרת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "באר אורה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "באר מלכה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "בארי": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 93
+        },
+        "בוסתן הגליל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "בוקעאת׳א": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "בטחה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "ביר הדאג׳": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "ביריה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "בית ג׳ן": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 86
+        },
+        "בית הגדי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "בית הלל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "בית העמק": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "בית הערבה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "בית זרע": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "בית חוגלה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "בית יוסף": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "בית קמה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "בית שאן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 78
+        },
+        "בן עמי": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "בני דקלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "בני יהודה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "בני נצרים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 86
+        },
+        "בענה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "בצת": {
+          "rate_pct": 0.12,
+          "ceiling": 186600,
+          "score": 57
+        },
+        "בר־יוחאי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "ברור חיל": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 22
+        },
+        "ברוש": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "ברעם": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 97
+        },
+        "גבולות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גבים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "גבעולים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "גבעות בר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "גבעת יואב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גברעם": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "גדות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "גונן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "גורן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "גורנות הגליל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "גילון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "גילת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "גינוסר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "גיתה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "געתון": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "גרופית": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "גשור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "גשר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "גשר הזיו": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "ג׳דיידה–מכר": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "ג׳וליס": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "ג׳ש (גוש חלב)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "דביר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "דגניה א׳": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "דגניה ב׳": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "דוב״ב": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 76
+        },
+        "דורות": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 22
+        },
+        "דימונה": {
+          "rate_pct": 0.18,
+          "ceiling": 245400,
+          "score": 61
+        },
+        "דיר אל־אסד": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "דיר חנא": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 53
+        },
+        "דישון": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "דלתון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "דן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "דפנה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "דקל": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "דריג׳את": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "האון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "הגושרים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "הילה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "הר עמשא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "הררית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "זיקים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "זמרת": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "זרועה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "חגי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "חד־נס": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "חולית": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "חולתה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "חוסן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "חוסנייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "חוקוק": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "חורה": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "חורפיש": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 76
+        },
+        "חזון": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "חלוץ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "חלץ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "חמדיה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "חמדת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "חניתה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "חספין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "חצבה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "חצור הגלילית": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "חצרים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "חרשים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "טבריה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "טובא–זנר׳רייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 68
+        },
+        "טירת צבי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "טל־אל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "טללים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "טמרה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "טנא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "טפחות": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "יאנוח–ג׳ת": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 53
+        },
+        "יבול": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "יד מרדכי": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "יהל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "יובל": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "יובלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "יוטבתה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "יונתן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "יושיביה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "יחיעם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "יכיני": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "יסוד המעלה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "יסעור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "יעד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "יערה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 70
+        },
+        "יפית": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 68
+        },
+        "יפתח": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "יראון": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 70
+        },
+        "ירדנה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "ירוחם": {
+          "rate_pct": 0.18,
+          "ceiling": 245400,
+          "score": 61
+        },
+        "ירכא": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "ישע": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "יתד": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "כאבול": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "כברי": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "כדיתה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "כורזים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כחל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כחלה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "כינרת (מושבה)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "כינרת (קבוצה)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כיסופים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "כיסרא–סמיע": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 85
+        },
+        "כישור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כליל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "כלנית": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "כמאנה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "כמהין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "כמון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כנף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "כסיפה": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 75
+        },
+        "כפר בלום": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "כפר גלעדי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כפר הנשיא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כפר חושן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כפר חנניה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "כפר חרוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "כפר יאסיף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "כפר מימון": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "כפר מסריק": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "כפר סאלד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "כפר עזה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 57
+        },
+        "כפר ראש הנקרה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "כפר רוזנוולד (זרעית)": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "כפר רופין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "כפר שמאי": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "כרכום": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "כרם בן זמרה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "כרם שלום": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "כרמי קטיף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "כרמיאל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "כרמייה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "כרמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "כרמל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "לבון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "לבנים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "להב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "להבות הבשן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "לוחמי הגטאות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "לוטם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "לוטן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "לימן": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "לפידות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "לקייה": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 64
+        },
+        "מבוא חמה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מבועים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מבטחים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "מבקיעים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": null
+        },
+        "מגאר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "מגדל": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "מגן": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "מג׳ד אל־כרום": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 50
+        },
+        "מג׳דל שמס": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "מדרשת בן גוריון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "מולדה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "מורן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מזרעה": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "מחולה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מחנה טלי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מחנה יוכבד": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "מחנה יפה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מחנה יתיר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מחניים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "מטולה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מיצר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "מירון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "מכחול": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "מכמנים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מלילות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מלכייה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מנוף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מנות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "מנחמיה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מנרה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מסדה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מסלול": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מסעדה": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "מעגלים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "מעגן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "מעוז חיים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מעון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "מעונה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "מעיין ברוך": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מעלה גמלא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "מעלות–תרשיחא": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "מעליא": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "מפלסים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "מצדות יהודה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "מצובה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "מצפה רמון": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "מצפה שלם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "מרגליות": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "מרום גולן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "מרחב עם": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "משאבי שדה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "משגב עם": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "משואה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "משכיות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "משמר הירדן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "משמר הנגב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "מתת": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 70
+        },
+        "נאות גולן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "נאות הכיכר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "נאות מרדכי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "נאות סמדר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 72
+        },
+        "נבטים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "נגוהות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "נהרייה": {
+          "rate_pct": 0.12,
+          "ceiling": 226560,
+          "score": 52
+        },
+        "נוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "נווה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 97
+        },
+        "נווה אור": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נווה אטי״ב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נווה איתן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נווה זוהר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "נווה זיו": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "נווה חריף": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "נועם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "נחל עוז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 57
+        },
+        "נחף": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "נטועה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "נטור": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "נטע": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "ניצנה (קהילת חינוך)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "ניצני סיני": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "ניר יצחק": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "ניר משה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "ניר עוז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "ניר עם": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "ניר עקיבא": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "נירים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "נמרוד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "נס עמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "נעמ״ה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "נתיב העשרה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 47
+        },
+        "נתיב השיירה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "נתיבות": {
+          "rate_pct": 0.16,
+          "ceiling": 226560,
+          "score": 50
+        },
+        "סאג׳ור": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 53
+        },
+        "סאסא": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "סוסיה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "סופה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "סח׳נין": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "סלמה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "סמר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 97
+        },
+        "סנסנה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "סעד": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 68
+        },
+        "סער": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "ספיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עבדון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עברון": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 53
+        },
+        "עזוז": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עידן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין אל־אסד": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "עין גב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "עין גדי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "עין הבשור": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "עין המפרץ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "עין הנצי״ב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "עין השלושה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "עין זיוון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "עין חצבה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין יהב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין יעקב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עין קניה": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "עין תמר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עיר אובות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 25
+        },
+        "עכו": {
+          "rate_pct": 0.12,
+          "ceiling": 186000,
+          "score": 43
+        },
+        "עלומים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 85
+        },
+        "עלמה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "עמוקה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "עמיעד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "עמיעוז": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "עמיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "עמקה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "עצמון שגב": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "עראבה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "עראמשה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 93
+        },
+        "ערב א־נעים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "ערד": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "ערערה בנגב": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 75
+        },
+        "עשהאל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "עתניאל": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "פארן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "פדויים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "פורייה עילית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "פורייה – כפר עבודה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "פורייה – נווה עובד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "פטיש": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "פלך": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "פני חבר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 64
+        },
+        "פסוטה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "פעמי תש״ז": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "פצאל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "פקיעין (בוקייעה)": {
+          "rate_pct": 0.14,
+          "ceiling": 259920,
+          "score": 68
+        },
+        "פקיעין חדשה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "פרוד": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "פרי גן": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "צאלים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 61
+        },
+        "צביה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "צבעון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "צוחר": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "צופר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "צוקים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "צוריאל": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "צורית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "צפת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 72
+        },
+        "קדמת צבי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "קדרים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "קורנית": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "קטורה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "קלחים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "קליה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 57
+        },
+        "קלע": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "קסר א־סיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 75
+        },
+        "קצרין": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "קריית ארבע": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "קריית שמונה": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 76
+        },
+        "קשת": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "ראמה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "ראס אל־עין": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "ראש פינה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 40
+        },
+        "רביבים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "רביד": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "רגבה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "רהט": {
+          "rate_pct": 0.16,
+          "ceiling": 226560,
+          "score": 54
+        },
+        "רוח מדבר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "רוחמה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "רועי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 62
+        },
+        "רותם": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "רחוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "ריחאנייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "רמות": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "רמות נפתלי": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "רמת טראמפ": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "רמת מגשימים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 76
+        },
+        "רנן": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "רעים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "רקפת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "רתמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "ר׳ג׳ר": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 93
+        },
+        "שאר ישוב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שבי דרום": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "שבי ציון": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שגב שלום": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "שדה אליהו": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 93
+        },
+        "שדה אליעזר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שדה בוקר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שדה דוד": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 27
+        },
+        "שדה נחום": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "שדה נחמיה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שדה ניצן": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "שדה צבי": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "שדי אברהם": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "שדי תרומות": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "שדמות מחולה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "שדרות": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 58
+        },
+        "שובה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 68
+        },
+        "שובל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שומרה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 65
+        },
+        "שומרייה": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "שוקדה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "שורשים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שזור": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שחרות": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שיבולים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "שיזף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שיח׳ דנון": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "שיטים": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שכניה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שלווה": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "שלווה במדבר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שלומי": {
+          "rate_pct": 0.2,
+          "ceiling": 259920,
+          "score": 62
+        },
+        "שלומית": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 76
+        },
+        "שמיר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שמעה": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שמרת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שני (ליבנה)": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "שניר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "שעב": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 60
+        },
+        "שעל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 45
+        },
+        "שער הגולן": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 86
+        },
+        "שפר": {
+          "rate_pct": 0.1,
+          "ceiling": 180000,
+          "score": 51
+        },
+        "שקף": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "שרשרת": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "שתולה": {
+          "rate_pct": 0.14,
+          "ceiling": 219960,
+          "score": 70
+        },
+        "תאשור": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "תדהר": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "תובל": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 32
+        },
+        "תושייה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "תל קציר": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 65
+        },
+        "תל שבע": {
+          "rate_pct": 0.18,
+          "ceiling": 259920,
+          "score": 67
+        },
+        "תל תאומים": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 70
+        },
+        "תלם": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 43
+        },
+        "תלמי אליהו": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 45
+        },
+        "תלמי ביל״ו": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 37
+        },
+        "תלמי יוסף": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 70
+        },
+        "תלמים": {
+          "rate_pct": 0.07,
+          "ceiling": 146640,
+          "score": 33
+        },
+        "תפרח": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        },
+        "תקומה": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": 62
+        },
+        "תרבין א־ס׳אנע (יישוב)": {
+          "rate_pct": 0.12,
+          "ceiling": 213240,
+          "score": 67
+        }
+      },
+      "_meta": {
+        "count": 485,
+        "rates": [
+          0.07,
+          0.1,
+          0.12,
+          0.14,
+          0.16,
+          0.18,
+          0.2
+        ]
+      }
+    },
+    "2026": {
+      "settlements": {
+        "א־סייד": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אבו סנאן": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "אבו קורינאת (יישוב)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אבו תלול": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אביבים": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "אביגיל": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "אבירים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אבן מנחם": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אבן שמואל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אבני איתן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אבנת": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אבשלום": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "אדורה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אדוריים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אדמית": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "אודם": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אוהד": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "אום בטין": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אופקים": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "אור הגנוז": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אור הנר": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "אורטל": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אורים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אחוזם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אחיהוד": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "איבים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "איילת השחר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אילון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אילות": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "איתן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אל־רום": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אלומות": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אלוני הבשן": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "אלי עד": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אליאב": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אליפז": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אליפלט": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אלמגור": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אלקוש": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אמירים": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "אמנון": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אמציה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אניעם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אספר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אפיק": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אפיקים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ארגמן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ארז": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "אשבול": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אשבל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אשדות יעקב (איחוד)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אשדות יעקב (מאוחד)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "אשחר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אשכולות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אשל הנשיא": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אשלים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "אשרת": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "באר אורה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "באר מלכה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "בארי": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "בוסתן הגליל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "בוקעאת׳א": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "בטחה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ביר הדאג׳": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ביריה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "בית ג׳ן": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "בית הגדי": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "בית הלל": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "בית העמק": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "בית הערבה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "בית זרע": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "בית חוגלה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "בית יוסף": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "בית קמה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "בית שאן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "בן עמי": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "בני דקלים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "בני יהודה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "בני נצרים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "בענה": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "בצת": {
+          "rate_pct": 0.12,
+          "ceiling": 86600,
+          "score": null
+        },
+        "בר־יוחאי": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ברור חיל": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "ברוש": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ברעם": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "גבולות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גבים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "גבעולים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גבעות בר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גבעת יואב": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גברעם": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "גדות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גונן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גורן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "גורנות הגליל": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "גילון": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גילת": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גינוסר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גיתה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "געתון": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "גרופית": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "גשור": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "גשר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "גשר הזיו": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "ג׳דיידה–מכר": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "ג׳ולס": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ג׳ש (גוש חלב)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "דביר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "דגניה א׳": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "דגניה ב׳": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "דוב״ב": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "דורות": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "דימונה": {
+          "rate_pct": 0.18,
+          "ceiling": 45400,
+          "score": null
+        },
+        "דיר אל־אסד": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "דיר חנא": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "דישון": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "דלתון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "דן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "דפנה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "דקל": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "דריג׳את": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "האון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "הגושרים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "הילה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "הר עמשא": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "הררית": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "זיקים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "זמרת": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "זרועה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חגי": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חד־נס": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חולית": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "חולתה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חוסן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חוסנייה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חוקוק": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חורה": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "חורפיש": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "חזון": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "חלוץ": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חלץ": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חמדיה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חמדת": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חניתה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "חספין": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חצבה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חצור הגלילית": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "חצרים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "חרשים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "טבריה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "טובא–זנר׳רייה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "טירת צבי": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "טל־אל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "טללים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "טמרה": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "טנא": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "טפחות": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "יאנוח–ג׳ת": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "יבול": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "יד מרדכי": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "יהל": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "יובל": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "יובלים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "יוטבתה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "יונתן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "יושיביה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "יחיעם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "יכיני": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "יסוד המעלה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "יסעור": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "יעד": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "יערה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "יפית": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "יפתח": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "יראון": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "ירדנה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ירוחם": {
+          "rate_pct": 0.18,
+          "ceiling": 45400,
+          "score": null
+        },
+        "ירכא": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ישע": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "יתד": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "כאבול": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "כברי": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "כדיתה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כורזים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כחל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כחלה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כינרת (מושבה)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כינרת (קבוצה)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כיסופים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "כיסרא–סמיע": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "כישור": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כליל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כלנית": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "כמאנה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כמהין": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כמון": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כנף": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כסיפה": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "כפר בלום": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כפר גלעדי": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כפר הנשיא": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כפר חושן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כפר חנניה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "כפר חרוב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כפר יאסיף": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כפר מימון": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "כפר מסריק": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כפר סאלד": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כפר עזה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "כפר ראש הנקרה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "כפר רוזנוולד (זרעית)": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "כפר רופין": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כפר שמאי": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "כרכום": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כרם בן זמרה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "כרם שלום": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "כרמי קטיף": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כרמיאל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כרמייה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "כרמים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "כרמל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "לבון": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "לבנים": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "להב": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "להבות הבשן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "לוחמי הגטאות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "לוטם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "לוטן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "לימן": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "לפידות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "לקייה": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "מבוא חמה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מבועים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מבטחים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "מבקיעים": {
+          "rate_pct": 0.2,
+          "ceiling": 267840,
+          "score": null
+        },
+        "מגאר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מגדל": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "מגן": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "מג׳ד אל־כרום": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "מג׳דל שמס": {
+          "rate_pct": 0.2,
+          "ceiling": 59920,
+          "score": null
+        },
+        "מדרשת בן גוריון": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מולדה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מורן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מזרעה": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "מחולה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מחנה טלי": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מחנה יוכבד": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "מחנה יפה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מחנה יתיר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מחניים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מטולה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "מיצר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מירון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מכחול": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מכמנים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מלילות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מלכייה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "מנוף": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מנות": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מנחמיה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מנרה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "מסדה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מסלול": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מסעדה": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "מעגלים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מעגן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מעוז חיים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מעון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מעונה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מעיין ברוך": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "מעלה גמלא": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מעלות–תרשיחא": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "מעליא": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "מפלסים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "מצדות יהודה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "מצובה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "מצפה רמון": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "מצפה שלם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מרגליות": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "מרום גולן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "מרחב עם": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "משאבי שדה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "משגב עם": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "משואה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "משכיות": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "משמר הירדן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "משמר הנגב": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "מתת": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "נאות גולן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נאות הכיכר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נאות מרדכי": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נאות סמדר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נבטים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נגוהות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נהרייה": {
+          "rate_pct": 0.12,
+          "ceiling": 26560,
+          "score": null
+        },
+        "נוב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נווה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "נווה אור": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נווה אטי״ב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נווה איתן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נווה זוהר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נווה זיו": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נווה חריף": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נועם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נחל עוז": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "נחף": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נטועה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "נטור": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נטע": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ניצנה (קהילת חינוך)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ניצני סיני": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ניר יצחק": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "ניר משה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ניר עוז": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "ניר עם": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "ניר עקיבא": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נירים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "נמרוד": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נס עמים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נעמ״ה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "נתיב העשרה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "נתיב השיירה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "נתיבות": {
+          "rate_pct": 0.16,
+          "ceiling": 26560,
+          "score": null
+        },
+        "סאג׳ור": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "סאסא": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "סוסיה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "סופה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "סח׳נין": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "סלמה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "סמר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "סנסנה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "סעד": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "סער": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "ספיר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עבדון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עברון": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "עזוז": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עידן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין אל־אסד": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין גב": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עין גדי": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עין הבשור": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "עין המפרץ": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עין הנצי״ב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין השלושה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "עין זיוון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין חצבה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין יהב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין יעקב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עין קניה": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "עין תמר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עיר אובות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עכו": {
+          "rate_pct": 0.12,
+          "ceiling": 86000,
+          "score": null
+        },
+        "עלומים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "עלמה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עמוקה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "עמיעד": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עמיעוז": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "עמיר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עמקה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עצמון שגב": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עראבה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "עראמשה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "ערב אל־נעים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ערד": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "ערערה בנגב": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "עשהאל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "עתניאל": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "פארן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "פדויים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פורייה עילית": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פורייה – כפר עבודה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פורייה – נווה עובד": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פטיש": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פלך": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פני חבר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "פסוטה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "פעמי תש״ז": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "פצאל": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "פקיעין (בוקייעה)": {
+          "rate_pct": 0.14,
+          "ceiling": 59920,
+          "score": null
+        },
+        "פקיעין חדשה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "פרוד": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "פרי גן": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "צאלים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "צביה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "צבעון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "צוחר": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "צופר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "צוקים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "צוריאל": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "צורית": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "צפת": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "קדמת צבי": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "קדרים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "קורנית": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "קטורה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "קלחים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "קליה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "קלע": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "קסר א־סיר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "קצרין": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "קריית ארבע": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "קריית שמונה": {
+          "rate_pct": 0.2,
+          "ceiling": 59920,
+          "score": null
+        },
+        "קשת": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ראמה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ראס אל־עין": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ראש פינה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רביבים": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "רביד": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "רגבה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רהט": {
+          "rate_pct": 0.16,
+          "ceiling": 26560,
+          "score": null
+        },
+        "רוח מדבר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רוחמה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רועי": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "רותם": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "רחוב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "ריחאנייה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "רמות": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רמות נפתלי": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "רמת טראמפ": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רמת מגשימים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "רנן": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רעים": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "רקפת": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "רתמים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "ר׳ג׳ר": {
+          "rate_pct": 0.2,
+          "ceiling": 59920,
+          "score": null
+        },
+        "שאר ישוב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שבי דרום": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שבי ציון": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שגב שלום": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "שדה אליהו": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שדה אליעזר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שדה בוקר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שדה דוד": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שדה נחום": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שדה נחמיה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שדה ניצן": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "שדה צבי": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שדי אברהם": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "שדי תרומות": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שדמות מחולה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שדרות": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "שובה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "שובל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שומרה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "שומרייה": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שוקדה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "שורשים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שזור": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "שחרות": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "שיבולים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שיזף": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שיח׳ דנון": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שיטים": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "שכניה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שלווה": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שלווה במדבר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שלומי": {
+          "rate_pct": 0.2,
+          "ceiling": 59920,
+          "score": null
+        },
+        "שלומית": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "שמיר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שמעה": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "שמרת": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שני (ליבנה)": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שניר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שעב": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שעל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שער הגולן": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "שפר": {
+          "rate_pct": 0.1,
+          "ceiling": 80000,
+          "score": null
+        },
+        "שקף": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שרשרת": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "שתולה": {
+          "rate_pct": 0.14,
+          "ceiling": 19960,
+          "score": null
+        },
+        "תאשור": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "תדהר": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "תובל": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "תושייה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "תל קציר": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "תל שבע": {
+          "rate_pct": 0.18,
+          "ceiling": 59920,
+          "score": null
+        },
+        "תל תאומים": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "תלם": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "תלמי אליהו": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "תלמי ביל״ו": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "תלמי יוסף": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "תלמים": {
+          "rate_pct": 0.07,
+          "ceiling": 46640,
+          "score": null
+        },
+        "תפרח": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        },
+        "תקומה": {
+          "rate_pct": 0.2,
+          "ceiling": 67840,
+          "score": null
+        },
+        "תרבין א־ס׳אנע (יישוב)": {
+          "rate_pct": 0.12,
+          "ceiling": 13240,
+          "score": null
+        }
+      },
+      "_meta": {
+        "count": 486,
+        "rates": [
+          0.07,
+          0.1,
+          0.12,
+          0.14,
+          0.16,
+          0.18,
+          0.2
+        ]
+      }
+    }
   },
   "postcodes": {
-    "10200": { "city": "נהריה", "tier": 2, "region": "north" },
-    "11000": { "city": "עכו", "tier": 1, "region": "north" },
-    "12000": { "city": "קריית שמונה", "tier": 1, "region": "north" },
-    "12200": { "city": "קריית שמונה", "tier": 1, "region": "north" },
-    "13100": { "city": "צפת", "tier": 1, "region": "north" },
-    "15100": { "city": "בית שאן", "tier": 1, "region": "north" },
-    "17000": { "city": "טבריה", "tier": 1, "region": "north" },
-    "20100": { "city": "כרמיאל", "tier": 1, "region": "north" },
-    "20200": { "city": "מגדל העמק", "tier": 1, "region": "north" },
-    "23100": { "city": "עפולה", "tier": 2, "region": "north" },
-    "31000": { "city": "חיפה (חלקים)", "tier": 2, "region": "north" },
-    "36000": { "city": "חדרה", "tier": 2, "region": "center-north" },
-    "38000": { "city": "נתניה", "tier": 2, "region": "center" },
-    "40500": { "city": "נתניה", "tier": 2, "region": "center" },
-    "42000": { "city": "נתניה", "tier": 2, "region": "center" },
-    "44100": { "city": "רעננה", "tier": 2, "region": "center" },
-    "44200": { "city": "כפר סבא", "tier": 2, "region": "center" },
-    "58000": { "city": "חולון", "tier": 2, "region": "center" },
-    "70100": { "city": "אור יהודה", "tier": 2, "region": "center" },
-    "71700": { "city": "לוד", "tier": 1, "region": "center" },
-    "72100": { "city": "רמלה", "tier": 1, "region": "center" },
-    "75700": { "city": "ראשון לציון", "tier": 2, "region": "center" },
-    "76100": { "city": "רחובות", "tier": 2, "region": "center" },
-    "77100": { "city": "אשדוד", "tier": 2, "region": "south" },
-    "78000": { "city": "גדרה", "tier": 2, "region": "south" },
-    "79100": { "city": "קריית מלאכי", "tier": 1, "region": "south" },
-    "80100": { "city": "אשדוד", "tier": 2, "region": "south" },
-    "82100": { "city": "אילת", "tier": 1, "region": "south" },
-    "84100": { "city": "באר שבע", "tier": 1, "region": "south" },
-    "84200": { "city": "באר שבע", "tier": 1, "region": "south" },
-    "84300": { "city": "באר שבע", "tier": 1, "region": "south" },
-    "85100": { "city": "אשקלון", "tier": 2, "region": "south" },
-    "85200": { "city": "שדרות", "tier": 1, "region": "south" },
-    "85400": { "city": "נתיבות", "tier": 1, "region": "south" },
-    "86100": { "city": "דימונה", "tier": 1, "region": "south" },
-    "87000": { "city": "ערד", "tier": 1, "region": "south" },
-    "88000": { "city": "אופקים", "tier": 1, "region": "south" },
-    "89100": { "city": "מצפה רמון", "tier": 1, "region": "south" },
-    "90000": { "city": "ירושלים (שכונות פריפריה)", "tier": 2, "region": "center" },
-    "90300": { "city": "מעלה אדומים", "tier": 1, "region": "judea" }
+    "11000": "עכו",
+    "12000": "קריית שמונה",
+    "12200": "קריית שמונה",
+    "13100": "צפת",
+    "15100": "בית שאן",
+    "17000": "טבריה",
+    "20100": "כרמיאל",
+    "85200": "שדרות",
+    "85400": "נתיבות",
+    "86100": "דימונה",
+    "87000": "ערד",
+    "88000": "אופקים",
+    "89100": "מצפה רמון"
   },
-  "communities": [
-    { "name": "אופקים", "tier": 1, "region": "south", "postcodes": ["88000"] },
-    { "name": "אור יהודה", "tier": 2, "region": "center", "postcodes": ["70100"] },
-    { "name": "אילת", "tier": 1, "region": "south", "postcodes": ["82100"] },
-    { "name": "אשדוד", "tier": 2, "region": "south", "postcodes": ["77100", "80100"] },
-    { "name": "אשקלון", "tier": 2, "region": "south", "postcodes": ["85100"] },
-    { "name": "באר שבע", "tier": 1, "region": "south", "postcodes": ["84100", "84200", "84300"] },
-    { "name": "בית שאן", "tier": 1, "region": "north", "postcodes": ["15100"] },
-    { "name": "גדרה", "tier": 2, "region": "south", "postcodes": ["78000"] },
-    { "name": "דימונה", "tier": 1, "region": "south", "postcodes": ["86100"] },
-    { "name": "חדרה", "tier": 2, "region": "center-north", "postcodes": ["36000"] },
-    { "name": "חולון", "tier": 2, "region": "center", "postcodes": ["58000"] },
-    { "name": "חיפה (חלקים)", "tier": 2, "region": "north", "postcodes": ["31000"] },
-    { "name": "טבריה", "tier": 1, "region": "north", "postcodes": ["17000"] },
-    { "name": "ירושלים (שכונות פריפריה)", "tier": 2, "region": "center", "postcodes": ["90000"] },
-    { "name": "כפר סבא", "tier": 2, "region": "center", "postcodes": ["44200"] },
-    { "name": "כרמיאל", "tier": 1, "region": "north", "postcodes": ["20100"] },
-    { "name": "לוד", "tier": 1, "region": "center", "postcodes": ["71700"] },
-    { "name": "מגדל העמק", "tier": 1, "region": "north", "postcodes": ["20200"] },
-    { "name": "מעלה אדומים", "tier": 1, "region": "judea", "postcodes": ["90300"] },
-    { "name": "מצפה רמון", "tier": 1, "region": "south", "postcodes": ["89100"] },
-    { "name": "נהריה", "tier": 2, "region": "north", "postcodes": ["10200"] },
-    { "name": "נתיבות", "tier": 1, "region": "south", "postcodes": ["85400"] },
-    { "name": "נתניה", "tier": 2, "region": "center", "postcodes": ["38000", "40500", "42000"] },
-    { "name": "עכו", "tier": 1, "region": "north", "postcodes": ["11000"] },
-    { "name": "עפולה", "tier": 2, "region": "north", "postcodes": ["23100"] },
-    { "name": "ערד", "tier": 1, "region": "south", "postcodes": ["87000"] },
-    { "name": "צפת", "tier": 1, "region": "north", "postcodes": ["13100"] },
-    { "name": "קריית מלאכי", "tier": 1, "region": "south", "postcodes": ["79100"] },
-    { "name": "קריית שמונה", "tier": 1, "region": "north", "postcodes": ["12000", "12200"] },
-    { "name": "ראשון לציון", "tier": 2, "region": "center", "postcodes": ["75700"] },
-    { "name": "רחובות", "tier": 2, "region": "center", "postcodes": ["76100"] },
-    { "name": "רמלה", "tier": 1, "region": "center", "postcodes": ["72100"] },
-    { "name": "רעננה", "tier": 2, "region": "center", "postcodes": ["44100"] },
-    { "name": "שדרות", "tier": 1, "region": "south", "postcodes": ["85200"] }
-  ]
+  "_postcodes_meta": "Postcode→settlement mapping is intentionally small. Only postcodes that resolve to a settlement actually present in the statute years are included. Pre-2026-05-04 list contained 22 false-positive center-city postcodes (Netanya/Holon/Rishon LeZion/Raanana/Kfar Saba/Rehovot/Hadera/Ashdod/Be'er Sheva/Eilat/Jerusalem/Ma'aleh Adumim/Lod/Ramla/Or Yehuda/Gedera/Kiryat Malachi/Ashkelon/Naharia/Migdal HaEmek/Afula/Haifa) which produced illegal over-refunds. Removed."
 }

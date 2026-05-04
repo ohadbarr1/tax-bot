@@ -1,194 +1,133 @@
 /**
  * peripheryData.test.ts — schema + content sanity for the periphery dataset.
  *
- * Closes the data-half assertions for audit F-007 (`audits/tax-domain.md`
- * §F-007): "פריפריה — שיטת חישוב שגויה לחלוטין". The math model itself was
- * fixed in Phase 0 §0.C (`lib/calculateTax.ts:calculatePeripheryDiscount`);
- * this test pins the data-shape contract that the engine relies on, plus
- * a handful of widely-known sample lookups and tier classifications from
- * צו 2024.
- *
  * Statutory anchor:
- *   צו מס הכנסה (קביעת ישובים מזכים) (תיקון), התשפ"ד-2024
- *   סעיף 11 לפקודת מס הכנסה — tier 1 = 13%, tier 2 = 11%, cap ₪241,920 (2025).
+ *   הודעת מס הכנסה (רשימת יישובים מוטבים) — annual notice per סעיף 11(ב)(2).
+ *   Each settlement has a year-specific (rate_pct, ceiling) pair set by the
+ *   Director of the Tax Authority. Rates 7%-20%, ceilings ₪146,640-₪267,840
+ *   (2025). NOT credit-points, NOT a flat tier system. The pre-2026-05-04
+ *   tier1=13%/tier2=11% model never matched the statute and was scrapped.
  */
 
 import { describe, it, expect } from "vitest";
 import peripheryRaw from "@/data/periphery_postcodes.json";
-import {
-  calculatePeripheryDiscount,
-} from "@/lib/calculateTax";
+import { calculatePeripheryDiscount } from "@/lib/calculateTax";
 
-// Re-typed to surface the runtime shape the engine + pdfUtils + optimizer
-// actually consume. If anyone changes the JSON shape, this assignment fails
-// at compile-time.
 const periphery = peripheryRaw as {
   description: string;
   source: string;
-  source_url?: string;
+  source_urls?: string[];
   last_updated: string;
-  model: "percentage_discount";
-  effective_year: number;
-  tiers: {
-    tier1: { discount_pct: number; cap_2024: number; cap_2025: number };
-    tier2: { discount_pct: number; cap_2024: number; cap_2025: number };
-  };
-  data_gap?: string;
-  _meta: {
-    community_count: number;
-    tier1_count: number;
-    tier2_count: number;
-    postcode_count: number;
-    expected_full_count: number;
-  };
-  postcodes: Record<
+  model: "per_settlement_rate_and_ceiling";
+  years: Record<
     string,
-    { city: string; tier: 1 | 2; region?: string }
+    {
+      settlements: Record<
+        string,
+        { rate_pct: number; ceiling: number; score?: number | null }
+      >;
+      _meta: { count: number; rates: number[] };
+    }
   >;
-  communities: Array<{
-    name: string;
-    tier: 1 | 2;
-    postcodes: string[];
-    region?: string;
-  }>;
+  postcodes: Record<string, string>;
 };
 
-describe("F-007 / צו 2024 — periphery dataset SHAPE", () => {
-  it("declares the percentage-discount model (not credit-points)", () => {
-    expect(periphery.model).toBe("percentage_discount");
+describe("F-007 — periphery dataset SHAPE", () => {
+  it("declares the per-settlement model (not credit-points, not tiered)", () => {
+    expect(periphery.model).toBe("per_settlement_rate_and_ceiling");
   });
 
-  it("cites צו 2024 as source", () => {
-    expect(periphery.source).toMatch(/ישובים מזכים/);
-    expect(periphery.source).toMatch(/2024|תשפ"ד/);
+  it("cites הודעת מס הכנסה / רשימת יישובים מוטבים as source", () => {
+    expect(periphery.source).toMatch(/יישובים מוטבים/);
   });
 
-  it("declares tier1=13% and tier2=11% (per צו 2023 §3)", () => {
-    expect(periphery.tiers.tier1.discount_pct).toBeCloseTo(0.13, 5);
-    expect(periphery.tiers.tier2.discount_pct).toBeCloseTo(0.11, 5);
+  it("publishes 2024, 2025, and 2026 statute years", () => {
+    expect(periphery.years["2024"]).toBeDefined();
+    expect(periphery.years["2025"]).toBeDefined();
+    expect(periphery.years["2026"]).toBeDefined();
   });
 
-  it("declares 2024/2025 income caps that match the engine constants", () => {
-    // Mirror PERIPHERY_INCOME_CAP in lib/calculateTax.ts (147-154).
-    expect(periphery.tiers.tier1.cap_2024).toBe(236_520);
-    expect(periphery.tiers.tier1.cap_2025).toBe(241_920);
-    expect(periphery.tiers.tier2.cap_2024).toBe(236_520);
-    expect(periphery.tiers.tier2.cap_2025).toBe(241_920);
+  it("each year has 400+ settlements (statute-grade coverage)", () => {
+    for (const yr of ["2024", "2025", "2026"]) {
+      expect(periphery.years[yr]._meta.count).toBeGreaterThanOrEqual(400);
+    }
   });
 
-  it("postcodes map: every entry has city + tier∈{1,2}", () => {
-    const entries = Object.entries(periphery.postcodes);
-    expect(entries.length).toBeGreaterThan(0);
-    for (const [pc, e] of entries) {
+  it("settlement rates fall in [0.07, 0.20]", () => {
+    for (const yr of Object.values(periphery.years)) {
+      for (const s of Object.values(yr.settlements)) {
+        expect(s.rate_pct).toBeGreaterThanOrEqual(0.07);
+        expect(s.rate_pct).toBeLessThanOrEqual(0.20);
+        expect(s.ceiling).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("postcode → settlement mapping resolves only to statute settlements (no false positives)", () => {
+    const stat2025 = periphery.years["2025"].settlements;
+    for (const [pc, name] of Object.entries(periphery.postcodes)) {
       expect(pc).toMatch(/^\d{5,7}$/);
-      expect(typeof e.city).toBe("string");
-      expect(e.city.length).toBeGreaterThan(0);
-      expect([1, 2]).toContain(e.tier);
+      expect(stat2025[name]).toBeDefined();
     }
   });
 
-  it("communities array: every entry has name + tier∈{1,2} + postcodes[]", () => {
-    expect(periphery.communities.length).toBeGreaterThan(0);
-    for (const c of periphery.communities) {
-      expect(typeof c.name).toBe("string");
-      expect(c.name.length).toBeGreaterThan(0);
-      expect([1, 2]).toContain(c.tier);
-      expect(Array.isArray(c.postcodes)).toBe(true);
-    }
-  });
-
-  it("communities are unique by name", () => {
-    const names = periphery.communities.map((c) => c.name);
-    expect(new Set(names).size).toBe(names.length);
-  });
-
-  it("_meta tier counts match the actual communities array", () => {
-    const t1 = periphery.communities.filter((c) => c.tier === 1).length;
-    const t2 = periphery.communities.filter((c) => c.tier === 2).length;
-    expect(periphery._meta.tier1_count).toBe(t1);
-    expect(periphery._meta.tier2_count).toBe(t2);
-    expect(periphery._meta.community_count).toBe(t1 + t2);
-  });
-
-  it("_meta postcode_count matches the actual postcodes map size", () => {
-    expect(periphery._meta.postcode_count).toBe(
-      Object.keys(periphery.postcodes).length
-    );
-  });
-
-  it("data_gap is documented while community_count < expected (408)", () => {
-    if (periphery._meta.community_count < periphery._meta.expected_full_count) {
-      expect(periphery.data_gap).toBeTruthy();
-      expect(periphery.data_gap).toMatch(/build-periphery-list/);
+  it("known center cities are NOT in any year's statute (regression guard)", () => {
+    const blocked = ["נתניה", "חולון", "ראשון לציון", "רעננה", "כפר סבא", "רחובות", "חדרה", "אשדוד", "באר שבע", "אילת", "ירושלים"];
+    for (const yr of Object.values(periphery.years)) {
+      for (const name of blocked) {
+        expect(yr.settlements[name]).toBeUndefined();
+      }
     }
   });
 });
 
-describe("F-007 / צו 2024 — sample community lookups", () => {
-  // These are widely-published, long-standing classifications that have
-  // appeared in every recent revision of צו ישובים מזכים. Used as a
-  // canary against silent regressions.
-
-  it("דימונה (postcode 86100) is tier 1 (south)", () => {
-    const e = periphery.postcodes["86100"];
+describe("F-007 — sample statute lookups", () => {
+  it("דימונה 2025 → 18%, ceiling ₪245,400", () => {
+    const e = periphery.years["2025"].settlements["דימונה"];
     expect(e).toBeDefined();
-    expect(e.city).toBe("דימונה");
-    expect(e.tier).toBe(1);
+    expect(e.rate_pct).toBeCloseTo(0.18, 5);
+    expect(e.ceiling).toBe(245_400);
   });
 
-  it("אילת (postcode 82100) is tier 1 (south)", () => {
-    const e = periphery.postcodes["82100"];
-    expect(e).toBeDefined();
-    expect(e.city).toBe("אילת");
-    expect(e.tier).toBe(1);
+  it("שדרות 2025 → 20%, ceiling ₪267,840", () => {
+    const e = periphery.years["2025"].settlements["שדרות"];
+    expect(e.rate_pct).toBeCloseTo(0.20, 5);
+    expect(e.ceiling).toBe(267_840);
   });
 
-  it("קריית שמונה (postcode 12000) is tier 1 (north)", () => {
-    const e = periphery.postcodes["12000"];
-    expect(e).toBeDefined();
-    expect(e.city).toBe("קריית שמונה");
-    expect(e.tier).toBe(1);
+  it("צפת 2025 → 12%, ceiling ₪213,240", () => {
+    const e = periphery.years["2025"].settlements["צפת"];
+    expect(e.rate_pct).toBeCloseTo(0.12, 5);
+    expect(e.ceiling).toBe(213_240);
   });
 
-  it("אשדוד (postcode 80100) is tier 2 (south)", () => {
-    const e = periphery.postcodes["80100"];
-    expect(e).toBeDefined();
-    expect(e.city).toBe("אשדוד");
-    expect(e.tier).toBe(2);
+  it("postcode 86100 resolves to דימונה", () => {
+    expect(periphery.postcodes["86100"]).toBe("דימונה");
   });
 
-  it("נתניה (postcode 42000) is tier 2 (center)", () => {
-    const e = periphery.postcodes["42000"];
-    expect(e).toBeDefined();
-    expect(e.city).toBe("נתניה");
-    expect(e.tier).toBe(2);
-  });
-
-  it("a non-eligible postcode (e.g. תל אביב 61000) returns undefined", () => {
+  it("non-eligible postcode (e.g. תל אביב 61000) is not in the table", () => {
     expect(periphery.postcodes["61000"]).toBeUndefined();
   });
 });
 
-describe("F-007 / סעיף 11 — engine integration end-to-end", () => {
-  // End-to-end: lookup → calculatePeripheryDiscount → ILS-correct discount.
-
-  it("דימונה resident, ₪200K income, 2025 → tier-1 13% × ₪200K = ₪26,000", () => {
-    const entry = periphery.postcodes["86100"]; // דימונה, tier 1
-    expect(entry.tier).toBe(1);
-    const discount = calculatePeripheryDiscount(200_000, 1, 2025);
-    expect(discount).toBe(26_000); // 0.13 × 200_000
+describe("F-007 — engine integration end-to-end", () => {
+  it("דימונה resident, ₪200K income, 2025 → 18% × ₪200K = ₪36,000", () => {
+    expect(calculatePeripheryDiscount(200_000, "דימונה", 2025)).toBe(36_000);
   });
 
-  it("אשקלון resident, ₪200K income, 2025 → tier-2 11% × ₪200K = ₪22,000", () => {
-    const entry = periphery.postcodes["85100"]; // אשקלון, tier 2
-    expect(entry.tier).toBe(2);
-    const discount = calculatePeripheryDiscount(200_000, 2, 2025);
-    expect(discount).toBe(22_000); // 0.11 × 200_000
+  it("שדרות resident, ₪200K income, 2025 → 20% × ₪200K = ₪40,000", () => {
+    expect(calculatePeripheryDiscount(200_000, "שדרות", 2025)).toBe(40_000);
   });
 
-  it("דימונה resident, ₪400K income, 2025 → capped at 13% × ₪241,920 = ₪31,449.6 → ₪31,450", () => {
-    const discount = calculatePeripheryDiscount(400_000, 1, 2025);
-    // 0.13 × 241_920 = 31_449.6, rounded to 31_450
-    expect(discount).toBe(Math.round(0.13 * 241_920));
+  it("דימונה resident, ₪400K income, 2025 → capped at 18% × ₪245,400 = ₪44,172", () => {
+    expect(calculatePeripheryDiscount(400_000, "דימונה", 2025)).toBe(Math.round(245_400 * 0.18));
+  });
+
+  it("non-statute settlement (תל אביב) → 0", () => {
+    expect(calculatePeripheryDiscount(200_000, "תל אביב", 2025)).toBe(0);
+  });
+
+  it("pre-2024 year (no published list) → 0", () => {
+    expect(calculatePeripheryDiscount(200_000, "דימונה", 2023)).toBe(0);
   });
 });

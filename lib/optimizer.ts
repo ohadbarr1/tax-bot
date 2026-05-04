@@ -2,19 +2,20 @@ import type { TaxPayer, FinancialData } from "@/types";
 import { calculateFullRefund } from "./calculateTax";
 import peripheryData from "@/data/periphery_postcodes.json";
 
-// Pre-build a lowercase set of city names mentioned in the periphery dataset.
-// We can't look up by postcode (the user hasn't entered one yet — that's the
-// whole point of the suggestion), but if they live in a Hebrew city name that
-// appears anywhere in the periphery postcode map we surface the suggestion.
+// Pre-build a set of all eligible-settlement names across the published years.
+// Used purely as a hint signal (does the typed city name MATCH a statute row?)
+// — NOT as the source of the discount calculation, which is per-year per-name.
 const peripheryCityNames: Set<string> = (() => {
-  const data = peripheryData as { postcodes: Record<string, { city: string }> };
+  const data = peripheryData as {
+    years: Record<string, { settlements: Record<string, unknown> }>;
+  };
   const set = new Set<string>();
-  for (const entry of Object.values(data.postcodes)) {
-    if (!entry?.city) continue;
-    // City entries look like "באר שבע" or "ירושלים (שכונות פריפריה)".
-    // Strip the parenthetical qualifier so "ירושלים" matches on its own.
-    const normalized = entry.city.replace(/\s*\([^)]*\)\s*/g, "").trim();
-    if (normalized) set.add(normalized);
+  for (const yr of Object.values(data.years ?? {})) {
+    for (const name of Object.keys(yr?.settlements ?? {})) {
+      // Names look like "באר שבע" or "אבו קרינאת (יישוב)".
+      const normalized = name.replace(/\s*\([^)]*\)\s*/g, "").trim();
+      if (normalized) set.add(normalized);
+    }
   }
   return set;
 })();
@@ -116,31 +117,33 @@ export function generateOptimizations(
     });
   }
 
-  // 6. Periphery — F-007 corrected: periphery is a percentage tax-discount
-  // (11%/13% × income, capped) under צו 2023, NOT credit-points. We surface
-  // a "set your postcode" hint when:
-  //   (a) the user typed a city name that appears in our periphery list,
-  //   (b) they haven't yet provided a postcode, and
-  //   (c) their `peripheryDiscount` is currently 0 (i.e. uncomputed).
-  // The estimated saving uses tier-2 (11%) on a conservative ₪100k slice as a
-  // floor — actual benefit is computed precisely once the postcode arrives.
+  // 6. Periphery — F-007 corrected: periphery is a per-settlement % discount
+  // (rate 7%-20%, per-settlement ceiling) under סעיף 11 + annual ITA notice,
+  // NOT credit-points and NOT a flat tier system. We surface a "set your
+  // settlement" hint when:
+  //   (a) the user typed a city name that matches a statute row,
+  //   (b) they haven't yet provided residenceSettlement nor postcode, and
+  //   (c) their peripheryDiscount is currently 0 (uncomputed).
+  // Saving uses 7% (the floor rate) on a conservative ₪100k slice — actual
+  // benefit is computed precisely once the settlement is set.
   const addr = taxpayer.address;
   if (
     addr?.city &&
+    !taxpayer.residenceSettlement &&
     !taxpayer.postcode &&
     !result.peripheryDiscount &&
     cityLooksPeripheral(addr.city)
   ) {
     const conservativeIncomeForHint = Math.min(result.taxableIncome, 100_000);
-    const conservativeSaving = Math.round(conservativeIncomeForHint * 0.11);
+    const conservativeSaving = Math.round(conservativeIncomeForHint * 0.07);
     suggestions.push({
       id: "opt-periphery",
-      title: "בדוק ישוב פריפריה",
-      description: `${addr.city} עשוי להיות מזוהה כישוב פריפריה. הוסף מיקוד לפרופיל כדי לקבל הנחת מס של 11%–13% מההכנסה החייבת (עד תקרה שנתית) — חיסכון משוער מינימלי ₪${conservativeSaving.toLocaleString("he-IL")}.`,
+      title: "בדוק ישוב מוטב",
+      description: `${addr.city} עשוי להופיע ברשימת היישובים המוטבים (סעיף 11). הגדר את היישוב בפרופיל כדי לקבל הנחת מס של 7%–20% מההכנסה החייבת (עד תקרה שנתית) — חיסכון משוער מינימלי ₪${conservativeSaving.toLocaleString("he-IL")}.`,
       estimatedSaving: conservativeSaving,
       priority: "low",
       action: "update_profile",
-      actionPayload: { field: "postcode" },
+      actionPayload: { field: "residenceSettlement" },
     });
   }
   // Reference unused so TS doesn't fail when downstream callers strip — the

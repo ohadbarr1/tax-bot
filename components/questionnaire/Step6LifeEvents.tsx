@@ -89,6 +89,63 @@ export default function Step6LifeEvents({
                     </p>
                   </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <Label>פיצויים ברוטו (₪)</Label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        value={lifeEvents.grossSeverancePay ?? ""}
+                        onChange={(e) =>
+                          onUpdateLifeEvent({
+                            grossSeverancePay: e.target.value === "" ? undefined : Number(e.target.value),
+                          })
+                        }
+                        placeholder="לדוגמה: 120000"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                      />
+                    </div>
+                    <div>
+                      <Label>משכורת אחרונה (₪/חודש)</Label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        value={lifeEvents.lastMonthlySalary ?? ""}
+                        onChange={(e) =>
+                          onUpdateLifeEvent({
+                            lastMonthlySalary: e.target.value === "" ? undefined : Number(e.target.value),
+                          })
+                        }
+                        placeholder="לדוגמה: 18000"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                      />
+                    </div>
+                    <div>
+                      <Label>שנות ותק</Label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step={0.5}
+                        value={lifeEvents.yearsOfService ?? ""}
+                        onChange={(e) =>
+                          onUpdateLifeEvent({
+                            yearsOfService: e.target.value === "" ? undefined : Number(e.target.value),
+                          })
+                        }
+                        placeholder="לדוגמה: 7.5"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    הפטור לפי סעיף 9(7א) מחושב אוטומטית: min(ברוטו, משכורת
+                    אחרונה × שנות ותק) עד תקרה שנתית. השאר את השדות ריקים אם
+                    אינך זוכר/ת — נשתמש בערכים מטופס 161 אם הוא יועלה.
+                  </p>
+
                   <div className="space-y-2">
                     <Label>האם קיבלת טופס 161 מהמעסיק?</Label>
                     <TogglePair

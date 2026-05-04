@@ -169,24 +169,11 @@ const DISABILITY_INCOME_CAP: Record<number, number> = {
   2025: 645_360,  // ITA published 2025 ceiling
 };
 
-// Periphery percentage-discount under צו 2023 only takes effect from tax year
-// 2024 onwards. For 2020–2023 the cap is intentionally 0 — the calculator
-// returns 0 discount, which is the conservative no-claim outcome. Pre-2024
-// claims that were eligible under the legacy flat-points model are out of
-// scope for the percentage-discount engine and require a future migration.
-const PERIPHERY_INCOME_CAP: Record<number, number> = {
-  2020: 0,
-  2021: 0,
-  2022: 0,
-  2023: 0,
-  2024: 236_520,  // ITA published 2024 ceiling
-  2025: 241_920,  // ITA published 2025 ceiling
-};
-
-const PERIPHERY_DISCOUNT_PCT: Record<number, number> = {
-  1: 0.13, // tier 1 — 13% of personal-effort income up to cap
-  2: 0.11, // tier 2 — 11% of personal-effort income up to cap
-};
+// Periphery rate + ceiling are PER-SETTLEMENT, set annually by the Director of
+// the Tax Authority under סעיף 11(ב)(2) (הודעת מס הכנסה — רשימת יישובים מוטבים).
+// Rates 7%-20%, ceilings ₪146,640-₪267,840 (2025). The data lives in
+// data/periphery_postcodes.json under years[YEAR].settlements[NAME].
+// Pre-2024 lists not yet ingested → engine returns 0 (conservative no-claim).
 
 // MA degree professions that earn 1.0 nq under סעיף 40ג(ב).
 const MA_PROFESSIONAL_KEYS = new Set([
@@ -314,22 +301,59 @@ export function calculateDisabilityExemption(
 
 // ─── 3. Periphery percentage-discount helper (F-007) ─────────────────────────
 
+type PeripherySettlement = {
+  rate_pct: number;
+  ceiling: number;
+  score?: number | null;
+};
+type PeripheryYear = { settlements: Record<string, PeripherySettlement> };
+type PeripheryData = {
+  years: Record<string, PeripheryYear>;
+  postcodes: Record<string, string>;
+};
+
 /**
- * Compute the periphery tax-discount under צו 2023 / סעיף 11.
- * Tier 1 = 13% of personal-effort income up to ₪241,920 (2025);
- * Tier 2 = 11% of same.
+ * Resolve a settlement entry for a given (settlementName, year). Returns the
+ * statute row or null if the settlement is not on that year's published list.
+ */
+export function lookupPeripherySettlement(
+  settlementName: string | undefined | null,
+  year: number
+): PeripherySettlement | null {
+  if (!settlementName) return null;
+  const d = peripheryData as PeripheryData;
+  const yr = d.years?.[String(year)];
+  if (!yr) return null;
+  return yr.settlements[settlementName] ?? null;
+}
+
+/**
+ * Resolve a settlement name from a 5/7-digit Israeli postcode using the
+ * curated postcodes table. Only postcodes that resolve to a settlement
+ * actually present in the statute years are kept in the table.
+ */
+export function lookupSettlementByPostcode(postcode: string | undefined | null): string | null {
+  if (!postcode) return null;
+  const d = peripheryData as PeripheryData;
+  return d.postcodes?.[postcode] ?? null;
+}
+
+/**
+ * Compute the periphery tax-discount under סעיף 11.
+ * Discount = min(personal_effort_income, ceiling) × rate_pct, where rate and
+ * ceiling are set per settlement per year by the Director of the Tax Authority.
  * Returns the ILS DISCOUNT (a reduction in tax owed, not credit-points).
  */
 export function calculatePeripheryDiscount(
   taxableIncome: number,
-  tier: 1 | 2,
+  settlementName: string | undefined | null,
   year: number
 ): number {
   if (taxableIncome <= 0) return 0;
-  const cap = PERIPHERY_INCOME_CAP[year] ?? PERIPHERY_INCOME_CAP[2025];
-  const pct = PERIPHERY_DISCOUNT_PCT[tier] ?? 0;
-  const eligibleIncome = Math.min(taxableIncome, cap);
-  return Math.round(eligibleIncome * pct);
+  const entry = lookupPeripherySettlement(settlementName, year);
+  if (!entry) return 0;
+  const eligibleIncome = Math.min(taxableIncome, entry.ceiling);
+  return Math.round(eligibleIncome * entry.rate_pct);
 }
 
 // ─── 3b. Severance §9(7א) exemption helper (F-013) ───────────────────────────
@@ -1248,19 +1272,14 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     isSalaried: true,
   });
 
-  // Step 4b: F-007 Periphery percentage-discount.
+  // Step 4b: F-007 Periphery percentage-discount. Per-settlement (rate, ceiling)
+  // pulled from the annual statute list. Settlement is resolved from
+  // taxpayer.residenceSettlement first, falling back to a postcode lookup.
   let peripheryDiscount = 0;
-  if (taxpayer.postcode) {
-    const postcodes = (peripheryData as { postcodes: Record<string, { city: string; tier: number }> })
-      .postcodes;
-    const entry = postcodes[taxpayer.postcode];
-    if (entry && (entry.tier === 1 || entry.tier === 2)) {
-      peripheryDiscount = calculatePeripheryDiscount(
-        taxableIncome,
-        entry.tier as 1 | 2,
-        year
-      );
-    }
+  const settlementName =
+    taxpayer.residenceSettlement ?? lookupSettlementByPostcode(taxpayer.postcode);
+  if (settlementName) {
+    peripheryDiscount = calculatePeripheryDiscount(taxableIncome, settlementName, year);
   }
 
   // Step 4c: F-024 §67א foreign-salary credit. Calculated against the
