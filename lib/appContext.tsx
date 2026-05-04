@@ -278,8 +278,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setView = (view: AppState["currentView"]) =>
     setState((s) => ({ ...s, currentView: view }));
 
-  const setQuestionnaireStep = (step: number) =>
-    setState((s) => ({ ...s, questionnaire: { ...s.questionnaire, step } }));
+  // Stable identity + idempotent: must not produce a new state ref when the
+  // step hasn't actually changed. Otherwise the [step] page's useEffect
+  // (which depends on setQuestionnaireStep) loops every render, reseeding
+  // state on every cycle, which silently aborts in-flight router.push
+  // transitions — the symptom is "המשך button does nothing".
+  const setQuestionnaireStep = useCallback((step: number) => {
+    setState((s) => {
+      if (s.questionnaire?.step === step) return s;
+      return { ...s, questionnaire: { ...s.questionnaire, step } };
+    });
+  }, []);
 
   const completeQuestionnaire = () =>
     setState((s) => {

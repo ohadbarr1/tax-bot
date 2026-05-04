@@ -1,34 +1,39 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/firebase/authContext";
 
 /**
  * AuthGate — wraps a subtree and blocks rendering until we know the user is
  * authenticated. Anonymous users are treated as authenticated so the app is
  * usable end-to-end without Google sign-in; only truly unresolved auth (e.g.
- * sign-in-anonymously failed) shows the sign-in prompt.
+ * sign-in-anonymously failed AND the grace window expired) shows the sign-in
+ * prompt.
  *
- * Behavior:
- *   - Firebase unconfigured (local dev / tests)  → no-op, render children.
- *   - Auth not ready yet                          → render a small spinner.
- *   - Ready + no user                             → render a sign-in prompt
- *                                                   (Google is the only escape
- *                                                   when anon sign-in itself
- *                                                   failed).
- *   - Ready + anonymous or linked user            → render children.
- *
- * The landing page and marketing routes remain open to anon users entirely.
+ * Why the grace window: AuthProvider sets `ready=true` immediately on
+ * subscribe (before any user is known) to avoid hanging on a stuck IndexedDB
+ * init. Without a grace period, AuthGate would briefly flash SignInPrompt
+ * while the anonymous sign-in is still in flight — a visible regression for
+ * every fresh visitor. We hold on the spinner for `GRACE_MS` after mount and
+ * only fall through to the prompt if `user` is still null past that.
  */
+const GRACE_MS = 4000;
+
 export function AuthGate({
   children,
 }: {
   children: ReactNode;
 }) {
   const { user, ready, configured, linkGoogle } = useAuth();
+  const [graceExpired, setGraceExpired] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setGraceExpired(true), GRACE_MS);
+    return () => clearTimeout(t);
+  }, []);
 
   if (!configured) return <>{children}</>;
-  if (!ready) {
+  if (!ready || (!user && !graceExpired)) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
