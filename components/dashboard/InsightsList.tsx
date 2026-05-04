@@ -51,7 +51,7 @@ export function InsightsList({ taxpayer, financials, hasOverlap }: InsightsListP
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-foreground">{emp.name}</span>
                       {emp.isMainEmployer && (
-                        <span className="bg-[#0F172A] text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                        <span className="bg-kc-ink text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full">
                           ראשי
                         </span>
                       )}
@@ -63,7 +63,7 @@ export function InsightsList({ taxpayer, financials, hasOverlap }: InsightsListP
                   <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
                     <motion.div
                       className={`h-2.5 rounded-full ${
-                        emp.isMainEmployer ? "bg-[#0F172A]" : "bg-orange-400"
+                        emp.isMainEmployer ? "bg-kc-ink" : "bg-orange-400"
                       }`}
                       initial={{ width: 0 }}
                       animate={{ width: `${widthPct}%` }}
@@ -90,7 +90,7 @@ export function InsightsList({ taxpayer, financials, hasOverlap }: InsightsListP
 
         {/* Top identity */}
         <div className="flex items-center gap-3 pb-3 border-b border-border">
-          <div className="w-10 h-10 rounded-xl bg-[#0F172A] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-kc-ink flex items-center justify-center">
             <span className="text-white text-sm font-bold">אב</span>
           </div>
           <div>

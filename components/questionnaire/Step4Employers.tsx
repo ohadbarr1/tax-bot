@@ -22,7 +22,7 @@ export default function Step4Employers({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">מפת מעסיקים</h2>
+        <h2 className="text-xl font-bold text-kc-ink">מפת מעסיקים</h2>
         <p className="mt-1 text-sm text-slate-500">
           חפיפת מעסיקים ללא תיאום מס עלולה לגרום לגביית יתר משמעותית.
         </p>
@@ -33,7 +33,7 @@ export default function Step4Employers({
           <Label>מעסיקים בשנת המס</Label>
           <button
             onClick={onAddEmployer}
-            className="flex items-center gap-1 text-xs text-[#0F172A] font-medium hover:text-emerald-600 transition-colors"
+            className="flex items-center gap-1 text-xs text-kc-ink font-medium hover:text-emerald-600 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             הוסף מעסיק
@@ -45,7 +45,7 @@ export default function Step4Employers({
             key={emp.id}
             className={`border rounded-xl p-4 space-y-3 ${
               emp.isMainEmployer
-                ? "border-[#0F172A]/30 bg-slate-50/60"
+                ? "border-kc-ink/30 bg-slate-50/60"
                 : "border-border"
             }`}
           >
@@ -55,7 +55,7 @@ export default function Step4Employers({
                   מעסיק {idx + 1}
                 </span>
                 {emp.isMainEmployer && (
-                  <span className="bg-[#0F172A] text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+                  <span className="bg-kc-ink text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
                     ראשי
                   </span>
                 )}
@@ -77,7 +77,7 @@ export default function Step4Employers({
               onChange={(e) =>
                 onUpdateEmployer(emp.id, { name: e.target.value })
               }
-              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
             />
 
             {/* Month range pickers */}
@@ -94,7 +94,7 @@ export default function Step4Employers({
                       monthsWorked: computeMonthsWorked(start, end),
                     });
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 >
                   {HEBREW_MONTHS.map((m) => (
                     <option key={m.v} value={m.v}>{m.l}</option>
@@ -113,7 +113,7 @@ export default function Step4Employers({
                       monthsWorked: computeMonthsWorked(start, end),
                     });
                   }}
-                  className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 >
                   {HEBREW_MONTHS.map((m) => (
                     <option key={m.v} value={m.v}>{m.l}</option>
@@ -141,7 +141,7 @@ export default function Step4Employers({
                       grossSalary: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 />
               </div>
               <div className="relative">
@@ -156,7 +156,7 @@ export default function Step4Employers({
                       taxWithheld: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 />
               </div>
               <div className="relative">
@@ -171,7 +171,7 @@ export default function Step4Employers({
                       pensionDeduction: e.target.value ? Number(e.target.value) : undefined,
                     })
                   }
-                  className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 />
               </div>
             </div>

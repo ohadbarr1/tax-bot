@@ -39,6 +39,29 @@ const eslintConfig = defineConfig([
     },
   },
 
+  // ---- Phase 3 §3.A: no raw hex literals in components/ -------------------
+  // Forces every new color reference to go through the --kc-* token system
+  // so dark mode + brand changes flow centrally. SVG illustrations + brand
+  // assets in public/ are exempt (already filtered by globalIgnores).
+  {
+    files: ["components/**/*.ts", "components/**/*.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/^#[0-9A-Fa-f]{3,8}$/]",
+          message:
+            "Raw hex literal — use a --kc-* token (Tailwind class like text-kc-ink, or CSS var(--kc-ink) for inline styles).",
+        },
+        {
+          selector: "TemplateElement[value.raw=/#[0-9A-Fa-f]{6}/]",
+          message:
+            "Raw hex literal in template string — use a --kc-* token instead.",
+        },
+      ],
+    },
+  },
+
   // ---- Tests + scripts: relax everything ----------------------------------
   {
     files: [

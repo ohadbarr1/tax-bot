@@ -97,7 +97,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           {/* Security badge */}
           <div className="hidden sm:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border"
-            style={{ color: "var(--success-500)", backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }}>
+            style={{ color: "var(--success-500)", backgroundColor: "var(--kc-lime-soft)", borderColor: "var(--kc-lime-soft)" }}>
             <Lock className="w-3 h-3" />
             <span>חיבור מאובטח</span>
           </div>

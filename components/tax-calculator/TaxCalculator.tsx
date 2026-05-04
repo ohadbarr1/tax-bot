@@ -131,7 +131,7 @@ const TINTS: Record<SummaryCardProps["tint"], { bg: string; fg: string }> = {
   emerald: { bg: "bg-emerald-50", fg: "text-emerald-600" },
   rose:    { bg: "bg-rose-50",    fg: "text-rose-600" },
   indigo:  { bg: "bg-indigo-50",  fg: "text-indigo-600" },
-  navy:    { bg: "bg-[#0B3B5C]/10", fg: "text-[#0B3B5C]" },
+  navy:    { bg: "bg-kc-ink/10", fg: "text-kc-ink" },
 };
 function SummaryCard({ label, value, sublabel, icon, tint }: SummaryCardProps) {
   const c = TINTS[tint];
@@ -247,8 +247,8 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
 
   const pieData = useMemo(
     () => [
-      { name: "מס נטו (אחרי זיכוי)", value: Math.max(0, calc.netTax * mult), fill: "#e11d48" },
-      { name: "נטו בכיס", value: calc.netTakeHome * mult, fill: "#059669" },
+      { name: "מס נטו (אחרי זיכוי)", value: Math.max(0, calc.netTax * mult), fill: "var(--kc-coral)" },
+      { name: "נטו בכיס", value: calc.netTakeHome * mult, fill: "var(--kc-lime-dark)" },
     ],
     [calc, mult]
   );
@@ -269,13 +269,13 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
           {showBackLink && (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#0B3B5C] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-kc-ink transition-colors"
             >
               <ArrowRight className="w-3.5 h-3.5" />
               חזור ללוח הבקרה הראשי
             </Link>
           )}
-          <h1 className="text-2xl font-bold text-[#0B3B5C] flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-kc-ink flex items-center gap-2">
             <Calculator className="w-6 h-6" />
             מחשבון מס
           </h1>
@@ -291,8 +291,8 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
               onClick={() => setPeriod(p)}
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                 period === p
-                  ? "bg-[#0B3B5C] text-white shadow-sm"
-                  : "text-slate-600 hover:text-[#0B3B5C]"
+                  ? "bg-kc-ink text-white shadow-sm"
+                  : "text-slate-600 hover:text-kc-ink"
               }`}
             >
               {p === "yearly" ? "שנתי" : "חודשי"}
@@ -374,22 +374,22 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
         <motion.div variants={fadeUp} className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Bracket bar chart (2/3 width on large screens) */}
           <div className="lg:col-span-2 bg-white dark:bg-card rounded-2xl border border-border p-5">
-            <p className="text-sm font-bold text-[#0B3B5C] mb-1">חישוב מס לפי מדרגות</p>
+            <p className="text-sm font-bold text-kc-ink mb-1">חישוב מס לפי מדרגות</p>
             <p className="text-xs text-slate-500 mb-4">
               פירוק המס על השכר בכל שכבת הכנסה (לפני זיכוי נקודות)
             </p>
             <div dir="ltr" className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bracketChartData} margin={{ top: 16, right: 16, left: 0, bottom: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#475569" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--kc-rule)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--kc-ink-soft)" }} />
                   <YAxis
-                    tick={{ fontSize: 11, fill: "#475569" }}
+                    tick={{ fontSize: 11, fill: "var(--kc-ink-soft)" }}
                     tickFormatter={(v) => formatCompactILS(v)}
                     width={55}
                   />
                   <Tooltip content={<CurrencyTooltip />} />
-                  <Bar dataKey="tax" name="מס במדרגה" fill="#0B3B5C" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="tax" name="מס במדרגה" fill="var(--kc-ink)" radius={[8, 8, 0, 0]}>
                     <LabelList
                       dataKey="tax"
                       position="top"
@@ -397,7 +397,7 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
                         const n = typeof v === "number" ? v : Number(v);
                         return n > 0 ? formatCompactILS(n) : "";
                       }}
-                      style={{ fontSize: 10, fill: "#0B3B5C", fontWeight: 600 }}
+                      style={{ fontSize: 10, fill: "var(--kc-ink)", fontWeight: 600 }}
                     />
                   </Bar>
                 </BarChart>
@@ -407,7 +407,7 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
 
           {/* Take-home pie chart */}
           <div className="bg-white dark:bg-card rounded-2xl border border-border p-5">
-            <p className="text-sm font-bold text-[#0B3B5C] mb-1">לאן הלך הברוטו</p>
+            <p className="text-sm font-bold text-kc-ink mb-1">לאן הלך הברוטו</p>
             <p className="text-xs text-slate-500 mb-4">פירוק בין מס לבין נטו בכיס</p>
             <div dir="ltr" className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -440,7 +440,7 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
           className="bg-white dark:bg-card rounded-2xl border border-border overflow-hidden"
         >
           <div className="px-5 py-4 border-b border-border">
-            <p className="text-sm font-bold text-[#0B3B5C]">פירוט מדרגות — {YEAR}</p>
+            <p className="text-sm font-bold text-kc-ink">פירוט מדרגות — {YEAR}</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -480,10 +480,10 @@ export default function TaxCalculator({ showBackLink = false }: { showBackLink?:
                   );
                 })}
                 <tr className="bg-slate-50/50 font-bold">
-                  <td className="px-5 py-3 text-[#0B3B5C]" colSpan={3}>
+                  <td className="px-5 py-3 text-kc-ink" colSpan={3}>
                     סך מס על שכר
                   </td>
-                  <td className="px-4 py-3 text-[#0B3B5C] tabular-nums">
+                  <td className="px-4 py-3 text-kc-ink tabular-nums">
                     {formatILS(calc.salaryTax * mult)}
                   </td>
                 </tr>

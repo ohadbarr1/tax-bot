@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -11,6 +12,7 @@ const NAV_LINKS = [
 ];
 
 export function MarketingNavbar() {
+  const pathname = usePathname() ?? "";
   return (
     <header className="sticky top-0 z-40 h-16 bg-background/80 backdrop-blur-sm border-b border-border flex items-center">
       <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 flex items-center justify-between">
@@ -22,11 +24,23 @@ export function MarketingNavbar() {
         </div>
         {/* Nav links CENTER */}
         <nav className="hidden md:flex items-center gap-6">
-          {NAV_LINKS.map(l => (
-            <Link key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              {l.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map(l => {
+            const active = pathname === l.href || pathname.startsWith(l.href + "/");
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-current={active ? "page" : undefined}
+                className={
+                  active
+                    ? "text-sm font-semibold text-foreground"
+                    : "text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                }
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
         {/* Actions LEFT */}
         <div className="flex items-center gap-3 order-first">

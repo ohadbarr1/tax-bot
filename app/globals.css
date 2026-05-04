@@ -35,8 +35,6 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --color-navy: #0F172A;
-  --color-emerald-brand: #10B981;
   /* Kesef Chazara palette */
   --color-kc-bg: var(--kc-bg);
   --color-kc-bg-soft: var(--kc-bg-soft);
@@ -141,56 +139,73 @@
 }
 
 .dark {
-  /* Backgrounds */
-  --background: #0D1B2E;
-  --foreground: #E8F0F7;
+  /* Phase 3 §3.A: dark mode uses the SAME KC palette as light, just tonally
+     inverted. Closes UPGRADE_PLAN F-D1 (--kc-* tokens not redeclared under
+     .dark) + F-D2 (.dark regressed to a different navy/amber brand). */
+  --kc-bg:        #0E0F14;  /* deep charcoal */
+  --kc-bg-soft:   #15171F;
+  --kc-card:      #1A1D26;
+  --kc-ink:       #ECEEF3;  /* near-white */
+  --kc-ink-soft:  #C7CAD3;
+  --kc-ink-dim:   #8A8E9A;
+  --kc-ink-faint: #51555F;
+  --kc-rule:      #262934;
+  --kc-rule-hi:   #353945;
 
-  /* Cards / surfaces */
-  --card: #152640;
-  --card-foreground: #E8F0F7;
-  --popover: #152640;
-  --popover-foreground: #E8F0F7;
+  /* Brand accents — same hues, slightly more saturated for dark contrast */
+  --kc-lime:       #C6FF4D;
+  --kc-lime-dark:  #B5F036;
+  --kc-lime-soft:  #2A3315;
+  --kc-grape:      #7A66FF;
+  --kc-grape-soft: #1F1A45;
+  --kc-coral:      #FF8273;
+  --kc-coral-soft: #3C1B17;
+  --kc-peach:      #FFB876;
+  --kc-peach-soft: #3C2715;
+  --kc-sky:        #66D6FF;
+  --kc-sky-soft:   #16313F;
 
-  /* Brand — keep same hues, slightly lighter for dark bg contrast */
-  --brand-900: #0F5A8A;
-  --brand-700: #1A7BBF;
+  /* Map semantic / shadcn-derived tokens to the KC palette */
+  --brand-900: var(--kc-ink);
+  --brand-700: var(--kc-ink-soft);
+  --accent-500: var(--kc-lime-dark);
+  --accent-100: var(--kc-lime-soft);
+  --success-500: var(--kc-lime-dark);
+  --danger-500: var(--kc-coral);
+  --surface-0: var(--kc-bg);
+  --ink-950: var(--kc-ink);
 
-  /* Accent — warm amber stays, but accent-100 muted for dark */
-  --accent-500: #F59E0B;
-  --accent-100: #2C1F06;
+  --background: var(--kc-bg);
+  --foreground: var(--kc-ink);
+  --card: var(--kc-card);
+  --card-foreground: var(--kc-ink);
+  --popover: var(--kc-card);
+  --popover-foreground: var(--kc-ink);
+  --primary: var(--kc-ink);
+  --primary-foreground: var(--kc-lime);
+  --secondary: var(--kc-bg-soft);
+  --secondary-foreground: var(--kc-ink);
+  --muted: var(--kc-bg-soft);
+  --muted-foreground: var(--kc-ink-dim);
+  --accent: var(--kc-lime-soft);
+  --accent-foreground: var(--kc-ink);
+  --destructive: var(--kc-coral);
+  --border: var(--kc-rule);
+  --input: var(--kc-rule);
+  --ring: var(--kc-ink);
 
-  /* Primary */
-  --primary: #1A7BBF;
-  --primary-foreground: #FFFFFF;
+  --sidebar: var(--kc-bg);
+  --sidebar-foreground: var(--kc-ink);
+  --sidebar-primary: var(--kc-ink);
+  --sidebar-primary-foreground: var(--kc-bg);
+  --sidebar-accent: var(--kc-bg-soft);
+  --sidebar-accent-foreground: var(--kc-ink);
+  --sidebar-border: var(--kc-rule);
+  --sidebar-ring: var(--kc-ink);
 
-  /* Secondary / muted */
-  --secondary: #1E3450;
-  --secondary-foreground: #CBD5E1;
-  --muted: #1E3450;
-  --muted-foreground: #8FB3D0;
-
-  /* Semantic */
-  --success-500: #84CC16;
-  --danger-500: #F87171;
-
-  /* Borders / inputs */
-  --border: #1E3A5F;
-  --input: #1E3A5F;
-  --ring: #1A7BBF;
-
-  /* Sidebar */
-  --sidebar: #0D1B2E;
-  --sidebar-foreground: #CBD5E1;
-  --sidebar-primary: #1A7BBF;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E3450;
-  --sidebar-accent-foreground: #E8F0F7;
-  --sidebar-border: #1E3A5F;
-  --sidebar-ring: #1A7BBF;
-
-  /* Shadows — more visible on dark */
-  --shadow-card: 0 1px 4px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-  --shadow-card-hover: 0 6px 20px 0 rgb(0 0 0 / 0.5), 0 2px 6px -1px rgb(26 123 191 / 0.2);
+  /* Shadows — more visible against dark surfaces */
+  --shadow-card: 0 1px 4px 0 rgb(0 0 0 / 0.55), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  --shadow-card-hover: 0 6px 20px 0 rgb(0 0 0 / 0.6), 0 2px 6px -1px rgb(0 0 0 / 0.4);
 }
 
 @layer base {
@@ -209,6 +224,24 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--kc-rule-hi); border-radius: 99px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--kc-ink-faint); }
+
+  /* Phase 3 §3.A — tabular figures everywhere currency / amount renders.
+     Stops digit-shift jitter when values re-render (live counters, RUM,
+     dashboard tables). Apply via class `tabular-nums` on the container. */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+
+  /* Phase 3 §3.A — global reduced-motion fallback for non-framer-motion
+     animations (CSS keyframes, transitions). framer-motion respects the
+     <MotionConfig reducedMotion="user"> wrapper in components/MotionRoot.tsx;
+     this catches everything else. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @keyframes kc-rise {

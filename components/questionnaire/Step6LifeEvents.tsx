@@ -37,7 +37,7 @@ export default function Step6LifeEvents({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">אירועי חיים</h2>
+        <h2 className="text-xl font-bold text-kc-ink">אירועי חיים</h2>
         <p className="mt-1 text-sm text-slate-500">
           שינויים תעסוקתיים עשויים להשפיע באופן משמעותי על חבות המס.
         </p>
@@ -103,7 +103,7 @@ export default function Step6LifeEvents({
                           })
                         }
                         placeholder="לדוגמה: 120000"
-                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                       />
                     </div>
                     <div>
@@ -119,7 +119,7 @@ export default function Step6LifeEvents({
                           })
                         }
                         placeholder="לדוגמה: 18000"
-                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                       />
                     </div>
                     <div>
@@ -136,7 +136,7 @@ export default function Step6LifeEvents({
                           })
                         }
                         placeholder="לדוגמה: 7.5"
-                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                        className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                       />
                     </div>
                   </div>
@@ -176,7 +176,7 @@ export default function Step6LifeEvents({
 
       {/* Summary box */}
       <div className="rounded-xl border border-border bg-slate-50 p-4 space-y-2">
-        <p className="text-xs font-semibold text-[#0F172A]">סיכום השאלון</p>
+        <p className="text-xs font-semibold text-kc-ink">סיכום השאלון</p>
         {[
           { label: "מצב משפחתי", value: maritalStatus === "married" ? "נשוי/אה" : maritalStatus === "divorced" ? "גרוש/ה" : maritalStatus === "widowed" ? "אלמן/ה" : "רווק/ה" },
           { label: "ילדים", value: `${childrenCount}` },
@@ -188,7 +188,7 @@ export default function Step6LifeEvents({
         ].map((row) => (
           <div key={row.label} className="flex justify-between text-xs">
             <span className="text-slate-500">{row.label}</span>
-            <span className="font-medium text-[#0F172A]">{row.value}</span>
+            <span className="font-medium text-kc-ink">{row.value}</span>
           </div>
         ))}
       </div>

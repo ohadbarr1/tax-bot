@@ -68,7 +68,7 @@ export default function Step7CreditPoints({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A] dark:text-white">נקודות זיכוי</h2>
+        <h2 className="text-xl font-bold text-kc-ink dark:text-white">נקודות זיכוי</h2>
         <p className="mt-1 text-sm text-slate-500">
           פרטים נוספים שמשפיעים על נקודות הזיכוי שלך
         </p>
@@ -89,7 +89,7 @@ export default function Step7CreditPoints({
               onClick={() => onGenderChange(opt.v)}
               className={`px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
                 gender === opt.v
-                  ? "bg-[#0F172A] text-white border-[#0F172A]"
+                  ? "bg-kc-ink text-white border-kc-ink"
                   : "bg-background dark:bg-secondary text-foreground border-border hover:border-muted-foreground/40"
               }`}
             >
@@ -122,7 +122,7 @@ export default function Step7CreditPoints({
                   const val = e.target.value;
                   onDischargeYearChange(val ? parseInt(val, 10) : undefined);
                 }}
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
               />
               {dischargeYear && 2025 - dischargeYear <= 3 && 2025 - dischargeYear >= 0 && (
                 <SuccessBox>
@@ -152,7 +152,7 @@ export default function Step7CreditPoints({
                 type="date"
                 value={aliyahDate}
                 onChange={(e) => onAliyahDateChange(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
               />
               <InfoBox>
                 עולה חדש זכאי לנקודות זיכוי מדורגות: 3 נקודות בשנה הראשונה, 2 בשנייה, 1 בשלישית.
@@ -175,7 +175,7 @@ export default function Step7CreditPoints({
             const val = e.target.value.replace(/\D/g, "");
             onPostcodeChange(val);
           }}
-          className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+          className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
         />
         <p className="text-xs text-slate-400 mt-1">
           המיקוד משמש לבדיקת זכאות לנקודות זיכוי בגין יישוב פריפריה.
@@ -208,7 +208,7 @@ export default function Step7CreditPoints({
                 <select
                   value={disabilityType ?? ""}
                   onChange={(e) => onDisabilityTypeChange(e.target.value as DisabilityType)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 >
                   <option value="" disabled>
                     בחר סוג נכות
@@ -227,7 +227,7 @@ export default function Step7CreditPoints({
                   placeholder="0-100"
                   value={disabilityPercent || ""}
                   onChange={(e) => onDisabilityPercentChange(Number(e.target.value))}
-                  className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 />
               </div>
               {disabilityPercent >= 100 && (

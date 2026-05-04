@@ -115,7 +115,7 @@ export function Hero({
   return (
     <div
       className="relative overflow-hidden rounded-[32px] px-8 md:px-11 py-10"
-      style={{ background: "var(--kc-ink)", color: "#fff" }}
+      style={{ background: "var(--kc-ink)", color: "white" }}
     >
       {/* Decorative blobs */}
       <div

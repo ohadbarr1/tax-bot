@@ -18,13 +18,13 @@ export function LogoMark({
       className={className}
       aria-label="כסף חזרה"
     >
-      <rect width={size} height={size} rx={rx} fill="#1A1A1F" />
+      <rect width={size} height={size} rx={rx} fill="var(--kc-ink)" />
       <text
         x="50%"
         y="50%"
         textAnchor="middle"
         dominantBaseline="central"
-        fill="#C6FF4D"
+        fill="var(--kc-lime)"
         fontSize={fontSize}
         fontWeight={800}
         fontFamily="Figtree, system-ui, sans-serif"

@@ -217,14 +217,14 @@ export function FilingKit() {
         <div
           className="h-1.5 w-full"
           style={{
-            background: "linear-gradient(90deg, #0F172A 0%, #10B981 60%, #6366F1 100%)",
+            background: "linear-gradient(90deg, var(--kc-ink) 0%, var(--kc-lime-dark) 60%, var(--kc-grape) 100%)",
           }}
         />
 
         <div className="p-6 space-y-5">
           {/* Document info row */}
           <div className="flex items-start gap-4">
-            <div className="w-12 h-14 rounded-xl bg-[#0F172A] flex flex-col items-center justify-center flex-shrink-0 shadow-md">
+            <div className="w-12 h-14 rounded-xl bg-kc-ink flex flex-col items-center justify-center flex-shrink-0 shadow-md">
               <span className="text-white text-[9px] font-semibold leading-none">PDF</span>
               <span className="text-emerald-400 text-xs font-bold leading-none mt-1">{formType}</span>
             </div>
@@ -318,7 +318,7 @@ export function FilingKit() {
                       alignItems: "center",
                       gap: 8,
                       fontSize: 12,
-                      color: "#475569",
+                      color: "var(--kc-ink-soft)",
                       marginBottom: 10,
                       cursor: "pointer",
                       userSelect: "none" as const,
@@ -343,7 +343,7 @@ export function FilingKit() {
                         ? "bg-rose-500 text-white hover:bg-rose-600"
                         : dlState === "generating"
                         ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                        : "bg-[#0F172A] text-white hover:bg-slate-800 shadow-sm shadow-slate-200"
+                        : "bg-kc-ink text-white hover:bg-slate-800 shadow-sm shadow-slate-200"
                     }`}
                   >
                     <AnimatePresence mode="wait">

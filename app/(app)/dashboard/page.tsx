@@ -1,8 +1,22 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useApp } from "@/lib/appContext";
 import Dashboard from "@/components/Dashboard";
 import { FileDropzone } from "@/components/FileDropzone";
-import IbkrAnalysisDashboard from "@/components/IbkrAnalysisDashboard";
+
+// Phase 3 §3.B — IBKR view ships recharts (~150KB); lazy-load so the default
+// dashboard render doesn't pay the bundle cost users may never trigger.
+const IbkrAnalysisDashboard = dynamic(
+  () => import("@/components/IbkrAnalysisDashboard"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    ),
+  },
+);
 
 export default function DashboardPage() {
   const { state, hydrated } = useApp();

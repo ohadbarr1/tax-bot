@@ -99,6 +99,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 px-3.5 py-3 rounded-[14px] text-[14.5px] transition-all duration-150",
                   active ? "font-semibold" : "font-medium"
@@ -136,7 +137,7 @@ export function Sidebar() {
         {/* Streak card */}
         <div
           className="relative overflow-hidden rounded-[20px] p-[18px]"
-          style={{ background: "var(--kc-ink)", color: "#fff" }}
+          style={{ background: "var(--kc-ink)", color: "white" }}
         >
           <div
             className="absolute w-[120px] h-[120px] rounded-full opacity-95"
@@ -253,6 +254,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl min-w-[48px]"
               style={{ color: active ? "var(--kc-ink)" : "var(--kc-ink-dim)" }}
             >

@@ -40,11 +40,11 @@ export default function Step1Personal({
   onChildrenChange,
 }: Props) {
   const inputClass =
-    "w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]";
+    "w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink";
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">מצב אישי ומשפחתי</h2>
+        <h2 className="text-xl font-bold text-kc-ink">מצב אישי ומשפחתי</h2>
         <p className="mt-1 text-sm text-slate-500">
           נתונים אלה משפיעים ישירות על נקודות הזיכוי שלך.
         </p>
@@ -66,7 +66,7 @@ export default function Step1Personal({
               onClick={() => onMaritalStatusChange(opt.v)}
               className={`px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
                 maritalStatus === opt.v
-                  ? "bg-[#0F172A] text-white border-[#0F172A]"
+                  ? "bg-kc-ink text-white border-kc-ink"
                   : "bg-background dark:bg-secondary text-foreground border-border hover:border-muted-foreground/40"
               }`}
             >
@@ -171,7 +171,7 @@ export default function Step1Personal({
                 { id: `c-${Date.now()}`, birthDate: "" },
               ])
             }
-            className="flex items-center gap-1 text-xs text-[#0F172A] font-medium hover:text-emerald-600 transition-colors"
+            className="flex items-center gap-1 text-xs text-kc-ink font-medium hover:text-emerald-600 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             הוסף ילד
@@ -203,7 +203,7 @@ export default function Step1Personal({
                             )
                           )
                         }
-                        className="w-full ps-3 pe-16 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                        className="w-full ps-3 pe-16 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                       />
                       <span className="absolute end-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
                         ילד {idx + 1}

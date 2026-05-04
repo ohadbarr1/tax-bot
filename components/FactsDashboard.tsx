@@ -190,9 +190,9 @@ export default function FactsDashboard() {
 
   // ── Pie chart: income breakdown ───────────────────────────────────────────
   const pieData = [
-    totalGrossSalary > 0 && { name: "משכורת", value: totalGrossSalary, fill: "#6366F1" },
-    netCapitalGain > 0 && { name: "רווח הון נטו", value: netCapitalGain, fill: "#10B981" },
-    dividendsILS > 0 && { name: "דיבידנדים", value: dividendsILS, fill: "#F59E0B" },
+    totalGrossSalary > 0 && { name: "משכורת", value: totalGrossSalary, fill: "var(--kc-grape)" },
+    netCapitalGain > 0 && { name: "רווח הון נטו", value: netCapitalGain, fill: "var(--kc-lime-dark)" },
+    dividendsILS > 0 && { name: "דיבידנדים", value: dividendsILS, fill: "var(--kc-peach)" },
   ].filter(Boolean) as { name: string; value: number; fill: string }[];
 
   const hasPieData = pieData.length > 0;
@@ -467,17 +467,17 @@ export default function FactsDashboard() {
                       }))}
                       margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--kc-bg-soft)" vertical={false} />
+                      <XAxis dataKey="name" tick={{ fontSize: 12, fill: "var(--kc-ink-dim)" }} axisLine={false} tickLine={false} />
                       <YAxis
                         tickFormatter={(v: number) => `₪${(v / 1000).toFixed(0)}k`}
-                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                        tick={{ fontSize: 11, fill: "var(--kc-ink-faint)" }}
                         axisLine={false}
                         tickLine={false}
                         width={52}
                       />
                       <Tooltip content={<ILSTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
-                      <Bar dataKey="מס" fill="#6366F1" radius={[6, 6, 0, 0]} maxBarSize={48} />
+                      <Bar dataKey="מס" fill="var(--kc-grape)" radius={[6, 6, 0, 0]} maxBarSize={48} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

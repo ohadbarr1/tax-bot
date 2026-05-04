@@ -106,7 +106,7 @@ export default function Step0Personal({
   onBankChange,
 }: Props) {
   const inputClass =
-    "w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]";
+    "w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink";
 
   // Local refs to the latest address so per-field setters don't go stale.
   const addressRef = useRef(address);
@@ -125,7 +125,7 @@ export default function Step0Personal({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">פרטים אישיים</h2>
+        <h2 className="text-xl font-bold text-kc-ink">פרטים אישיים</h2>
         <p className="mt-1 text-sm text-slate-500">
           פרטים אלה ישמשו למילוי טופס 135 ולהגשה לרשות המיסים.
         </p>
@@ -181,7 +181,7 @@ export default function Step0Personal({
 
       {/* Address */}
       <div className="space-y-3">
-        <p className="text-sm font-semibold text-[#0F172A]">כתובת מגורים</p>
+        <p className="text-sm font-semibold text-kc-ink">כתובת מגורים</p>
         <div className="space-y-1.5">
           <Label>עיר</Label>
           <ComposableTextInput
@@ -216,7 +216,7 @@ export default function Step0Personal({
       {/* Bank details */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-[#0F172A]">פרטי חשבון בנק (להחזר)</p>
+          <p className="text-sm font-semibold text-kc-ink">פרטי חשבון בנק (להחזר)</p>
           <span className="text-xs text-slate-400">אופציונלי</span>
         </div>
         <InfoBox>

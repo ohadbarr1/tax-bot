@@ -105,8 +105,8 @@ export default function IbkrCharts({
 }: IbkrChartsProps) {
   // ── Bar chart data ────────────────────────────────────────────────────────
   const barData = [
-    { name: "רווח ממומש", value: totalProfitUSD, fill: "#10B981" },
-    { name: "הפסד ממומש", value: totalLossUSD,   fill: "#ef4444" },
+    { name: "רווח ממומש", value: totalProfitUSD, fill: "var(--kc-lime-dark)" },
+    { name: "הפסד ממומש", value: totalLossUSD,   fill: "var(--kc-coral)" },
   ];
 
   // ── Pie chart data ────────────────────────────────────────────────────────
@@ -116,14 +116,14 @@ export default function IbkrCharts({
   const foreignCredit = foreignTaxUSD; // shown as an offset/credit slice
 
   const pieDataRaw = [
-    { name: "מס רווחי הון (25%)", value: israeliCGT,    fill: "#0F172A" },
-    { name: "מס דיבידנדים (25%)", value: dividendTax,   fill: "#6366F1" },
-    { name: "מס זר שנוכה",        value: foreignCredit, fill: "#10B981" },
+    { name: "מס רווחי הון (25%)", value: israeliCGT,    fill: "var(--kc-ink)" },
+    { name: "מס דיבידנדים (25%)", value: dividendTax,   fill: "var(--kc-grape)" },
+    { name: "מס זר שנוכה",        value: foreignCredit, fill: "var(--kc-lime-dark)" },
   ].filter((d) => d.value > 0);
 
   const pieData = pieDataRaw.length > 0
     ? pieDataRaw
-    : [{ name: "אין נתונים", value: 1, fill: "#e2e8f0" }];
+    : [{ name: "אין נתונים", value: 1, fill: "var(--kc-rule)" }];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -136,16 +136,16 @@ export default function IbkrCharts({
         <div dir="ltr">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barData} margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--kc-bg-soft)" vertical={false} />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 12, fill: "#64748b" }}
+                tick={{ fontSize: 12, fill: "var(--kc-ink-dim)" }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: "var(--kc-ink-faint)" }}
                 axisLine={false}
                 tickLine={false}
                 width={48}

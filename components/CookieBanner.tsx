@@ -62,7 +62,7 @@ export function CookieBanner() {
           <button
             type="button"
             onClick={() => record("all")}
-            className="px-4 py-2 rounded-xl bg-[#0F172A] text-white text-sm hover:bg-[#0F172A]/90"
+            className="px-4 py-2 rounded-xl bg-kc-ink text-white text-sm hover:bg-kc-ink/90"
           >
             אשר הכול
           </button>

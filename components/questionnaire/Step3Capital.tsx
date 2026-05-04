@@ -35,7 +35,7 @@ export default function Step3Capital({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">שוק ההון</h2>
+        <h2 className="text-xl font-bold text-kc-ink">שוק ההון</h2>
         <p className="mt-1 text-sm text-slate-500">
           ניהול תיק השקעות עצמאי עשוי לחייב הגשת דוח נפרד.
         </p>
@@ -81,7 +81,7 @@ export default function Step3Capital({
                   }
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-start ${
                     portfolioLocation === opt.v
-                      ? "bg-[#0F172A] text-white border-[#0F172A]"
+                      ? "bg-kc-ink text-white border-kc-ink"
                       : "bg-background dark:bg-secondary text-foreground border-border hover:border-muted-foreground/40"
                   }`}
                 >
@@ -117,7 +117,7 @@ export default function Step3Capital({
                         onClick={() => onSelectedBrokerChange(b)}
                         className={`text-start px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
                           selectedBroker === b
-                            ? "bg-[#0F172A] text-white border-[#0F172A]"
+                            ? "bg-kc-ink text-white border-kc-ink"
                             : "bg-background dark:bg-secondary text-foreground border-border hover:border-muted-foreground/40"
                         }`}
                       >

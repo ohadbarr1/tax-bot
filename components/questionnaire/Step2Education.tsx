@@ -30,7 +30,7 @@ export default function Step2Education({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">השכלה ופיתוח מקצועי</h2>
+        <h2 className="text-xl font-bold text-kc-ink">השכלה ופיתוח מקצועי</h2>
         <p className="mt-1 text-sm text-slate-500">
           תואר אקדמי עשוי להעניק נקודות זיכוי נוספות.
         </p>
@@ -80,7 +80,7 @@ export default function Step2Education({
                     },
                   ])
                 }
-                className="flex items-center gap-1 text-xs text-[#0F172A] font-medium hover:text-emerald-600 transition-colors"
+                className="flex items-center gap-1 text-xs text-kc-ink font-medium hover:text-emerald-600 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
                 הוסף תואר
@@ -128,7 +128,7 @@ export default function Step2Education({
                         }
                         className={`py-2 rounded-lg text-sm font-medium border transition-all ${
                           deg.type === opt.v
-                            ? "bg-[#0F172A] text-white border-[#0F172A]"
+                            ? "bg-kc-ink text-white border-kc-ink"
                             : "bg-background dark:bg-secondary text-foreground border-border"
                         }`}
                       >
@@ -147,7 +147,7 @@ export default function Step2Education({
                         )
                       )
                     }
-                    className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                   />
                   <div>
                     <label className="text-xs text-slate-500 block mb-1">
@@ -167,7 +167,7 @@ export default function Step2Education({
                           )
                         )
                       }
-                      className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                     />
                   </div>
                   {note && <InfoBox>{note}</InfoBox>}

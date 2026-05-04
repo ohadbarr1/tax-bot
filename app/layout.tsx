@@ -5,6 +5,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WebVitals } from "@/components/WebVitals";
 import { CookieBanner } from "@/components/CookieBanner";
+import { MotionRoot } from "@/components/MotionRoot";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -48,12 +49,24 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background">
+        {/* Phase 3 §3.A — skip-link for keyboard users (visually hidden until
+            focused). Israeli accessibility standard IS 5568 / WCAG 2.4.1. */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:right-2 focus:z-[100] focus:rounded-xl focus:bg-kc-ink focus:px-4 focus:py-2 focus:text-white focus:shadow-lg focus:outline focus:outline-2 focus:outline-kc-lime"
+        >
+          דלג לתוכן הראשי
+        </a>
         {/* Closes performance §1.6 — Web Vitals reporter (LCP/INP/CLS/FCP/TTFB)
             beacons to /api/_metrics. Renders nothing; pure side-effect. */}
         <WebVitals />
         <ThemeProvider>
-          <ErrorBoundary>{children}</ErrorBoundary>
-          <CookieBanner />
+          <MotionRoot>
+            <ErrorBoundary>
+              <div id="main-content">{children}</div>
+            </ErrorBoundary>
+            <CookieBanner />
+          </MotionRoot>
         </ThemeProvider>
       </body>
     </html>

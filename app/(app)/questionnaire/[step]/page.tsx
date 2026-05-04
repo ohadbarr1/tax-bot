@@ -207,7 +207,7 @@ export default function StepPage({
         {!isLast ? (
           <button
             onClick={() => next && router.push(`/questionnaire/${next}`)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0F172A] text-white text-sm font-semibold hover:bg-slate-800 transition-all"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-kc-ink text-white text-sm font-semibold hover:bg-slate-800 transition-all"
           >
             המשך
             <ChevronLeft className="w-4 h-4" />

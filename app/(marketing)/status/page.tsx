@@ -68,7 +68,7 @@ export default function StatusPage() {
   return (
     <main dir="rtl" className="mx-auto max-w-3xl px-4 py-12 space-y-6">
       <header>
-        <h1 className="text-3xl font-bold text-[#0F172A]">סטטוס המערכת</h1>
+        <h1 className="text-3xl font-bold text-kc-ink">סטטוס המערכת</h1>
         <p className="mt-2 text-sm text-slate-500">
           רענון אוטומטי כל 30 שניות. נתונים נמשכים מ-/api/health.
         </p>
@@ -101,7 +101,7 @@ export default function StatusPage() {
 
           <section className="rounded-xl border border-border bg-white p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-[#0F172A]">יעדי SLO</h2>
+              <h2 className="text-base font-semibold text-kc-ink">יעדי SLO</h2>
               <span
                 className={`text-xs px-2 py-1 rounded-full ${
                   data.slo.filing_season
@@ -116,7 +116,7 @@ export default function StatusPage() {
               {data.slo.slos.map((s) => (
                 <li key={s.id} className="py-2 flex items-center justify-between text-sm">
                   <div>
-                    <div className="font-medium text-[#0F172A]">{s.label}</div>
+                    <div className="font-medium text-kc-ink">{s.label}</div>
                     <div className="text-xs text-slate-500">{s.window}</div>
                   </div>
                   <div className="font-mono text-slate-700">{formatTarget(s)}</div>

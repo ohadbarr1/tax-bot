@@ -238,9 +238,9 @@ export default function IncomeTaxDashboard() {
   }));
 
   const pieData = [
-    { name: "מס הכנסה",        value: totals.withheld, fill: "#ef4444" },
-    { name: "הפרשות פנסיוניות", value: totals.pension,  fill: "#6366F1" },
-    { name: "נטו לעובד",         value: netTakeHome,     fill: "#10B981" },
+    { name: "מס הכנסה",        value: totals.withheld, fill: "var(--kc-coral)" },
+    { name: "הפרשות פנסיוניות", value: totals.pension,  fill: "var(--kc-grape)" },
+    { name: "נטו לעובד",         value: netTakeHome,     fill: "var(--kc-lime-dark)" },
   ].filter((d) => d.value > 0);
 
   return (
@@ -330,16 +330,16 @@ export default function IncomeTaxDashboard() {
                     data={bracketData}
                     margin={{ top: 18, right: 16, left: 8, bottom: 4 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--kc-bg-soft)" vertical={false} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 12, fill: "#64748b" }}
+                      tick={{ fontSize: 12, fill: "var(--kc-ink-dim)" }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
                       tickFormatter={(v: number) => formatCompactILS(v)}
-                      tick={{ fontSize: 11, fill: "#94a3b8" }}
+                      tick={{ fontSize: 11, fill: "var(--kc-ink-faint)" }}
                       axisLine={false}
                       tickLine={false}
                       width={52}
@@ -353,13 +353,13 @@ export default function IncomeTaxDashboard() {
                       name="מס במדרגה"
                       radius={[8, 8, 0, 0]}
                       maxBarSize={56}
-                      fill="#f59e0b"
+                      fill="var(--kc-peach)"
                     >
                       <LabelList
                         dataKey="tax"
                         position="top"
                         fontSize={10}
-                        fill="#64748b"
+                        fill="var(--kc-ink-dim)"
                         formatter={(v) => {
                           const n = typeof v === "number" ? v : Number(v);
                           return n > 0 ? formatCompactILS(n) : "";
@@ -421,16 +421,16 @@ export default function IncomeTaxDashboard() {
                       data={employerData}
                       margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--kc-bg-soft)" vertical={false} />
                       <XAxis
                         dataKey="name"
-                        tick={{ fontSize: 11, fill: "#64748b" }}
+                        tick={{ fontSize: 11, fill: "var(--kc-ink-dim)" }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <YAxis
                         tickFormatter={(v: number) => formatCompactILS(v)}
-                        tick={{ fontSize: 11, fill: "#94a3b8" }}
+                        tick={{ fontSize: 11, fill: "var(--kc-ink-faint)" }}
                         axisLine={false}
                         tickLine={false}
                         width={52}
@@ -440,9 +440,9 @@ export default function IncomeTaxDashboard() {
                         cursor={{ fill: "rgba(0,0,0,0.04)" }}
                       />
                       <Legend content={renderLegend} />
-                      <Bar dataKey="gross"   name="ברוטו"  fill="#10B981" radius={[6, 6, 0, 0]} maxBarSize={42} />
-                      <Bar dataKey="tax"     name="מס"     fill="#ef4444" radius={[6, 6, 0, 0]} maxBarSize={42} />
-                      <Bar dataKey="pension" name="פנסיה" fill="#6366F1" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                      <Bar dataKey="gross"   name="ברוטו"  fill="var(--kc-lime-dark)" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                      <Bar dataKey="tax"     name="מס"     fill="var(--kc-coral)" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                      <Bar dataKey="pension" name="פנסיה" fill="var(--kc-grape)" radius={[6, 6, 0, 0]} maxBarSize={42} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

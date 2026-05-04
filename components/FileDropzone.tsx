@@ -299,7 +299,7 @@ export function FileDropzone() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-6">
       {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-bold text-[#0F172A]">העלאת מסמכים</h1>
+        <h1 className="text-2xl font-bold text-kc-ink">העלאת מסמכים</h1>
         <p className="mt-1 text-sm text-slate-500">
           המערכת תחלץ אוטומטית את הנתונים הרלוונטיים ותעדכן את חישוב ההחזר בזמן אמת.
         </p>
@@ -352,13 +352,13 @@ export function FileDropzone() {
         <div className="flex flex-col items-center gap-4">
           <div
             className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
-              dragging ? "bg-[#0F172A] text-white" : "bg-slate-100 text-slate-500"
+              dragging ? "bg-kc-ink text-white" : "bg-slate-100 text-slate-500"
             }`}
           >
             <Upload className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#0F172A]">
+            <p className="text-sm font-semibold text-kc-ink">
               גרור לכאן טופסי 106, דוחות ברוקר (Activity Statement), ואישורי זכאות
             </p>
             <p className="mt-1 text-xs text-slate-400">PDF, CSV, JPG, PNG · עד 50MB לקובץ</p>
@@ -393,7 +393,7 @@ export function FileDropzone() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-3"
           >
-            <h3 className="text-sm font-semibold text-[#0F172A]">קבצים שהועלו</h3>
+            <h3 className="text-sm font-semibold text-kc-ink">קבצים שהועלו</h3>
 
             {files.map((file) => (
               <motion.div
@@ -427,7 +427,7 @@ export function FileDropzone() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-[#0F172A] truncate">{file.name}</p>
+                      <p className="text-sm font-medium text-kc-ink truncate">{file.name}</p>
                       <button
                         onClick={() => setFiles((prev) => prev.filter((f) => f.id !== file.id))}
                         className="text-slate-300 hover:text-rose-400 transition-colors flex-shrink-0"
@@ -499,7 +499,7 @@ export function FileDropzone() {
         <div className="text-center">
           <button
             onClick={() => setView("dashboard")}
-            className="text-sm text-slate-400 hover:text-[#0F172A] underline underline-offset-2 transition-colors"
+            className="text-sm text-slate-400 hover:text-kc-ink underline underline-offset-2 transition-colors"
           >
             דלג ועבור ישירות ללוח הבקרה
           </button>

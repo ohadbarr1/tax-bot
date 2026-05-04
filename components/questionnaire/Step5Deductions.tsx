@@ -24,7 +24,7 @@ export default function Step5Deductions({
   return (
     <>
       <div>
-        <h2 className="text-xl font-bold text-[#0F172A]">ניכויים וזיכויים אישיים</h2>
+        <h2 className="text-xl font-bold text-kc-ink">ניכויים וזיכויים אישיים</h2>
         <p className="mt-1 text-sm text-slate-500">
           תרומות וביטוח חיים מזכים בזיכוי מס ישיר — לא ניכוי בלבד.
         </p>
@@ -42,9 +42,9 @@ export default function Step5Deductions({
             <button
               key={opt.type}
               onClick={() => onAddDeduction(opt.type)}
-              className="flex flex-col items-start px-4 py-3 rounded-xl border border-dashed border-border hover:border-[#0F172A]/40 hover:bg-slate-50 text-start transition-all"
+              className="flex flex-col items-start px-4 py-3 rounded-xl border border-dashed border-border hover:border-kc-ink/40 hover:bg-slate-50 text-start transition-all"
             >
-              <span className="text-sm font-medium text-[#0F172A]">
+              <span className="text-sm font-medium text-kc-ink">
                 + {opt.label}
               </span>
               <span className="text-xs text-emerald-600 font-semibold">
@@ -91,7 +91,7 @@ export default function Step5Deductions({
                   onChange={(e) =>
                     onUpdateDeduction(ded.id, { providerName: e.target.value })
                   }
-                  className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 />
                 <div className="flex gap-2 items-center">
                   <div className="flex-1 relative">
@@ -106,7 +106,7 @@ export default function Step5Deductions({
                           amount: Number(e.target.value),
                         })
                       }
-                      className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-[#0F172A]/20 focus:border-[#0F172A]"
+                      className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                     />
                   </div>
                   {ded.amount > 0 && (
