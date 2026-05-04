@@ -90,6 +90,7 @@ describe("Route manifest", () => {
         "/questionnaire",
         "/questionnaire/[step]",
         "/settings",
+        "/status",
         "/tax-calculator",
         "/terms",
         "/welcome",
@@ -100,6 +101,8 @@ describe("Route manifest", () => {
   it("API route list is stable", () => {
     expect(apiRoutes).toMatchInlineSnapshot(`
       [
+        "/api/admin/audit/verify",
+        "/api/admin/breach",
         "/api/admin/files",
         "/api/admin/files/signed-url",
         "/api/admin/stats",

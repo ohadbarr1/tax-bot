@@ -20,6 +20,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { publicSloSnapshot } from "@/lib/observability/slos";
 
 // Force the route to be dynamically evaluated on every hit — never cached at
 // the Next.js / Edge layer.
@@ -31,6 +32,7 @@ export function GET(): NextResponse {
     status: "ok",
     commit: process.env.GIT_SHA,
     ts: Date.now(),
+    slo: publicSloSnapshot(),
   };
   return NextResponse.json(body, {
     status: 200,

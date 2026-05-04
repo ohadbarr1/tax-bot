@@ -19,6 +19,7 @@ import { buildForm1301Fields, hebrewForPdf, assertForm1301Consistency } from "@/
 import { isValidTZ } from "@/lib/validateTZ";
 import { loadFieldMap, findField, type FieldMap } from "@/lib/fieldMap";
 import { withUser } from "@/lib/api/withUser";
+import { auditLog } from "@/lib/audit/auditEvents";
 import { withRateLimitForUser } from "@/lib/api/withRateLimit";
 import {
   invalidInput,
@@ -411,7 +412,7 @@ export const EXCLUDED_CODES_1301: Readonly<Record<string, string>> = {
   "858": "form-internal — SHAAM scanner reference, never stamped by filer",
 };
 
-async function handle(req: NextRequest): Promise<Response> {
+async function handle(req: NextRequest, ctx: { uid: string; requestId: string }): Promise<Response> {
   if (!fs.existsSync(TEMPLATE_PATH)) {
     return serviceUnavailable(
       "תבנית הטופס אינה זמינה כרגע.",
@@ -617,6 +618,15 @@ async function handle(req: NextRequest): Promise<Response> {
     const mode = calibrate ? "calibration" : "final";
     console.log(`[form-1301] ${mode} ${buffer.byteLength}B — drawn=${drawn.length} missing=${missing.length}`);
     if (missing.length) console.log(`[form-1301] codes not in map: ${missing.join(", ")}`);
+
+    if (!calibrate) {
+      void auditLog({
+        uid: ctx.uid,
+        requestId: ctx.requestId,
+        action: "form_1301_generated",
+        metadata: { bytes: buffer.byteLength, drawn: drawn.length, missing: missing.length },
+      });
+    }
 
     return new Response(buffer, {
       status: 200,

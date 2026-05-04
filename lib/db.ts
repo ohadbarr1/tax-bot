@@ -28,10 +28,13 @@ import {
   getDoc,
   setDoc,
   deleteDoc,
+  collection,
+  getDocs,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import type { AppState } from "@/types";
+import type { AppState, AdvisorMessage } from "@/types";
 import {
   getClientAuth,
   getClientFirestore,
@@ -40,6 +43,8 @@ import {
 
 const SUBCOLLECTION = "private";
 const DOC_ID        = "state";
+const ADVISOR_SUBCOLLECTION = "advisor"; // users/{uid}/advisor/{draftId}
+const SCHEMA_VERSION = 2;
 
 /** Current signed-in user's uid, or null if auth not ready / unconfigured. */
 function currentUid(): string | null {
@@ -73,7 +78,13 @@ function waitForUser(timeoutMs = 5000): Promise<User | null> {
   });
 }
 
-/** Persist AppState to Firestore. No-op on SSR / unconfigured / no-user. */
+/** Persist AppState to Firestore. No-op on SSR / unconfigured / no-user.
+ *
+ * Schema v2 (Phase 2 §2.E partial): advisorHistory is split into a
+ * subcollection at users/{uid}/advisor/{draftId} so the main state doc stays
+ * comfortably under the 1 MiB Firestore cap regardless of message count.
+ * Other fields stay in the single doc — they're bounded by user inputs.
+ */
 export async function saveState(state: AppState): Promise<void> {
   if (typeof window === "undefined") return;
   if (!isFirebaseConfigured()) return;
@@ -83,22 +94,45 @@ export async function saveState(state: AppState): Promise<void> {
   if (!db || !uid) return;
 
   try {
+    // Split advisorHistory off — written separately under /advisor/{draftId}.
+    const { advisorHistory, ...rest } = state;
     const ref = doc(db, "users", uid, SUBCOLLECTION, DOC_ID);
     await setDoc(
       ref,
       {
         // Strip any `undefined` recursively — Firestore rejects them.
-        state: stripUndefined(state),
+        state: stripUndefined(rest as AppState),
+        schema_version: SCHEMA_VERSION,
         updatedAt: serverTimestamp(),
       },
       { merge: false }
     );
+
+    // Fan advisor history into per-draft subcollection docs. Each draft is
+    // its own doc → still atomic-per-draft, scoped well under the 1 MiB cap.
+    if (advisorHistory && Object.keys(advisorHistory).length > 0) {
+      const batch = writeBatch(db);
+      for (const [draftId, messages] of Object.entries(advisorHistory)) {
+        const advisorRef = doc(db, "users", uid, ADVISOR_SUBCOLLECTION, draftId);
+        batch.set(advisorRef, {
+          messages: stripUndefined(messages),
+          updatedAt: serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    }
   } catch (err) {
     console.warn("[db] saveState failed:", err);
   }
 }
 
-/** Load AppState from Firestore. Returns null if no doc or on failure. */
+/** Load AppState from Firestore. Returns null if no doc or on failure.
+ *
+ * Schema v2: merges the main state doc with advisor history loaded from the
+ * /advisor subcollection. Falls back to legacy state.advisorHistory for
+ * users that haven't yet been re-saved under v2 — they migrate transparently
+ * on their next save.
+ */
 export async function loadState(): Promise<AppState | null> {
   if (typeof window === "undefined") return null;
   if (!isFirebaseConfigured()) return null;
@@ -113,14 +147,44 @@ export async function loadState(): Promise<AppState | null> {
     const snap = await getDoc(ref);
     if (!snap.exists()) return null;
     const data = snap.data();
-    return (data?.state as AppState) ?? null;
+    const baseState = (data?.state as AppState) ?? null;
+    if (!baseState) return null;
+
+    // Pull advisor history from subcollection. Per-draft doc; missing → empty.
+    const advisorHistory: Record<string, AdvisorMessage[]> = {};
+    try {
+      const advisorSnap = await getDocs(
+        collection(db, "users", uid, ADVISOR_SUBCOLLECTION),
+      );
+      for (const d of advisorSnap.docs) {
+        const docData = d.data() as { messages?: AdvisorMessage[] };
+        if (Array.isArray(docData.messages)) {
+          advisorHistory[d.id] = docData.messages;
+        }
+      }
+    } catch (err) {
+      // Advisor split is non-fatal — keep loading even if subcollection read fails.
+      console.warn("[db] advisor subcollection read failed:", err);
+    }
+
+    // Backwards-compat: pre-v2 docs stored advisorHistory inside `state`.
+    // Prefer subcollection (v2 truth); fall back to legacy field.
+    const merged: AppState = {
+      ...baseState,
+      advisorHistory:
+        Object.keys(advisorHistory).length > 0
+          ? advisorHistory
+          : baseState.advisorHistory ?? {},
+    };
+    return merged;
   } catch (err) {
     console.warn("[db] loadState failed:", err);
     return null;
   }
 }
 
-/** Delete the persisted state for the current user. */
+/** Delete the persisted state for the current user, including the advisor
+ * subcollection (Schema v2). Best-effort — partial failures are logged. */
 export async function clearState(): Promise<void> {
   if (typeof window === "undefined") return;
   if (!isFirebaseConfigured()) return;
@@ -134,6 +198,19 @@ export async function clearState(): Promise<void> {
     await deleteDoc(ref);
   } catch (err) {
     console.warn("[db] clearState failed:", err);
+  }
+
+  try {
+    const advisorSnap = await getDocs(
+      collection(db, "users", uid, ADVISOR_SUBCOLLECTION),
+    );
+    if (!advisorSnap.empty) {
+      const batch = writeBatch(db);
+      for (const d of advisorSnap.docs) batch.delete(d.ref);
+      await batch.commit();
+    }
+  } catch (err) {
+    console.warn("[db] clearState advisor cleanup failed:", err);
   }
 }
 

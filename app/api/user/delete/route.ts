@@ -38,6 +38,7 @@ import {
   getAdminStorage,
 } from "@/lib/firebase/admin";
 import { withUser } from "@/lib/api/withUser";
+import { auditLog } from "@/lib/audit/auditEvents";
 import { invalidInput, unauthorized } from "@/lib/api/errorEnvelope";
 
 export const runtime = "nodejs";
@@ -157,7 +158,7 @@ async function runAuthStep(uid: string): Promise<{ ok: true } | { ok: false; mes
   }
 }
 
-export const DELETE = withUser(async (request: NextRequest, { uid }) => {
+export const DELETE = withUser(async (request: NextRequest, { uid, requestId }) => {
   if (!uid) return unauthorized();
 
   let parsed: { confirm?: unknown } = {};
@@ -232,6 +233,7 @@ export const DELETE = withUser(async (request: NextRequest, { uid }) => {
 
   if (allDone) {
     await clearState(uid);
+    void auditLog({ uid, requestId, action: "user_data_deleted" });
     return new Response(null, { status: 204 });
   }
 

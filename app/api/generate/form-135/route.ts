@@ -42,6 +42,7 @@ import { buildForm135Fields, hebrewForPdf } from "@/lib/pdfUtils";
 import { isValidTZ } from "@/lib/validateTZ";
 import { loadFieldMap, findField, type FieldMap } from "@/lib/fieldMap";
 import { withUser } from "@/lib/api/withUser";
+import { auditLog } from "@/lib/audit/auditEvents";
 import { withRateLimitForUser } from "@/lib/api/withRateLimit";
 import {
   invalidInput,
@@ -326,7 +327,7 @@ export const EXCLUDED_CODES_135: Readonly<Record<string, string>> = {
 
 // ── Route handler ────────────────────────────────────────────────────────────
 
-async function handle(req: NextRequest): Promise<Response> {
+async function handle(req: NextRequest, ctx: { uid: string; requestId: string }): Promise<Response> {
   if (!fs.existsSync(TEMPLATE_PATH)) {
     return serviceUnavailable(
       "תבנית הטופס אינה זמינה כרגע.",
@@ -486,6 +487,15 @@ async function handle(req: NextRequest): Promise<Response> {
     const mode = calibrate ? "calibration" : "final";
     console.log(`[form-135] ${mode} ${buffer.byteLength}B — drawn=${drawn.length} missing=${missing.length}`);
     if (missing.length) console.log(`[form-135] codes not in map: ${missing.join(", ")}`);
+
+    if (!calibrate) {
+      void auditLog({
+        uid: ctx.uid,
+        requestId: ctx.requestId,
+        action: "form_135_generated",
+        metadata: { bytes: buffer.byteLength, drawn: drawn.length, missing: missing.length },
+      });
+    }
 
     return new Response(buffer, {
       status: 200,

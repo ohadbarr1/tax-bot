@@ -27,5 +27,14 @@ service cloud.firestore {
       allow read:  if (request.auth != null && request.auth.uid == uid) || isAdmin();
       allow write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Phase 2 §2.B — tamper-evident audit log. Admin SDK writes (server only)
+    // bypass these rules; clients have NO read or write access. Admins read
+    // through the portal, which routes via the Admin SDK as well — direct
+    // client read is intentionally blocked to keep the chain auditable
+    // (any leak would otherwise let a snooping admin learn the chain head).
+    match /audit_events/{eventId} {
+      allow read, write: if false;
+    }
   }
 }

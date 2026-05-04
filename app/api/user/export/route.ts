@@ -31,6 +31,7 @@ import {
 } from "firebase-admin/firestore";
 import { getAdminFirestore, getAdminStorage } from "@/lib/firebase/admin";
 import { withUser } from "@/lib/api/withUser";
+import { auditLog } from "@/lib/audit/auditEvents";
 import { internalError } from "@/lib/api/errorEnvelope";
 
 export const runtime = "nodejs";
@@ -161,10 +162,11 @@ async function buildExportZip(uid: string): Promise<Buffer> {
   return zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
 }
 
-export const GET = withUser(async (_req: NextRequest, { uid }) => {
+export const GET = withUser(async (_req: NextRequest, { uid, requestId }) => {
   try {
     const buf = await buildExportZip(uid);
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    void auditLog({ uid, requestId, action: "user_data_exported", metadata: { bytes: buf.byteLength } });
     // `Response` body accepts `Uint8Array` per the WHATWG Fetch spec — Node's
     // type defs lag behind, so we widen via `BodyInit` before construction.
     const body = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength) as BodyInit;

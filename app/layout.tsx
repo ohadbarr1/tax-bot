@@ -4,6 +4,7 @@ import "./globals.css";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WebVitals } from "@/components/WebVitals";
+import { CookieBanner } from "@/components/CookieBanner";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -52,6 +53,7 @@ export default function RootLayout({
         <WebVitals />
         <ThemeProvider>
           <ErrorBoundary>{children}</ErrorBoundary>
+          <CookieBanner />
         </ThemeProvider>
       </body>
     </html>

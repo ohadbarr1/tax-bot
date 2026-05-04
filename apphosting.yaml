@@ -1,15 +1,24 @@
 # Firebase App Hosting configuration — https://firebase.google.com/docs/app-hosting
 #
-# Runtime settings for the Next.js server. These caps stay generous because
-# Form-106 OCR (Tesseract Hebrew+English) and PDF text extraction can spike
-# RAM and wall-clock on cold starts. Adjust down once you profile real traffic.
+# Runtime settings for the Next.js server. Form-106 OCR (Tesseract Hebrew+English)
+# and PDF text extraction can spike RAM and wall-clock on cold starts.
+#
+# Phase 2 §2.G capacity tuning:
+#   • minInstances = 1 — keeps one warm pool member to absorb the cold-start
+#     hit on the first request after idle. Bump to ≥ 2 from Feb 1 → May 31
+#     (filing-season crunch) via a release-branch override.
+#   • maxInstances = 30 — UPGRADE_PLAN crunch ceiling.
+#   • concurrency  = 20 — Tesseract is CPU-bound; >20 in-flight per instance
+#     causes head-of-line blocking on the OCR queue. Plan §2.G value.
+#   • Splitting OCR/PDF into a separate Cloud Run service (UPGRADE_PLAN §2.G)
+#     is deferred — single-service is fine until concurrent OCR > 60.
 
 runConfig:
   cpu: 2
   memoryMiB: 2048
-  concurrency: 40
-  minInstances: 0
-  maxInstances: 10
+  concurrency: 20
+  minInstances: 1
+  maxInstances: 30
   timeoutSeconds: 300
 
 # Environment variables.

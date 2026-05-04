@@ -1,0 +1,18 @@
+{
+  "_comment": "Firebase Extension config for firestore-bigquery-export — streams audit_events to BigQuery for 7-year retention (PPA תיקון 13). Install via: firebase ext:install firebase/firestore-bigquery-export --project=taxbackil --params=extensions/firestore-bigquery-export.params.json",
+  "COLLECTION_PATH": "audit_events",
+  "DATASET_ID": "audit_events",
+  "TABLE_ID": "audit_events",
+  "DATASET_LOCATION": "us-central1",
+  "BACKUP_COLLECTION": "_audit_events_bq_backup",
+  "WILDCARD_IDS": "false",
+  "USE_NEW_SNAPSHOT_QUERY_SYNTAX": "yes",
+  "TRANSFORM_FUNCTION": "",
+  "TIME_PARTITIONING_OPTION": "DAY",
+  "TIME_PARTITIONING_FIELD_NAME": "created_at",
+  "TIME_PARTITIONING_FIRESTORE_FIELD": "created_at",
+  "TIME_PARTITIONING_FIELD_TYPE": "TIMESTAMP",
+  "CLUSTERING": "uid,action",
+  "BIGQUERY_PROJECT_ID": "taxbackil",
+  "DOC_ID": ""
+}

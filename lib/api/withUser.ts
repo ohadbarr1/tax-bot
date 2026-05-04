@@ -18,11 +18,21 @@
  */
 
 import type { NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { getAdminAuth } from "@/lib/firebase/admin";
 import { unauthorized } from "./errorEnvelope";
+import {
+  createRequestLogger,
+  newRequestId,
+  type Logger,
+} from "@/lib/logger";
 
 export interface WithUserContext {
   uid: string;
+  /** Per-request id (uuid) — injected into every log line via `log`. */
+  requestId: string;
+  /** Pino logger pre-bound with `request_id`, `uid`, `release`. */
+  log: Logger;
 }
 
 /**
@@ -79,8 +89,33 @@ export function withUser(
   handler: WithUserHandler,
 ): (req: NextRequest, ctx?: NextRouteContext) => Promise<Response> {
   return async (req: NextRequest, ctx?: NextRouteContext) => {
+    // Honour an inbound trace id if a load-balancer / OTel sidecar set one;
+    // otherwise mint our own uuid. Standard headers checked: `x-request-id`
+    // (most LBs), `traceparent` (W3C). Single allocation, fall through.
+    const headerRid =
+      req.headers.get("x-request-id") ??
+      req.headers.get("traceparent")?.split("-")[1] ??
+      null;
+    const requestId = headerRid ?? newRequestId();
+
     const decoded = await verifyBearerOrNull(req);
-    if (!decoded) return unauthorized();
-    return await handler(req, { uid: decoded.uid, params: ctx?.params });
+    if (!decoded) {
+      // Auth failure — still emit a structured trace so we can correlate
+      // 401 spikes with deploys / Firebase outages.
+      createRequestLogger(requestId).warn(
+        { event: "auth_unauthorized", path: req.nextUrl?.pathname ?? "" },
+        "401",
+      );
+      return unauthorized();
+    }
+    const log = createRequestLogger(requestId).child({ uid: decoded.uid });
+
+    // Sentry isolation: tag every captured event from this request with the
+    // request_id and uid. Scope is request-local; no cross-request leakage.
+    return await Sentry.withScope((scope) => {
+      scope.setTag("request_id", requestId);
+      scope.setUser({ id: decoded.uid });
+      return handler(req, { uid: decoded.uid, requestId, log, params: ctx?.params });
+    });
   };
 }
