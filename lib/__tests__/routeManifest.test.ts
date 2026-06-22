@@ -91,6 +91,7 @@ describe("Route manifest", () => {
         "/questionnaire/[step]",
         "/settings",
         "/status",
+        "/summary",
         "/tax-calculator",
         "/terms",
         "/welcome",
