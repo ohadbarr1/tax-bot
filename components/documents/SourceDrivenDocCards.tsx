@@ -174,7 +174,15 @@ export function SourceDrivenDocCards() {
   } = useApp();
 
   const sources = state.onboarding?.sources ?? [];
-  const documents = state.documents ?? [];
+  // Scope the active required-doc cards to the CURRENT draft only. Documents
+  // are a cross-draft vault (state.documents holds every draft's uploads), but
+  // a NEW process must start clean — otherwise a prior draft's parsed docs
+  // (e.g. last year's 106/IBKR) match here and look "attached" while the new
+  // draft's financials are still empty (the ₪0-summary-with-docs bug). Reusing
+  // a prior doc across drafts is the explicit job of the vault's "link" action.
+  const documents = (state.documents ?? []).filter(
+    (d) => (d.draftId ?? state.currentDraftId) === state.currentDraftId,
+  );
 
   // Per-docType local upload state (only for cards where user triggers an upload)
   const [uploadStates, setUploadStates] = useState<Record<string, UploadState>>({});
