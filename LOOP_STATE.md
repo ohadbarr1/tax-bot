@@ -4,11 +4,13 @@
 
 ---
 
-## STATUS: 🔵 RUNNING — T5 tax correctness. Next milestone = end of T5.
+## STATUS: ⏸️ MILESTONE REACHED — T5 tax correctness complete. Paused for human review.
 
-- **Current track:** T5 · Tax correctness
-- **Units:** T5.1 surtax §121ב rebuild · T5.2 §66 married separate calc · T5.3 phantom-refund keep-but-fix · T5.4 CG 30% controlling shareholder · T5.5 track gate
-- **Each unit:** CPA golden test (worked example, expected numbers) + tax-pro sign-off.
+- **Completed this run:** T5.1 surtax §121ב rebuild · T5.2 §66 separate calc (engine+UI) · T5.3 phantom-refund gate · T5.4 CG 30% controlling shareholder · T5.5 tax-pro gate.
+- **tax-pro verdict:** PASS-with-concerns — all 4 core fixes confirmed CORRECT. Edge simplifications surfaced as user warnings (§66 child-credit allocation; CG-30% portfolio scope); deeper edges (surtax 2% ordering, שבח base, §66(ד)) logged in DEFERRED_ACTIONS.
+- **Remaining loop tracks:** T7 (input/parsing robustness — NaN/locale guards, IBKR multi-currency, 106 parser filters) · T8 (coverage lock). Most of T7's TZ fix was pulled into T1.
+- **Last measured gate:** 571 pass / 2 skip / 54 files · build ✓ · lint 0err/45warn
+- **Branch:** `loop/remediation`
 
 ## (prev) MILESTONE — T6 form-fill fidelity complete.
 
@@ -43,7 +45,9 @@
 
 ## NEXT ACTION (what the next iteration does — keep this concrete)
 
-> **HUMAN REVIEW POINT — T6 milestone.** Form-fill done (Hebrew was a false alarm; structural bugs fixed, conventions flagged for CPA verification). When approved, recommended next: **T5 (tax correctness)** — surtax §121ב rebuild (single cumulative threshold), §66 married separate calc, fix the phantom חל"ת/maternity + multi-employer-overlap refunds (keep-but-fix per locked decision §3), CG 30% for controlling shareholder. This makes the calc-waterfall numbers themselves correct. Then T7 (input/parsing robustness) and T8 (coverage lock) to finish.
+> **HUMAN REVIEW POINT — T5 milestone.** Tax correctness done (surtax, §66, phantom-refund, CG30 — core all verified correct by tax-pro). When approved, remaining: **T7 (input/parsing robustness)** — NaN/locale guards on client calc, IBKR multi-currency (EUR/GBP) + locale-aware number parsing, Tofes-106 parser `<100` filter + employer-name heuristic. Then **T8 (coverage lock)** — regression tests at every seam — to close the loop. After T8 the loop's Definition of Done (LOOP_GOAL §2) is met.
+
+> **(prev) HUMAN REVIEW POINT — T6 milestone.** Form-fill done (Hebrew was a false alarm; structural bugs fixed, conventions flagged for CPA verification). When approved, recommended next: **T5 (tax correctness)** — surtax §121ב rebuild (single cumulative threshold), §66 married separate calc, fix the phantom חל"ת/maternity + multi-employer-overlap refunds (keep-but-fix per locked decision §3), CG 30% for controlling shareholder. This makes the calc-waterfall numbers themselves correct. Then T7 (input/parsing robustness) and T8 (coverage lock) to finish.
 
 ---
 
@@ -51,9 +55,9 @@
 
 | Gate | Expected (audit, 2026-06-22) | Last measured | When |
 |------|------------------------------|---------------|------|
-| `npm test` | 522 pass / 2 skip / 45 files | 554 pass / 2 skip / 51 files | Iter 15 |
-| `npm run build` | pass | pass | Iter 15 |
-| `npm run lint` | 0 err / 46 warn | 0 err / 45 warn | Iter 15 |
+| `npm test` | 522 pass / 2 skip / 45 files | 571 pass / 2 skip / 54 files | Iter 20 |
+| `npm run build` | pass | pass | Iter 20 |
+| `npm run lint` | 0 err / 46 warn | 0 err / 45 warn | Iter 20 |
 | `npm run forms:smoke` | 135: 14/14, 1301: 21/21 | 135 14/14, 1301 21/21 | Iter 1 |
 
 Rule: test count must never drop; lint warnings must never increase.
@@ -71,12 +75,21 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + reviewer P
 | T2 Override end-to-end | 🔵 | qa-lead | T2.1 ✅ | T2.1 done (all doc-write paths honor lock); remaining: inline-edit override UX, dedupe-by-name |
 | T3 Output 1 — data summary | ✅ | product-lead | PASS (fields added) | verified live; override badge cosmetic-only in spine order |
 | T4 Output 2 — calc waterfall | ✅ | product-lead + tax-pro | PASS (reconciles) | verified live: ₪300k→refund ₪16,604 |
-| T5 Tax correctness | ⬜ | tax-pro | — | surtax §121ב, §66 separate, phantom-refund, CG 30% |
+| T5 Tax correctness | ✅ | tax-pro | PASS-w/-concerns (core correct) | surtax/§66/phantom/CG30 fixed; edges→warnings+DEFERRED |
+| T7 Input/parsing robustness | ⬜ | qa-lead | — | NaN/locale guards, IBKR multi-ccy, 106 filters (TZ done in T1) |
+| T8 Coverage lock | ⬜ | qa-lead | — | |
 | T6 Form-fill fidelity | ✅ | (CPA/user to verify) | conventions flagged ASSUMPTION | Hebrew=false-alarm; 135 double-count + dividend codes fixed; T6.5 coords deferred |
 | T5 Tax correctness | ⬜ | tax-pro | — | surtax, §66, CG 30%, phantom-refund fix |
 | T6 Form-fill fidelity | ⬜ | tax-pro | — | RTL headline, 135 aggregate, loss sign, hide 161/1214 |
 | T7 Input/parsing robustness | ⬜ | qa-lead | — | TZ, NaN, locale, IBKR multi-ccy |
 | T8 Coverage lock | ⬜ | qa-lead | — | |
+
+### Track checklist — T5  (COMPLETE)
+- ✅ T5.1 Surtax §121ב — single shared threshold + 2% capital surcharge (2025); per-year table; +6 goldens
+- ✅ T5.2 §66 separate calc — engine + spouse.income/.taxWithheld model + questionnaire UI + summary; +4 goldens
+- ✅ T5.3 Phantom-refund gate — חל"ת/maternity/overlap fire only on incomeIsAnnualizedProjection; +5 tests
+- ✅ T5.4 CG 30% for controlling shareholder (gain + dividends); +2 tests
+- ✅ T5.5 tax-pro gate — core correct; §66 + CG-30% simplifications now warn; edges→DEFERRED
 
 ### Track checklist — T6  (COMPLETE)
 - ✅ T6.1 Hebrew rendering: verified pure-Hebrew correct via poppler + CoreGraphics (D7 false alarm); fixed embedded multi-digit reversal (reverseDigitRuns) +5 tests
