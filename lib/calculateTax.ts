@@ -1343,6 +1343,12 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     const spouseCreditValue = Math.round(2.25 * loadYearData(year).credit_point_annual_value);
     spouseSeparateTax = Math.max(0, spouseBracketTax - spouseCreditValue);
     spouseTaxWithheld = taxpayer.spouse!.taxWithheld ?? 0;
+    if ((taxpayer.children?.length ?? 0) > 0) {
+      incomeDeductionWarnings.push(
+        "חישוב נפרד (§66): נקודות הזיכוי של הילדים שויכו לנישום הרשום בלבד. " +
+          "כברירת מחדל נקודות הילדים שייכות לאם — ודאו את ההקצאה בין בני הזוג."
+      );
+    }
   }
 
   // Step 5: Net tax owed (floored at 0) — household = registered taxpayer's
@@ -1426,6 +1432,12 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     const dividendRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
     const grossCGTax = Math.round(netGain * cgRate + dividends * dividendRate);
     capitalGainsTax = Math.max(0, grossCGTax - foreignTaxWithheld);
+    if (taxpayer.controllingShareholder && (netGain > 0 || dividends > 0)) {
+      incomeDeductionWarnings.push(
+        "שיעור 30% (בעל מניות מהותי) הוחל על כל רווחי ההון והדיבידנדים. " +
+          "הוא חל רק על אחזקה שבה מוחזקים 10%+ — אם חלק מהתיק אינו כזה, ייתכן שחלקו במס 25%."
+      );
+    }
   }
 
   // T5.1 — Mas Yesafim (surtax) per סעיף 121ב, rebuilt.
