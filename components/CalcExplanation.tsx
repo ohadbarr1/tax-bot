@@ -66,28 +66,30 @@ export function CalcExplanation() {
   const cgtNote = (state.taxpayer.capitalGains?.foreignTaxWithheld ?? 0) > 0 ? "לאחר זיכוי מס זר ששולם בחו״ל" : undefined;
 
   const rows: Row[] = [
-    { label: "הכנסה ברוטו כוללת", value: r.totalGrossIncome },
-    { label: "ניכויים מההכנסה", value: -r.incomeDeductions, kind: "sub", note: "פנסיה, מזונות, פטור נכות וכד׳", hideIfZero: true },
-    { label: "הכנסה חייבת", value: r.taxableIncome, kind: "subtotal" },
-    { label: "מס לפי מדרגות", value: rawBracketTax, kind: "add", expense: true },
-    { label: "הנחת עבודה במשמרות", value: -r.shiftWorkDiscount, kind: "sub", hideIfZero: true },
-    { label: "נקודות זיכוי", value: -r.creditPointsValue, kind: "sub", note: `${r.creditPointsCount} נק׳ × ערך שנתי`, hideIfZero: true },
-    { label: "זיכויי מס (§46, §45א)", value: -r.deductionCredits, kind: "sub", note: "תרומות, ביטוח חיים וכד׳", hideIfZero: true },
-    { label: "הנחת פריפריה (§11)", value: -r.peripheryDiscount, kind: "sub", hideIfZero: true },
-    { label: "זיכוי מס זר על שכר (§67א)", value: -r.foreignSalaryCredit, kind: "sub", hideIfZero: true },
-    { label: "מס בן/בת זוג (חישוב נפרד §66)", value: r.spouseSeparateTax, kind: "add", expense: true, hideIfZero: true },
+    { label: "הכנסה ברוטו כוללת", value: r.totalGrossIncome, note: "סך ההכנסה החייבת מכל המקורות — משכורת, עסק והכנסות נוספות — לפני ניכויים. הבסיס לחישוב." },
+    { label: "ניכויים מההכנסה", value: -r.incomeDeductions, kind: "sub", note: "מוקטנים מההכנסה לפני המס: הפקדות לפנסיה (§47), מזונות ששולמו (§9א), ופטור נכות (§9(5)). מקטינים את ההכנסה החייבת.", hideIfZero: true },
+    { label: "הכנסה חייבת", value: r.taxableIncome, kind: "subtotal", note: "ההכנסה שעליה מחושב המס לפי מדרגות." },
+    { label: "מס לפי מדרגות", value: rawBracketTax, kind: "add", expense: true, note: "המס המצטבר לפי מדרגות המס השנתיות (10%–50%). ראו פירוט המדרגות למטה. סעיף 121." },
+    { label: "הנחת עבודה במשמרות", value: -r.shiftWorkDiscount, kind: "sub", note: "הנחה של 15% על המס המיוחס לשעות משמרת מזכות. תקנה 5.", hideIfZero: true },
+    { label: "נקודות זיכוי", value: -r.creditPointsValue, kind: "sub", note: `${r.creditPointsCount} נקודות זיכוי × הערך השנתי לנקודה. תושב, מין, ילדים, תואר, עולה, חייל משוחרר — כל אחת מקטינה את המס בסכום קבוע. סעיפים 34–40.`, hideIfZero: true },
+    { label: "זיכויי מס (§46, §45א)", value: -r.deductionCredits, kind: "sub", note: "זיכוי של 35% על תרומות מוכרות (§46) ו-25% על פרמיות ביטוח חיים/סיעודי (§45א), בכפוף לתקרות.", hideIfZero: true },
+    { label: "הנחת פריפריה (§11)", value: -r.peripheryDiscount, kind: "sub", note: "הנחה ביישוב מזכה — אחוז וקבוע לפי היישוב, על הכנסה מיגיעה אישית. סעיף 11.", hideIfZero: true },
+    { label: "זיכוי מס זר על שכר (§67א)", value: -r.foreignSalaryCredit, kind: "sub", note: "זיכוי על מס ששולם בחו״ל על שכר, עד גובה המס הישראלי המיוחס לאותה הכנסה. סעיף 67א.", hideIfZero: true },
+    { label: "מס בן/בת זוג (חישוב נפרד §66)", value: r.spouseSeparateTax, kind: "add", expense: true, note: "המס של בן/בת הזוג מחושב בנפרד על מדרגות משלו — לרוב מקטין את המס המשפחתי. סעיף 66.", hideIfZero: true },
     {
       label: "מס הכנסה לתשלום",
       value: r.netTaxOwed,
       kind: "subtotal",
       expense: true,
-      note: creditsExceedTax ? "הזיכויים האישיים אינם מוחזרים — עודף הזיכוי לא נוצל" : undefined,
+      note: creditsExceedTax
+        ? "מס המדרגות בניכוי כל הזיכויים. הזיכויים האישיים אינם מוחזרים — עודף הזיכוי לא נוצל (לכן הסכום אינו שלילי)."
+        : "מס המדרגות בניכוי כל נקודות הזיכוי והזיכויים.",
     },
-    { label: "מס על רווחי הון", value: r.capitalGainsTax, kind: "add", expense: true, note: cgtNote, hideIfZero: true },
-    { label: "מס יסף (§121ב)", value: r.surtax, kind: "add", expense: true, hideIfZero: true },
-    { label: "סך חבות המס", value: totalLiability, kind: "subtotal", expense: true },
-    { label: "מס שנוכה במקור", value: -employerWithheld, kind: "sub", expense: true, note: "כבר שולם — מקוזז מול החבות", hideIfZero: true },
-    { label: "מס שנוכה לבן/בת הזוג", value: -r.spouseTaxWithheld, kind: "sub", expense: true, hideIfZero: true },
+    { label: "מס על רווחי הון", value: r.capitalGainsTax, kind: "add", expense: true, note: cgtNote ? cgtNote + " ראו פירוט מס רווחי הון למטה." : "מס על רווחי הון ודיבידנדים מניירות ערך. ראו פירוט מס רווחי הון למטה. סעיף 91.", hideIfZero: true },
+    { label: "מס יסף (§121ב)", value: r.surtax, kind: "add", expense: true, note: "3% על ההכנסה מעל ₪721,560, ועוד 2% על החלק ההוני שמעל הסף (מ-2025). סעיף 121ב.", hideIfZero: true },
+    { label: "סך חבות המס", value: totalLiability, kind: "subtotal", expense: true, note: "מס הכנסה + מס רווחי הון + מס יסף." },
+    { label: "מס שנוכה במקור", value: -employerWithheld, kind: "sub", expense: true, note: "מס שכבר נוכה מהמשכורת ובמקור במהלך השנה — מקוזז מול החבות. אם נוכה יותר מהחבות, ההפרש חוזר כהחזר.", hideIfZero: true },
+    { label: "מס שנוכה לבן/בת הזוג", value: -r.spouseTaxWithheld, kind: "sub", expense: true, note: "ניכוי במקור משכר בן/בת הזוג.", hideIfZero: true },
   ];
   if (r.multiEmployerOverlapRefund > 0) {
     rows.push({

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Check, Zap, FileDown, Loader2 } from "lucide-react";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { CalcExplanation } from "@/components/CalcExplanation";
+import { CapitalGainsDetail } from "@/components/CapitalGainsDetail";
 import { useApp } from "@/lib/appContext";
 import { downloadGeneratedForm } from "@/lib/pdfDownload";
 import { refundHeadline } from "@/lib/refundDisplay";
@@ -136,6 +137,10 @@ function FilingInner() {
 
       <div style={{ marginBottom: 24 }}>
         <CalcExplanation />
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <CapitalGainsDetail />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-5">
