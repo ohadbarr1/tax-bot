@@ -36,6 +36,13 @@ Key new files: `lib/flowStage.ts` (stage machine), `components/FlowChrome.tsx`
 
 ## Open / next
 
+- **NEXT UP — 3 new user requests (R7/R8/R9), specced in `LOOP2_STATE.md`:**
+  R7 delete-employers bug (phantom mined employers, no delete); R8 broker-tax as
+  a real per-trade step-by-step PAGE (needs IBKR parser to retain `trades[]`);
+  R9 filing copy fixes (135-vs-1301 via determineFormType; we generate a PDF, we
+  do NOT submit to the ITA). Start here.
+
+
 - **"smart questionnaire" is NOT needed** — the user clarified it was the
   resume-jump bug (now fixed), not skip-the-filled-steps. Don't build skip logic.
 - **CG drill-down live render** with real data not yet eyeballed on-screen
