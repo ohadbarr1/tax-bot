@@ -145,6 +145,10 @@ export interface CalculationResult {
   taxPaid: number;              // sum of all employer taxWithheld + F-023 overlap refund
   refundFromEmployment: number; // taxPaid − netTaxOwed
   capitalGainsTax: number;      // net capital gains tax owed after foreign credit
+  /** Phase 2 §2.B — Mas Yesafim (surtax) on income above ₪721,560 (סעיף 121ב). */
+  surtax: number;
+  surtaxActive: number;         // 3% on active income above the threshold
+  surtaxPassive: number;        // 5% on capital/passive income above the threshold
   netRefund: number;            // refundFromEmployment − capitalGainsTax
   creditPointsCount: number;
   warnings?: string[];          // surfaced advisory issues (e.g. alimony default-spouse-100%)
@@ -1344,6 +1348,8 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
 
   // Step 8: Capital gains tax (F-016: subtract carriedForwardLoss before 25% rate).
   let capitalGainsTax = 0;
+  let netGain = 0;
+  let dividendsAmount = 0;
   if (taxpayer.capitalGains) {
     const {
       totalRealizedProfit,
@@ -1352,14 +1358,34 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
       dividends = 0,
       carriedForwardLoss = 0,
     } = taxpayer.capitalGains;
+    dividendsAmount = dividends;
     // F-016: סעיף 92 — קיזוז הפסד הון מועבר לפני חישוב המס.
-    const netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
-    const grossCGTax = Math.round((netGain + dividends) * 0.25);
+    netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
+    // Phase 2 §2.B — controlling-shareholder dividends are taxed at 30%
+    // (vs 25% for regular). Default to 25% unless the user flagged otherwise
+    // in the questionnaire.
+    const dividendRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
+    const grossCGTax = Math.round(netGain * 0.25 + dividends * dividendRate);
     capitalGainsTax = Math.max(0, grossCGTax - foreignTaxWithheld);
   }
 
+  // Phase 2 §2.B — Mas Yesafim (surtax) per סעיף 121ב.
+  // 2026 thresholds (Israeli-tax-returns skill, Step 4):
+  //   • Active income (employment + business): 3% above ₪721,560
+  //   • Capital / passive income (dividend, interest, rent, capital gains):
+  //     5% above ₪721,560 (3% base + 2% additional surcharge)
+  // Both buckets share the SAME ₪721,560 threshold but compute independently.
+  const SURTAX_THRESHOLD = 721_560;
+  const activeIncomeForSurtax = Math.max(0, taxableIncome);
+  const passiveIncomeForSurtax = netGain + dividendsAmount;
+  const activeSurtaxBase  = Math.max(0, activeIncomeForSurtax  - SURTAX_THRESHOLD);
+  const passiveSurtaxBase = Math.max(0, passiveIncomeForSurtax - SURTAX_THRESHOLD);
+  const surtaxActive  = Math.round(activeSurtaxBase  * 0.03);
+  const surtaxPassive = Math.round(passiveSurtaxBase * 0.05);
+  const surtaxTotal   = surtaxActive + surtaxPassive;
+
   // Step 9: Final net refund.
-  const netRefund = refundFromEmployment - capitalGainsTax;
+  const netRefund = refundFromEmployment - capitalGainsTax - surtaxTotal;
 
   // Step 10: F-013 §9(7א) auto-compute severance exemption + emit a warning
   // when the user-entered `taxableSeverancePay` (Field 272) appears to ignore
@@ -1405,6 +1431,9 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     taxPaid,
     refundFromEmployment,
     capitalGainsTax,
+    surtax: surtaxTotal,
+    surtaxActive,
+    surtaxPassive,
     netRefund,
     creditPointsCount,
     warnings: incomeDeductionWarnings,

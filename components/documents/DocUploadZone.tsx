@@ -116,7 +116,7 @@ export function DocUploadZone({ docs, sessionUrls, parseStatuses, parseResults, 
             const viewUrl = sessionUrl ?? doc.downloadUrl;
             const parseStatus = parseStatuses.get(doc.id) ?? "idle";
             const parseResult = parseResults.get(doc.id);
-            const canParse = doc.type === "form106" || doc.type === "ibkr";
+            const canParse = doc.type === "form106" || doc.type === "ibkr" || doc.type === "form867";
             return (
               <div key={doc.id} className="flex flex-col gap-1.5 p-3 bg-card border border-border rounded-xl">
                 <div className="flex items-center gap-3">
@@ -240,9 +240,22 @@ function guessDocType(filename: string, mimeType: string): VaultDocType {
   if (lower.endsWith(".csv") || mimeType === "text/csv") return "ibkr";
 
   // Form numbers in filename — CHECK BEFORE brand keywords so "Phoenix_106"
-  // classifies as form106 and not pension.
-  if (/\b106\b/.test(lower) || /טופס\s*106|106\s*טופס/.test(lower)) return "form106";
-  if (/\b135\b/.test(lower) || /טופס\s*135|135\s*טופס/.test(lower)) return "form135";
+  // classifies as form106 and not pension. Use a non-digit boundary that
+  // also treats `_` as a separator (regex \b doesn't, since \w includes _ —
+  // that's why "TA 106_2025.pdf" used to fall through to "other").
+  // Match form 867 (broker tax certificate) the same way; required for the
+  // IBKR → 1301 path. Use a tail-anchored variant to avoid a false-positive
+  // on filenames like "U14867394_867.pdf" where 867 also appears mid-string.
+  const has = (n: string) =>
+    new RegExp(`(^|[^0-9])${n}([^0-9]|$)`).test(lower);
+  if (has("106") || /טופס\s*106|106\s*טופס/.test(lower)) return "form106";
+  if (has("135") || /טופס\s*135|135\s*טופס/.test(lower)) return "form135";
+  if (
+    /(?:^|[^0-9])867(?:[^0-9]|$)/.test(lower) ||
+    /טופס\s*867|867\s*טופס|tax.?withholding|withhold(?:ing)?.?cert/.test(lower)
+  ) {
+    return "form867";
+  }
 
   // Broker / brokerage keywords
   if (/ibkr|interactive|broker|activity.?statement|trade/.test(lower)) return "ibkr";

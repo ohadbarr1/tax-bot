@@ -77,6 +77,8 @@ export interface Form135Fields {
   "023": string; // Street     — raw Hebrew
   "024": string; // House number — numeric string
   maritalStatusLabel: string; // Hebrew label (raw)
+  spouseFirstName: string;    // Phase 2 §2.B — page-1 בן/בת זוג column
+  spouseLastName: string;     // Phase 2 §2.B — page-1 בן/בת זוג column
 
   // §1b Residency / aliyah / periphery (Phase 0 §0.D — audits/generation.md §1.1)
   /**
@@ -272,11 +274,29 @@ export function buildForm1301Fields(
 
     // Capital gains — expanded
     "060": formatIlsForPdf(cg?.totalRealizedProfit),
-    "211": "0", // center column — reserved for future use
+    "211": "", // center column — Israeli-broker capital gains (reserved; only set when we split sources)
     "067": formatIlsForPdf(cg?.totalRealizedLoss),
     "157": formatIlsForPdf(cg?.foreignTaxWithheld),
-    "141": formatIlsForPdf(cg?.dividends),
-    "055_1301": formatIlsForPdf(cg?.foreignTaxWithheld),
+    // Phase 2 §2.B — dividend / interest classification.
+    //   - regular dividend (default for IBKR / foreign brokers) → code 117
+    //   - redemption-eligible Israeli securities                  → code 141
+    //   - controlling-shareholder dividend (10%+ holder, 30% rate) → code 055
+    // The user's questionnaire choice (`taxpayer.dividendType` /
+    // `controllingShareholder`) decides which slot gets the value;
+    // the other slots stay empty so the ITA scanner does not double-count.
+    "117": taxpayer.controllingShareholder
+      ? ""
+      : taxpayer.dividendType === "redemption_141"
+      ? ""
+      : formatIlsForPdf(cg?.dividends),
+    "141": taxpayer.controllingShareholder
+      ? ""
+      : taxpayer.dividendType === "redemption_141"
+      ? formatIlsForPdf(cg?.dividends)
+      : "",
+    "055_1301": taxpayer.controllingShareholder
+      ? formatIlsForPdf(cg?.dividends)
+      : "",
 
     // Deductions (page 1)
     "078": formatIlsForPdf(donations),
@@ -436,6 +456,8 @@ export function buildForm135Fields(
     "012": taxpayer.idNumber ?? "",
     "013": taxpayer.spouseId ?? "",
     "031": taxpayer.firstName ?? nameParts[0] ?? "",
+    spouseFirstName: taxpayer.spouse?.firstName ?? "",
+    spouseLastName:  taxpayer.spouse?.lastName  ?? "",
     "032": taxpayer.lastName  ?? nameParts[1] ?? "",
     "022": taxpayer.address?.city        ?? "",
     "023": taxpayer.address?.street      ?? "",

@@ -146,6 +146,8 @@ const TaxPayerSchema = z.object({
   disabilityPercent: z.number().min(0).max(100).optional(),
   postcode: z.string().max(16).optional(),
   kibbutzMember: z.boolean().optional(),
+  controllingShareholder: z.boolean().optional(),
+  dividendType: z.enum(["regular_117", "redemption_141"]).optional(),
 });
 
 const FinancialDataSchema = z.object({

@@ -10,18 +10,26 @@ interface Props {
   investsCapital: boolean;
   portfolioLocation: "bank" | "local_broker" | "foreign_broker" | null;
   selectedBroker: string;
+  controllingShareholder: boolean;
+  dividendType: "regular_117" | "redemption_141";
   onInvestsCapitalChange: (v: boolean) => void;
   onPortfolioLocationChange: (v: "bank" | "local_broker" | "foreign_broker") => void;
   onSelectedBrokerChange: (v: string) => void;
+  onControllingShareholderChange: (v: boolean) => void;
+  onDividendTypeChange: (v: "regular_117" | "redemption_141") => void;
 }
 
 export default function Step3Capital({
   investsCapital,
   portfolioLocation,
   selectedBroker,
+  controllingShareholder,
+  dividendType,
   onInvestsCapitalChange,
   onPortfolioLocationChange,
   onSelectedBrokerChange,
+  onControllingShareholderChange,
+  onDividendTypeChange,
 }: Props) {
   const { state } = useApp();
   // T4: heuristic default for portfolio location when the user flips to yes.
@@ -134,6 +142,66 @@ export default function Step3Capital({
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* ── סיווג דיבידנד / ריבית — drives Form 1301 codes 117 vs 141 ─ */}
+            <div className="space-y-2">
+              <Label>סוג הכנסה מדיבידנד / ריבית</Label>
+              <p className="text-xs text-slate-500 -mt-1">
+                ברוב התיקים מדובר בדיבידנד רגיל (קוד 117 בטופס 1301, מס בשיעור 25%).
+                ריבית מאיגרות־חוב סחירות בנות פדיון נכנסת לקוד 141.
+              </p>
+              {[
+                {
+                  v: "regular_117" as const,
+                  l: "דיבידנד רגיל / ריבית מני\"ע סחירים (קוד 117)",
+                },
+                {
+                  v: "redemption_141" as const,
+                  l: "ריבית ודיבידנד מני\"ע סחירים בני פדיון (קוד 141)",
+                },
+              ].map((opt) => (
+                <button
+                  key={opt.v}
+                  onClick={() => onDividendTypeChange(opt.v)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all text-start ${
+                    dividendType === opt.v
+                      ? "bg-kc-ink text-white border-kc-ink"
+                      : "bg-background dark:bg-secondary text-foreground border-border hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      dividendType === opt.v ? "border-white" : "border-slate-300"
+                    }`}
+                  >
+                    {dividendType === opt.v && (
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span>{opt.l}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* ── בעל מניות מהותי — drives Form 1301 code 055 (30%) ─────── */}
+            <div className="space-y-2">
+              <Label>האם את/ה בעל מניות מהותי (10%+) באחת מהחברות שמהן קיבלת דיבידנד?</Label>
+              <p className="text-xs text-slate-500 -mt-1">
+                בעל מניות מהותי מחויב במס בשיעור 30% על דיבידנד מהחברה (קוד 055), במקום 25%.
+                ברירת המחדל: לא.
+              </p>
+              <TogglePair
+                value={controllingShareholder}
+                onChange={onControllingShareholderChange}
+              />
+              {controllingShareholder && (
+                <WarnBox>
+                  בחירה זו תפנה את סכום הדיבידנד שלך לקוד 055 בטופס 1301 (מס בשיעור 30%) במקום
+                  לקוד 117 (25%). אם רק חלק מהדיבידנדים שייך לבעל מניות מהותי, יש להזין סכום
+                  ידני בעמוד הפרטים.
+                </WarnBox>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -10,7 +10,7 @@ import { useApp } from "@/lib/appContext";
 import { uploadUserDocument } from "@/lib/firebase/storage";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { clientFetch } from "@/lib/api/clientFetch";
-import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse } from "@/types";
+import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse, Form867InboundData } from "@/types";
 
 const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
   { id: "all",          label: "כל המסמכים" },
@@ -35,7 +35,14 @@ export default function DocumentsPage() {
 function DocumentsPageInner() {
   const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, linkDocumentToProcess, hydrated } = useApp();
   const router = useRouter();
-  const [viewMode, setViewMode] = useState<"grouped" | "flat">("grouped");
+  // Default to the flat list view when the vault is empty so the upload
+  // dropzone is reachable on first visit. The grouped view (`VaultGroupedView`)
+  // does not render the dropzone, so an empty-vault user landing on grouped
+  // has nowhere to drop their first file. Once any document exists, the user
+  // toggles freely between views.
+  const initialViewMode: "grouped" | "flat" =
+    (state.documents?.length ?? 0) === 0 ? "flat" : "grouped";
+  const [viewMode, setViewMode] = useState<"grouped" | "flat">(initialViewMode);
 
   // Session-only blob URLs — never persisted (blob URLs are tab-lifetime only).
   const [sessionUrls, setSessionUrls] = useState<Map<string, string>>(new Map());
@@ -91,7 +98,7 @@ function DocumentsPageInner() {
             ].join(" · "),
             raw: d,
           });
-        } else {
+        } else if (doc.parsedPayload.kind === "ibkr") {
           const d = doc.parsedPayload.data;
           next.set(doc.id, {
             summary: [
@@ -100,6 +107,18 @@ function DocumentsPageInner() {
               `דיבידנדים: $${d.dividendsUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
               `WHT: $${d.foreignTaxUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
               `שער: ${d.exchangeRate}`,
+            ].join(" · "),
+            raw: d,
+          });
+        } else if (doc.parsedPayload.kind === "form867") {
+          const d = doc.parsedPayload.data;
+          next.set(doc.id, {
+            summary: [
+              `ברוקר: ${d.brokerName || "—"}`,
+              `רווח: ₪${d.realizedGainsIls.toLocaleString("he-IL")}`,
+              `הפסד: ₪${d.realizedLossesIls.toLocaleString("he-IL")}`,
+              `דיבידנדים: ₪${d.dividendsIls.toLocaleString("he-IL")}`,
+              `ניכוי במקור (חו״ל): ₪${d.foreignWithholdingIls.toLocaleString("he-IL")}`,
             ].join(" · "),
             raw: d,
           });
@@ -117,7 +136,10 @@ function DocumentsPageInner() {
   // ── Parse a file and update state ─────────────────────────────────────────
 
   const parseDocument = useCallback(async (docId: string, docType: VaultDocType, file: File) => {
-    if (docType !== "form106" && docType !== "ibkr") return;
+    // Phase 2: also auto-parse form 867 (broker tax cert) on the IBKR → 1301
+    // path. Anything else (pension, RSU, bank, receipt, other) needs manual
+    // categorisation and has no automated parser.
+    if (docType !== "form106" && docType !== "ibkr" && docType !== "form867") return;
 
     setParseStatuses((prev) => new Map(prev).set(docId, "parsing"));
 
@@ -126,7 +148,7 @@ function DocumentsPageInner() {
     // document survives page reloads.
     const uploadPromise = uploadUserDocument(
       file,
-      docType === "form106" ? "form-106" : "ibkr",
+      docType === "form106" ? "form-106" : docType === "ibkr" ? "ibkr" : "form-867",
       file.name,
       state.currentDraftId,
     );
@@ -200,7 +222,9 @@ function DocumentsPageInner() {
         setParseResults((prev) => new Map(prev).set(docId, { summary, raw: d }));
         setParseStatuses((prev) => new Map(prev).set(docId, "done"));
 
-        // Update global state
+        // Update global state — IBKR is the trigger for the 1301 form-type
+        // path (`hasForeignBroker = true`). Stamp the parsed values into
+        // capitalGains so determineFormType + the 1301 stamper see them.
         updateTaxpayerAndRecalculate(
           {
             capitalGains: {
@@ -219,18 +243,107 @@ function DocumentsPageInner() {
           downloadUrl: uploadResult?.url,
           parsedPayload: { kind: "ibkr", data: d },
         });
+
+      } else if (docType === "form867") {
+        // Form 867 is the annual tax certificate from an Israeli tax-service
+        // provider (e.g. הייבריד שרותי תפעול מס). For IBKR-only users it does
+        // NOT represent a separate Israeli-broker portfolio — it represents
+        // taxes already prepaid on the user's behalf against the same IBKR
+        // transactions. Adding 867 totals onto the IBKR totals double-counts
+        // the entire portfolio.
+        //
+        // Treatment chosen:
+        //   • Identity backfill (accountHolderName / tz) when state is empty —
+        //     the 867 is the most reliable identity source we have for an
+        //     IBKR-only filer.
+        //   • Capital-gains numbers from the 867 are NOT merged into
+        //     `taxpayer.capitalGains`. They're stored in the document's
+        //     `parsedPayload` for later cross-check / discrepancy banner.
+        //   • If the user has no IBKR data at all, fall back to using the
+        //     867 numbers as the primary capital-gains source — that path
+        //     covers the rare salaried filer who only has a הייבריד 867
+        //     and never imports the underlying IBKR CSV.
+        const res = await clientFetch("/api/parse/form-867-inbound", { method: "POST", body: formData });
+        const json = await res.json() as { success: boolean; data?: Form867InboundData; error?: string };
+        if (!json.success || !json.data) throw new Error(json.error ?? "parse failed");
+
+        const d = json.data;
+        const summary = [
+          `ברוקר: ${d.brokerName || "—"}`,
+          `רווח: ₪${d.realizedGainsIls.toLocaleString("he-IL")}`,
+          `הפסד: ₪${d.realizedLossesIls.toLocaleString("he-IL")}`,
+          `דיבידנדים: ₪${d.dividendsIls.toLocaleString("he-IL")}`,
+          `ניכוי במקור (חו״ל): ₪${d.foreignWithholdingIls.toLocaleString("he-IL")}`,
+        ].join(" · ");
+
+        setParseResults((prev) => new Map(prev).set(docId, { summary, raw: d }));
+        setParseStatuses((prev) => new Map(prev).set(docId, "done"));
+
+        // Identity backfill — only writes when the existing taxpayer field
+        // is empty so a user-typed value never gets clobbered by a
+        // low-confidence vision extraction.
+        const identityPatch: Partial<typeof state.taxpayer> = {};
+        const looksLikeTZ = /^\d{5,9}$/.test(d.tz);
+        if (!state.taxpayer.idNumber && looksLikeTZ) {
+          identityPatch.idNumber = d.tz.padStart(9, "0");
+        }
+        if (!state.taxpayer.fullName && d.accountHolderName) {
+          identityPatch.fullName = d.accountHolderName;
+          // First/last split — best-effort, user can correct in /details.
+          const parts = d.accountHolderName.trim().split(/\s+/);
+          if (parts.length >= 2 && !state.taxpayer.firstName) identityPatch.firstName = parts[0];
+          if (parts.length >= 2 && !state.taxpayer.lastName)  identityPatch.lastName  = parts.slice(1).join(" ");
+        }
+
+        // Fall-back capital-gains primary source: only when no IBKR data
+        // is currently in state. Otherwise the 867 stays cross-check-only
+        // and we leave `capitalGains` driven by IBKR.
+        const hasIbkrSource = state.financials?.hasForeignBroker === true;
+        const capitalGainsPatch = hasIbkrSource
+          ? undefined
+          : {
+              totalRealizedProfit: Math.max(0, d.realizedGainsIls),
+              totalRealizedLoss: Math.max(0, d.realizedLossesIls),
+              foreignTaxWithheld: Math.max(0, d.foreignWithholdingIls),
+              dividends: Math.max(0, d.dividendsIls),
+            };
+
+        updateTaxpayerAndRecalculate(
+          {
+            ...identityPatch,
+            ...(capitalGainsPatch ? { capitalGains: capitalGainsPatch } : {}),
+          },
+          // Mirror IBKR-flag when the 867 is the sole capital-gains source —
+          // otherwise determineFormType will fall back to 135 even though
+          // the user has foreign-broker income reported via the 867 service.
+          capitalGainsPatch ? { hasForeignBroker: true } : undefined,
+        );
+
+        const uploadResult = await uploadPromise;
+        updateDocumentStatus(docId, "mined", {
+          storagePath: uploadResult?.path,
+          downloadUrl: uploadResult?.url,
+          parsedPayload: { kind: "form867", data: d },
+        });
       }
-    } catch {
+    } catch (err) {
+      // Keep the (silent-by-default) parse-error UI but record the user-facing
+      // message so a future <ParseErrorBanner /> can surface it. Critical for
+      // the IBKR → 1301 path — a failed IBKR parse silently downgrades the
+      // form-type recommendation to 135, which is the wrong filing.
+      const message = err instanceof Error ? err.message : "parse failed";
       setParseStatuses((prev) => new Map(prev).set(docId, "error"));
+      setParseResults((prev) => new Map(prev).set(docId, { summary: `שגיאה: ${message}`, raw: null }));
+      updateDocumentStatus(docId, "failed", { miningError: message });
     }
-  }, [state.taxpayer.employers, updateTaxpayerAndRecalculate, updateDocumentStatus]);
+  }, [state.taxpayer.employers, state.taxpayer.capitalGains, state.currentDraftId, updateTaxpayerAndRecalculate, updateDocumentStatus]);
 
   const handleAdd = useCallback((meta: VaultDocMeta, objectUrl: string, file: File) => {
     addDocument(meta);
     setSessionUrls((prev) => new Map(prev).set(meta.id, objectUrl));
     setSessionFiles((prev) => new Map(prev).set(meta.id, file));
     // Auto-parse if parseable type
-    if (meta.type === "form106" || meta.type === "ibkr") {
+    if (meta.type === "form106" || meta.type === "ibkr" || meta.type === "form867") {
       parseDocument(meta.id, meta.type, file);
     }
   }, [addDocument, parseDocument]);
@@ -247,7 +360,7 @@ function DocumentsPageInner() {
     updateDocumentType(id, type);
     // If type changed to a parseable type and we have the file, auto-parse
     const file = sessionFiles.get(id);
-    if (file && (type === "form106" || type === "ibkr")) {
+    if (file && (type === "form106" || type === "ibkr" || type === "form867")) {
       parseDocument(id, type, file);
     }
   }, [updateDocumentType, sessionFiles, parseDocument]);

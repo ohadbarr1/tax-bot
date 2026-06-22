@@ -46,6 +46,52 @@ const DOC_ID        = "state";
 const ADVISOR_SUBCOLLECTION = "advisor"; // users/{uid}/advisor/{draftId}
 const SCHEMA_VERSION = 2;
 
+// ─── Local-dev fallback (Firebase unconfigured) ─────────────────────────────
+//
+// When `isFirebaseConfigured()` is false (no .env.local, smoke test envs,
+// E2E without a live Firebase project), the Firestore writes are no-ops AND
+// React state lives only in memory. Any full page reload (`window.location.href`
+// or a browser refresh) wipes everything — questionnaire answers, uploaded
+// docs, parsed IBKR data, the lot. That's a hard regression for the
+// IBKR → 1301 path because navigating from /documents to /dashboard via
+// `window.location` (used in some buttons) drops the freshly-parsed
+// capitalGains snapshot before the form-type recommendation can flip.
+//
+// In production the Firestore round-trip is the source of truth; localStorage
+// is only the offline fallback used during dev. The key is namespaced so two
+// users sharing a browser don't cross-contaminate.
+
+const LOCAL_KEY = "kc:appState:v1";
+
+function localSave(state: AppState): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCAL_KEY, JSON.stringify(state));
+  } catch {
+    // Storage quota / private mode — non-fatal.
+  }
+}
+
+function localLoad(): AppState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(LOCAL_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as AppState;
+  } catch {
+    return null;
+  }
+}
+
+function localClear(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(LOCAL_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Current signed-in user's uid, or null if auth not ready / unconfigured. */
 function currentUid(): string | null {
   const auth = getClientAuth();
@@ -87,7 +133,10 @@ function waitForUser(timeoutMs = 5000): Promise<User | null> {
  */
 export async function saveState(state: AppState): Promise<void> {
   if (typeof window === "undefined") return;
-  if (!isFirebaseConfigured()) return;
+  if (!isFirebaseConfigured()) {
+    localSave(state);
+    return;
+  }
 
   const db  = getClientFirestore();
   const uid = currentUid();
@@ -135,7 +184,7 @@ export async function saveState(state: AppState): Promise<void> {
  */
 export async function loadState(): Promise<AppState | null> {
   if (typeof window === "undefined") return null;
-  if (!isFirebaseConfigured()) return null;
+  if (!isFirebaseConfigured()) return localLoad();
 
   const db   = getClientFirestore();
   const user = await waitForUser();
@@ -187,7 +236,10 @@ export async function loadState(): Promise<AppState | null> {
  * subcollection (Schema v2). Best-effort — partial failures are logged. */
 export async function clearState(): Promise<void> {
   if (typeof window === "undefined") return;
-  if (!isFirebaseConfigured()) return;
+  if (!isFirebaseConfigured()) {
+    localClear();
+    return;
+  }
 
   const db  = getClientFirestore();
   const uid = currentUid();

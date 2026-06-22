@@ -303,6 +303,25 @@ export interface TaxPayer {
    * the donating year and the remaining (un-credited) amount.
    */
   donationCarryForward?: { year: number; remaining: number }[];
+  /**
+   * Phase 2 §2.B — בעל מניות מהותי. True when the user holds 10%+ of any
+   * company that distributed dividends to them in the tax year. Drives Form
+   * 1301 code 055 placement (30% rate on controlling-shareholder dividends
+   * vs 25% rate at code 117 for regular dividends). Default false.
+   */
+  controllingShareholder?: boolean;
+  /**
+   * Phase 2 §2.B — classification of the user's dividend / interest income.
+   * Drives stamping decisions on Form 1301 page 2:
+   *   - "regular_117": ordinary dividend / interest from foreign brokers
+   *     (IBKR, etc.) → code 117 at 25%. DEFAULT for IBKR-only filers.
+   *   - "redemption_141": interest / dividends from redemption-eligible
+   *     Israeli securities (ני"ע סחירים בני פדיון) → code 141 at 25%.
+   * Mixed portfolios should route via the IBKR parser splitting income
+   * type — Phase 1 §1.K backlog. Until then we treat the entire bucket
+   * as one type per the user's questionnaire answer.
+   */
+  dividendType?: "regular_117" | "redemption_141";
 }
 
 // ─── Financial / Dashboard Data ───────────────────────────────────────────────
@@ -381,7 +400,27 @@ export type VaultDocStatus =
  */
 export type VaultDocParsedPayload =
   | { kind: "form106"; data: NonNullable<Form106ParseResponse["data"]> }
-  | { kind: "ibkr";    data: NonNullable<IbkrParseResponse["data"]> };
+  | { kind: "ibkr";    data: NonNullable<IbkrParseResponse["data"]> }
+  | { kind: "form867"; data: Form867InboundData };
+
+/**
+ * Parsed Israeli broker / bank annual securities tax certificate
+ * (אישור שנתי לבעל ני״ע / טופס 867). Cross-checks the IBKR parser's
+ * foreign WHT figure on the IBKR → 1301 path. Wider duck-type so
+ * `types.ts` doesn't need to import the Zod schema directly.
+ */
+export interface Form867InboundData {
+  brokerName: string;
+  accountHolderName: string;
+  tz: string;
+  year: number;
+  realizedGainsIls: number;
+  realizedLossesIls: number;
+  dividendsIls: number;
+  interestIls: number;
+  foreignWithholdingIls: number;
+  overallConfidence: "high" | "medium" | "low";
+}
 
 /**
  * Persisted document metadata (no objectUrl — blob URLs are session-only

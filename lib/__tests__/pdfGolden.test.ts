@@ -131,7 +131,9 @@ describe("PDF golden field snapshots", () => {
         "peripheryFlag": "",
         "signatureName": "אוהד בר",
         "spouseCreditPoints": "",
+        "spouseFirstName": "",
         "spouseGrossSalary": "0",
+        "spouseLastName": "",
         "taxYear": "2024",
       }
     `);
@@ -163,7 +165,7 @@ describe("PDF golden field snapshots", () => {
         "045": "36,600",
         "045_p3": "36,600",
         "055": "1,500",
-        "055_1301": "1,500",
+        "055_1301": "",
         "060": "50,000",
         "067": "8,000",
         "068_main": "96,000",
@@ -175,7 +177,7 @@ describe("PDF golden field snapshots", () => {
         "124": "",
         "126": "2,400",
         "135": "7,200",
-        "141": "12,000",
+        "141": "",
         "142": "7,200",
         "157": "1,500",
         "158": "540,000",
@@ -183,7 +185,7 @@ describe("PDF golden field snapshots", () => {
         "166": "8,000",
         "172_2nd": "60,000",
         "201": "0",
-        "211": "0",
+        "211": "",
         "245": "",
         "256": "50,000",
         "258_main": "33,600",
@@ -207,7 +209,9 @@ describe("PDF golden field snapshots", () => {
         "peripheryFlag": "",
         "signatureName": "אוהד בר",
         "spouseCreditPoints": "",
+        "spouseFirstName": "",
         "spouseGrossSalary": "0",
+        "spouseLastName": "",
         "taxYear": "2024",
       }
     `);

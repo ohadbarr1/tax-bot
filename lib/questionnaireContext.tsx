@@ -63,9 +63,13 @@ interface QuestionnaireContextValue {
   investsCapital: boolean;
   portfolioLocation: "bank" | "local_broker" | "foreign_broker" | null;
   selectedBroker: string;
+  controllingShareholder: boolean;
+  dividendType: "regular_117" | "redemption_141";
   setInvestsCapital: (v: boolean) => void;
   setPortfolioLocation: (v: "bank" | "local_broker" | "foreign_broker" | null) => void;
   setSelectedBroker: (v: string) => void;
+  setControllingShareholder: (v: boolean) => void;
+  setDividendType: (v: "regular_117" | "redemption_141") => void;
 
   // Step 4 — employers
   employers: Employer[];
@@ -178,6 +182,13 @@ export function QuestionnaireProvider({
   >(financials.hasForeignBroker ? "foreign_broker" : null);
   const [selectedBroker, setSelectedBroker] = useState(
     financials.brokerName ?? "",
+  );
+  // Phase 2 §2.B — drives Form 1301 codes 117 / 141 / 055.
+  const [controllingShareholder, setControllingShareholder] = useState(
+    taxpayer.controllingShareholder ?? false,
+  );
+  const [dividendType, setDividendType] = useState<"regular_117" | "redemption_141">(
+    taxpayer.dividendType ?? "regular_117",
   );
 
   // ── Step 4 ──────────────────────────────────────────────────────────────────
@@ -332,6 +343,8 @@ export function QuestionnaireProvider({
         kibbutzMember,
         disabilityType: hasDisability ? disabilityType : undefined,
         disabilityPercent: hasDisability ? disabilityPercent : undefined,
+        controllingShareholder,
+        dividendType,
       });
       updateFinancials({
         hasForeignBroker: portfolioLocation === "foreign_broker",
@@ -372,6 +385,8 @@ export function QuestionnaireProvider({
     disabilityPercent,
     portfolioLocation,
     selectedBroker,
+    controllingShareholder,
+    dividendType,
   ]);
 
   // ── Finish ──────────────────────────────────────────────────────────────────
@@ -412,6 +427,8 @@ export function QuestionnaireProvider({
       kibbutzMember,
       disabilityType: hasDisability ? disabilityType : undefined,
       disabilityPercent: hasDisability ? disabilityPercent : undefined,
+      controllingShareholder,
+      dividendType,
     });
     updateFinancials({
       hasForeignBroker: portfolioLocation === "foreign_broker",
@@ -458,9 +475,13 @@ export function QuestionnaireProvider({
       investsCapital,
       portfolioLocation,
       selectedBroker,
+      controllingShareholder,
+      dividendType,
       setInvestsCapital,
       setPortfolioLocation,
       setSelectedBroker,
+      setControllingShareholder,
+      setDividendType,
       employers,
       setEmployers,
       addEmployer,
@@ -516,6 +537,8 @@ export function QuestionnaireProvider({
       investsCapital,
       portfolioLocation,
       selectedBroker,
+      controllingShareholder,
+      dividendType,
       employers,
       hasOverlap,
       deductions,

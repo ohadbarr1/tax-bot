@@ -109,9 +109,13 @@ export default function StepPage({
             investsCapital={ctx.investsCapital}
             portfolioLocation={ctx.portfolioLocation}
             selectedBroker={ctx.selectedBroker}
+            controllingShareholder={ctx.controllingShareholder}
+            dividendType={ctx.dividendType}
             onInvestsCapitalChange={ctx.setInvestsCapital}
             onPortfolioLocationChange={ctx.setPortfolioLocation}
             onSelectedBrokerChange={ctx.setSelectedBroker}
+            onControllingShareholderChange={ctx.setControllingShareholder}
+            onDividendTypeChange={ctx.setDividendType}
           />
         );
       case "employers":
