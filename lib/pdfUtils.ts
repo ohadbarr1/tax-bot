@@ -275,25 +275,21 @@ export function buildForm1301Fields(
     // Capital gains — expanded
     "060": formatIlsForPdf(cg?.totalRealizedProfit),
     "211": "", // center column — Israeli-broker capital gains (reserved; only set when we split sources)
-    "067": formatIlsForPdf(cg?.totalRealizedLoss),
+    // Loss box (הפסד) takes the POSITIVE magnitude — ITA loss boxes are labeled
+    // as losses, not signed. Math.abs guards against a stray negative.
+    "067": formatIlsForPdf(cg != null ? Math.abs(cg.totalRealizedLoss) : undefined),
     "157": formatIlsForPdf(cg?.foreignTaxWithheld),
-    // Phase 2 §2.B — dividend / interest classification.
-    //   - regular dividend (default for IBKR / foreign brokers) → code 117
-    //   - redemption-eligible Israeli securities                  → code 141
+    // Phase 2 §2.B — dividend classification.
     //   - controlling-shareholder dividend (10%+ holder, 30% rate) → code 055
-    // The user's questionnaire choice (`taxpayer.dividendType` /
-    // `controllingShareholder`) decides which slot gets the value;
-    // the other slots stay empty so the ITA scanner does not double-count.
-    "117": taxpayer.controllingShareholder
-      ? ""
-      : taxpayer.dividendType === "redemption_141"
-      ? ""
-      : formatIlsForPdf(cg?.dividends),
-    "141": taxpayer.controllingShareholder
-      ? ""
-      : taxpayer.dividendType === "redemption_141"
-      ? formatIlsForPdf(cg?.dividends)
-      : "",
+    //   - all other dividends (regular, 25%)                        → code 117
+    // ASSUMPTION (verify against a real 2025 Form 1301 — see DEFERRED_ACTIONS):
+    // code 141's meaning is disputed — the auto-generated field-map labels it
+    // "other income", while an older route comment called it redemption-interest.
+    // To avoid stamping dividends into a possible "other income" box, we route
+    // ONLY to 117 / 055 (both well-established) and leave 141 empty until the
+    // form is confirmed. The redemption-141 track folds into regular 117.
+    "117": taxpayer.controllingShareholder ? "" : formatIlsForPdf(cg?.dividends),
+    "141": "",
     "055_1301": taxpayer.controllingShareholder
       ? formatIlsForPdf(cg?.dividends)
       : "",
@@ -339,10 +335,17 @@ export function buildForm135Fields(
   taxpayer: TaxPayer,
   financials: FinancialData
 ): Form135Fields {
-  // ── Aggregate employer figures (field 158/042/045) ────────────────────────
-  const totalGross    = taxpayer.employers?.reduce((s, e) => s + (e.grossSalary     ?? 0), 0) ?? 0;
-  const totalTax      = taxpayer.employers?.reduce((s, e) => s + (e.taxWithheld     ?? 0), 0) ?? 0;
-  const totalPension  = taxpayer.employers?.reduce((s, e) => s + (e.pensionDeduction ?? 0), 0) ?? 0;
+  // ── Main-employer figures (fields 158/068/258) ────────────────────────────
+  // ASSUMPTION (verify against a real 2025 Form 135 — see DEFERRED_ACTIONS):
+  // the field-map labels 158/068/258 as the MAIN employer's columns, and the
+  // form has SEPARATE secondary columns (069 tax, 272 severance). So these hold
+  // the main employer only; aggregating all employers here AND populating 069
+  // double-counts the secondary employer's tax. Single-employer filers (the vast
+  // majority routed to 135) are unaffected since main == only employer.
+  const mainEmp135    = taxpayer.employers?.find((e) => e.isMainEmployer) ?? taxpayer.employers?.[0];
+  const mainGross     = mainEmp135?.grossSalary ?? 0;
+  const mainTax       = mainEmp135?.taxWithheld ?? 0;
+  const mainPension   = mainEmp135?.pensionDeduction ?? 0;
 
   // ── Multi-employer split (codes 069 = secondary tax-withheld; 086 = exempt grant) ──
   // Audit table §1.1: code 069 prints withholding for the 2nd (left-column)
@@ -470,10 +473,10 @@ export function buildForm135Fields(
     aliyahDate: aliyahFormatted,
     peripheryFlag,
 
-    // Employment — numeric strings (formatted with commas)
-    "158": formatIlsForPdf(totalGross),
-    "042": formatIlsForPdf(totalTax),
-    "045": formatIlsForPdf(totalPension),
+    // Employment — main employer only (secondary → 069 / 272). See ASSUMPTION above.
+    "158": formatIlsForPdf(mainGross),
+    "042": formatIlsForPdf(mainTax),
+    "045": formatIlsForPdf(mainPension),
     "272": formatIlsForPdf(taxpayer.lifeEvents?.taxableSeverancePay),
     "069": formatIlsForPdf(secondaryTax || undefined),
     // Code 086 — מענק פטור per סעיף 9(7א). Phase 0 keeps the user-entered
@@ -484,7 +487,7 @@ export function buildForm135Fields(
 
     // Capital gains — numeric
     "256": formatIlsForPdf(cg?.totalRealizedProfit),
-    "166": formatIlsForPdf(cg?.totalRealizedLoss),
+    "166": formatIlsForPdf(cg != null ? Math.abs(cg.totalRealizedLoss) : undefined), // loss = positive magnitude
     "055": formatIlsForPdf(cg?.foreignTaxWithheld),
     "117": formatIlsForPdf(cg?.dividends),
     // Code 124 — ריבית ני"ע סחירים. The IBKR parser does not yet split
