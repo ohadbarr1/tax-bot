@@ -4,12 +4,14 @@
 
 ---
 
-## STATUS: 🔵 RUNNING — T7 input/parsing → T8 coverage. Final milestone = end of T8.
+## STATUS: ✅ LOOP COMPLETE — Definition of Done met (LOOP_GOAL §2). Awaiting human: merge `loop/remediation` → main.
 
-- **Current track:** T7 · Input/parsing robustness, then T8 · Coverage lock
-- **Units:** T7.1 NaN/locale guards (client calc) · T7.2 IBKR multi-currency + locale · T7.3 Tofes-106 parser filters · T8 coverage lock + final gate.
+- **All tracks closed:** T0 Foundation · T1 Onboarding · T2/T2.1 Override end-to-end · T3 Data summary · T4 Calc waterfall · T5 Tax correctness · T6 Form-fill · T7 Input/parsing · T8 Coverage lock.
+- **Final gate:** 576 pass / 2 skip / 55 files · build ✓ · lint 0err/45warn · forms:smoke 14/14+21/21. Live-verified in preview: onboarding gating, both outputs.
+- **Deferred (logged in DEFERRED_ACTIONS.md, none blocking):** verify 3 ITA form conventions vs real forms (T6); §66 credit-point split + §66(ד) gate + surtax 2% ordering/שבח base (T5); Tofes-106 OCR heuristics need real samples (T7.3); T6.5 eyeballed coords; override-badge inline-edit + /details fate (T3).
+- **24+ commits on `loop/remediation`; main untouched (clean at 8ccafd5).**
 
-## (prev) MILESTONE — T5 tax correctness complete.
+## (prev) T7.1/T7.2 done
 
 - **Completed this run:** T5.1 surtax §121ב rebuild · T5.2 §66 separate calc (engine+UI) · T5.3 phantom-refund gate · T5.4 CG 30% controlling shareholder · T5.5 tax-pro gate.
 - **tax-pro verdict:** PASS-with-concerns — all 4 core fixes confirmed CORRECT. Edge simplifications surfaced as user warnings (§66 child-credit allocation; CG-30% portfolio scope); deeper edges (surtax 2% ordering, שבח base, §66(ד)) logged in DEFERRED_ACTIONS.
@@ -50,7 +52,9 @@
 
 ## NEXT ACTION (what the next iteration does — keep this concrete)
 
-> **HUMAN REVIEW POINT — T5 milestone.** Tax correctness done (surtax, §66, phantom-refund, CG30 — core all verified correct by tax-pro). When approved, remaining: **T7 (input/parsing robustness)** — NaN/locale guards on client calc, IBKR multi-currency (EUR/GBP) + locale-aware number parsing, Tofes-106 parser `<100` filter + employer-name heuristic. Then **T8 (coverage lock)** — regression tests at every seam — to close the loop. After T8 the loop's Definition of Done (LOOP_GOAL §2) is met.
+> **LOOP COMPLETE.** All tracks T0–T8 closed; Definition of Done (LOOP_GOAL §2) met. Next action is the human's: review the branch and **merge `loop/remediation` → main** (24+ commits, all gated green). Optional follow-up loop: clear the DEFERRED_ACTIONS items (verify ITA form conventions with real forms; §66 credit-point split; 106 OCR with real samples; override-badge inline-edit).
+
+> **(prev) HUMAN REVIEW POINT — T5 milestone.** Tax correctness done (surtax, §66, phantom-refund, CG30 — core all verified correct by tax-pro). When approved, remaining: **T7 (input/parsing robustness)** — NaN/locale guards on client calc, IBKR multi-currency (EUR/GBP) + locale-aware number parsing, Tofes-106 parser `<100` filter + employer-name heuristic. Then **T8 (coverage lock)** — regression tests at every seam — to close the loop. After T8 the loop's Definition of Done (LOOP_GOAL §2) is met.
 
 > **(prev) HUMAN REVIEW POINT — T6 milestone.** Form-fill done (Hebrew was a false alarm; structural bugs fixed, conventions flagged for CPA verification). When approved, recommended next: **T5 (tax correctness)** — surtax §121ב rebuild (single cumulative threshold), §66 married separate calc, fix the phantom חל"ת/maternity + multi-employer-overlap refunds (keep-but-fix per locked decision §3), CG 30% for controlling shareholder. This makes the calc-waterfall numbers themselves correct. Then T7 (input/parsing robustness) and T8 (coverage lock) to finish.
 
@@ -81,13 +85,19 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + reviewer P
 | T3 Output 1 — data summary | ✅ | product-lead | PASS (fields added) | verified live; override badge cosmetic-only in spine order |
 | T4 Output 2 — calc waterfall | ✅ | product-lead + tax-pro | PASS (reconciles) | verified live: ₪300k→refund ₪16,604 |
 | T5 Tax correctness | ✅ | tax-pro | PASS-w/-concerns (core correct) | surtax/§66/phantom/CG30 fixed; edges→warnings+DEFERRED |
-| T7 Input/parsing robustness | ⬜ | qa-lead | — | NaN/locale guards, IBKR multi-ccy, 106 filters (TZ done in T1) |
-| T8 Coverage lock | ⬜ | qa-lead | — | |
+| T7 Input/parsing robustness | ✅ | qa-lead | NaN + multi-ccy done | T7.3 (106 OCR) deferred — needs real samples |
+| T8 Coverage lock | ✅ | qa-lead | every seam has a regression test | 576 tests across 55 files |
 | T6 Form-fill fidelity | ✅ | (CPA/user to verify) | conventions flagged ASSUMPTION | Hebrew=false-alarm; 135 double-count + dividend codes fixed; T6.5 coords deferred |
 | T5 Tax correctness | ⬜ | tax-pro | — | surtax, §66, CG 30%, phantom-refund fix |
 | T6 Form-fill fidelity | ⬜ | tax-pro | — | RTL headline, 135 aggregate, loss sign, hide 161/1214 |
 | T7 Input/parsing robustness | ⬜ | qa-lead | — | TZ, NaN, locale, IBKR multi-ccy |
 | T8 Coverage lock | ⬜ | qa-lead | — | |
+
+### Track checklist — T7 + T8  (COMPLETE)
+- ✅ T7.1 numField() NaN guards on all money inputs + finiteOr0 display guard (no more "NaN ₪"); +4 tests
+- ✅ T7.2 IBKR multi-currency — detect base currency, convert via getFxRate(currency,date); +1 EUR test
+- ⤳ T7.3 Tofes-106 OCR heuristics (<100 filter, employer-name) — DEFERRED (needs real 106 samples)
+- ✅ T8 Coverage lock — every fixed seam has a regression test (provenance, validation, persistence, summary, surtax, §66, phantom, CG30, bidi, 135-main, numField, IBKR-EUR); final gate green
 
 ### Track checklist — T5  (COMPLETE)
 - ✅ T5.1 Surtax §121ב — single shared threshold + 2% capital surcharge (2025); per-year table; +6 goldens
