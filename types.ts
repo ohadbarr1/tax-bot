@@ -564,9 +564,13 @@ export interface AppState {
   onboarding: {
     /** Income sources the user selected on the first screen. */
     sources: IncomeSourceId[];
-    /** Whether the initial source selection has been done (gate for /welcome). */
+    /** Stage ① done — income sources picked. */
     sourcesSelected: boolean;
-    /** Whether the user has confirmed the prefilled details page. */
+    /** Stage ② done — user finished the documents step (uploaded or skipped). */
+    documentsConfirmed?: boolean;
+    /** Stage ④ done — user reviewed & confirmed the summary. */
+    summaryConfirmed?: boolean;
+    /** Legacy (Loop 1) — prefilled details page confirmed. */
     detailsConfirmed: boolean;
   };
   taxpayer: TaxPayer;
