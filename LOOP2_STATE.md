@@ -6,7 +6,15 @@
 
 ---
 
-## STATUS: ⏸️ CHECKPOINT — M1 (flow) + R3 (logout) + R4 (expenses) done & live-verified. R5 + smart-Q + R6 remain.
+## STATUS: ✅ LOOP 2 COMPLETE — all 6 user points fixed & live-verified (smart-Q deferred as enhancement). Awaiting human: merge `loop/flow-rebuild`.
+
+- **All 6 done & LIVE-VERIFIED in a full E2E run:** 1.1 auto-logout (R3) · 1.2 gated flow (R0/R2) · 1.3 new-flow-stage-1 + docs-in-flow (R0/R1) · 1.4 stepper+back-to-sources+hub (R1) · 1.5 expenses red/parens — מס שנוכה (₪70,000) shown red live (R4) · 1.6 detailed filing explanation with § + capital-gains drill-down (R5).
+- **R6 E2E (live, desktop):** sources(salary)→documents→questionnaire(8 steps, started at 1)→summary→filing; gating + stepper correct; waterfall reconciles to ₪16,604; per-line § explanations present.
+- **Deferred (non-blocking):** R2 smart-questionnaire (skip doc-covered fields) — enhancement, not a glitch; foreign-credit §200-vs-engine-§67א naming reconcile; CG drill-down live-checked only via tests (no IBKR upload in-session).
+- **Gate:** 589 pass · build ✓ · 0 lint errors. **8 commits on `loop/flow-rebuild`** (off main `6a6c748`); main untouched.
+
+## (history below)
+## (prev) CHECKPOINT
 
 - **Done & LIVE-VERIFIED:** R0 flow machine · R1 stepper+guard+back+mobile bar+הבית-resume-CTA · R2 reorder (docs→Q) · R3 auto-logout (warn+logout fired) · R4 expense display (red/parens; live check pending in R6 seeded run).
 - **Remaining:** R2 smart-questionnaire (skip doc-covered fields) · **R5 deep filing explanation + per-element drill-down (1.6)** — the big content piece, deserves focused attention, not a rush · R6 full E2E reel.
