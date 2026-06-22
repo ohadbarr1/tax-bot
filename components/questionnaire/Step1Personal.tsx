@@ -9,6 +9,8 @@ import { isValidTZ } from "@/lib/validateTZ";
 interface Props {
   maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseIncome: boolean;
+  spouseIncomeAmount: number | undefined;
+  spouseTaxWithheld: number | undefined;
   spouseFirstName: string;
   spouseLastName: string;
   spouseIdNumber: string;
@@ -16,6 +18,8 @@ interface Props {
   children: Child[];
   onMaritalStatusChange: (v: "single" | "married" | "divorced" | "widowed") => void;
   onSpouseIncomeChange: (v: boolean) => void;
+  onSpouseIncomeAmountChange: (v: number | undefined) => void;
+  onSpouseTaxWithheldChange: (v: number | undefined) => void;
   onSpouseFirstNameChange: (v: string) => void;
   onSpouseLastNameChange: (v: string) => void;
   onSpouseIdNumberChange: (v: string) => void;
@@ -26,6 +30,8 @@ interface Props {
 export default function Step1Personal({
   maritalStatus,
   spouseIncome,
+  spouseIncomeAmount,
+  spouseTaxWithheld,
   spouseFirstName,
   spouseLastName,
   spouseIdNumber,
@@ -33,6 +39,8 @@ export default function Step1Personal({
   children,
   onMaritalStatusChange,
   onSpouseIncomeChange,
+  onSpouseIncomeAmountChange,
+  onSpouseTaxWithheldChange,
   onSpouseFirstNameChange,
   onSpouseLastNameChange,
   onSpouseIdNumberChange,
@@ -143,6 +151,37 @@ export default function Step1Personal({
               <TogglePair value={spouseIncome} onChange={onSpouseIncomeChange} />
               {!spouseIncome && (
                 <InfoBox>ייתכן שתהיה זכאי לנקודת זיכוי בגין בן/בת זוג שאינו עובד.</InfoBox>
+              )}
+              {spouseIncome && (
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <Label>הכנסה שנתית של בן/בת הזוג (₪)</Label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      placeholder="ברוטו שנתי"
+                      value={spouseIncomeAmount ?? ""}
+                      onChange={(e) =>
+                        onSpouseIncomeAmountChange(e.target.value === "" ? undefined : Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>מס שנוכה לבן/בת הזוג (₪)</Label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      placeholder="מס הכנסה שנוכה"
+                      value={spouseTaxWithheld ?? ""}
+                      onChange={(e) =>
+                        onSpouseTaxWithheldChange(e.target.value === "" ? undefined : Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <p className="col-span-2 text-xs text-slate-500">
+                    משמש לחישוב נפרד (סעיף 66) — לרוב מקטין את המס המשפחתי.
+                  </p>
+                </div>
               )}
             </div>
           </motion.div>

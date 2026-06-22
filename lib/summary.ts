@@ -98,6 +98,7 @@ export function buildSummary(taxpayer: TaxPayer): SummarySection[] {
     familyRows.push({ label: "בן/בת זוג", value: spouseName, path: "taxpayer.spouse.firstName" });
     familyRows.push({ label: "ת״ז בן/בת זוג", value: t.spouse?.idNumber || "", path: "taxpayer.spouse.idNumber" });
     familyRows.push({ label: "לבן/בת הזוג הכנסה", value: t.spouseHasIncome ? "כן" : "לא", path: "taxpayer.spouseHasIncome" });
+    if (t.spouse?.income) familyRows.push({ label: "הכנסת בן/בת הזוג (חישוב נפרד §66)", value: ils(t.spouse.income), path: "taxpayer.spouse.income" });
   }
   if (t.paysAlimony) {
     familyRows.push({ label: "תשלום מזונות", value: "כן", path: "taxpayer.paysAlimony" });

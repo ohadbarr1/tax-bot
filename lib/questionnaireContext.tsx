@@ -41,6 +41,8 @@ interface QuestionnaireContextValue {
   // Step 1 — family
   maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseIncome: boolean;
+  spouseIncomeAmount: number | undefined;
+  spouseTaxWithheld: number | undefined;
   spouseFirstName: string;
   spouseLastName: string;
   spouseIdNumber: string;
@@ -48,6 +50,8 @@ interface QuestionnaireContextValue {
   children: Child[];
   setMaritalStatus: (v: "single" | "married" | "divorced" | "widowed") => void;
   setSpouseIncome: (v: boolean) => void;
+  setSpouseIncomeAmount: (v: number | undefined) => void;
+  setSpouseTaxWithheld: (v: number | undefined) => void;
   setSpouseFirstName: (v: string) => void;
   setSpouseLastName: (v: string) => void;
   setSpouseIdNumber: (v: string) => void;
@@ -159,6 +163,13 @@ export function QuestionnaireProvider({
   const [maritalStatus, setMaritalStatus] = useState(taxpayer.maritalStatus);
   const [spouseIncome, setSpouseIncome] = useState(
     taxpayer.spouseHasIncome ?? false,
+  );
+  // T5.2 — spouse's annual personal-exertion income + withholding, for §66.
+  const [spouseIncomeAmount, setSpouseIncomeAmount] = useState<number | undefined>(
+    taxpayer.spouse?.income,
+  );
+  const [spouseTaxWithheld, setSpouseTaxWithheld] = useState<number | undefined>(
+    taxpayer.spouse?.taxWithheld,
   );
   const [spouseFirstName, setSpouseFirstName] = useState(
     taxpayer.spouse?.firstName ?? "",
@@ -325,6 +336,8 @@ export function QuestionnaireProvider({
             firstName: spouseFirstName,
             lastName: spouseLastName,
             idNumber: spouseIdNumber,
+            income: spouseIncome ? spouseIncomeAmount : undefined,
+            taxWithheld: spouseIncome ? spouseTaxWithheld : undefined,
           }
         : undefined;
       updateTaxpayer({
@@ -378,6 +391,8 @@ export function QuestionnaireProvider({
     bank,
     maritalStatus,
     spouseIncome,
+    spouseIncomeAmount,
+    spouseTaxWithheld,
     spouseFirstName,
     spouseLastName,
     spouseIdNumber,
@@ -531,6 +546,8 @@ export function QuestionnaireProvider({
       setBank,
       maritalStatus,
       spouseIncome,
+      spouseIncomeAmount,
+      spouseTaxWithheld,
       spouseFirstName,
       spouseLastName,
       spouseIdNumber,
@@ -538,6 +555,8 @@ export function QuestionnaireProvider({
       children,
       setMaritalStatus,
       setSpouseIncome,
+      setSpouseIncomeAmount,
+      setSpouseTaxWithheld,
       setSpouseFirstName,
       setSpouseLastName,
       setSpouseIdNumber,
@@ -602,6 +621,8 @@ export function QuestionnaireProvider({
       bank,
       maritalStatus,
       spouseIncome,
+      spouseIncomeAmount,
+      spouseTaxWithheld,
       spouseFirstName,
       spouseLastName,
       spouseIdNumber,
