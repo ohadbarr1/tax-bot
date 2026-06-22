@@ -550,7 +550,7 @@ describe("F-013 Severance §9(7א) auto-exemption (סעיף 9(7א))", () => {
       lifeEvents: {
         changedJobs: true,
         pulledSeverancePay: true,
-        hasForm161: false,
+        hasForm161: false, incomeIsAnnualizedProjection: true,
         grossSeverancePay: 200_000,
         lastMonthlySalary: 12_000,
         yearsOfService: 10,
@@ -695,7 +695,7 @@ describe("F-023 Multi-employer overlap (תקנה 5(ג)(2)) — refund add-on", (
         { id: "sec",  name: "מעסיק משני", isMainEmployer: false, monthsWorked: 3,
           grossSalary: 30_000, taxWithheld: 14_100 }, // 47% × 30,000.
       ],
-      lifeEvents: { changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+      lifeEvents: { changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         multiEmployerOverlapMonths: 3 },
     });
     const result = calculateFullRefund(tp, 2025);
@@ -712,7 +712,7 @@ describe("F-023 Multi-employer overlap (תקנה 5(ג)(2)) — refund add-on", (
         { id: "m", name: "מעסיק", isMainEmployer: true, monthsWorked: 12,
           grossSalary: 200_000, taxWithheld: 30_000 },
       ],
-      lifeEvents: { changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+      lifeEvents: { changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         multiEmployerOverlapMonths: 0 },
     });
     const result = calculateFullRefund(tp, 2025);
@@ -950,7 +950,7 @@ describe("F-018 שכר במשמרות — תקנה 5 לתקנות מס הכנס�
   it("≥ 175h × 12 months → positive discount, scaled by 15% × marginal-rate × shift slice", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         shiftWorkHours: { months: 12, avgHoursPerMonth: 200 },
       },
     });
@@ -968,7 +968,7 @@ describe("F-018 שכר במשמרות — תקנה 5 לתקנות מס הכנס�
   it("< 175 hours/month → NO discount (eligibility floor)", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         shiftWorkHours: { months: 12, avgHoursPerMonth: 170 },
       },
     });
@@ -981,13 +981,13 @@ describe("F-018 שכר במשמרות — תקנה 5 לתקנות מס הכנס�
   it("hours capped at 200 — extra hours above 200 do NOT increase the discount", () => {
     const tp200 = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         shiftWorkHours: { months: 12, avgHoursPerMonth: 200 },
       },
     });
     const tp250 = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         shiftWorkHours: { months: 12, avgHoursPerMonth: 250 },
       },
     });
@@ -1000,7 +1000,7 @@ describe("F-018 שכר במשמרות — תקנה 5 לתקנות מס הכנס�
   it("citation must reference תקנה 5 + הוראת ביצוע 24/2002", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         shiftWorkHours: { months: 12, avgHoursPerMonth: 190 },
       },
     });
@@ -1025,7 +1025,7 @@ describe('חל"ת — תקנה 5(ג)(4) (תיאום מס לאחר חזרה מח�
   it("3 months חל\"ת → taxableIncome reduced by 25% before bracket calc", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         chaltMonths: 3,
       },
     });
@@ -1038,7 +1038,7 @@ describe('חל"ת — תקנה 5(ג)(4) (תיאום מס לאחר חזרה מח�
   it('0 months → no adjustment (back-compat)', () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         chaltMonths: 0,
       },
     });
@@ -1050,7 +1050,7 @@ describe('חל"ת — תקנה 5(ג)(4) (תיאום מס לאחר חזרה מח�
   it('full-year (12 months) חל"ת → adjustment 0 (no income to reconcile)', () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         chaltMonths: 12,
       },
     });
@@ -1062,7 +1062,7 @@ describe('חל"ת — תקנה 5(ג)(4) (תיאום מס לאחר חזרה מח�
   it('citation must reference תקנה 5(ג)(4)', () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         chaltMonths: 4,
       },
     });
@@ -1074,7 +1074,7 @@ describe('חל"ת — תקנה 5(ג)(4) (תיאום מס לאחר חזרה מח�
     const tpBase = makeTaxpayer();
     const tpChalt = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         chaltMonths: 4,
       },
     });
@@ -1096,7 +1096,7 @@ describe("F-019 חופשת לידה — תקנות 168 + 174 (תיאום מס) +
   it("4 months מטרניטי → taxableIncome reduced by 1/3 before bracket calc", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         maternityLeaveMonths: 4,
       },
     });
@@ -1109,7 +1109,7 @@ describe("F-019 חופשת לידה — תקנות 168 + 174 (תיאום מס) +
   it("דמי לידה (allowance) NEVER added to taxable income (סעיף 9(7)(ב) exemption)", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         maternityLeaveMonths: 4,
         maternityLeaveAllowanceIls: 35_000, // BL grant
       },
@@ -1126,7 +1126,7 @@ describe("F-019 חופשת לידה — תקנות 168 + 174 (תיאום מס) +
   it('0 months → no adjustment (back-compat)', () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         maternityLeaveMonths: 0,
       },
     });
@@ -1137,7 +1137,7 @@ describe("F-019 חופשת לידה — תקנות 168 + 174 (תיאום מס) +
   it('citation must reference תקנות 168 + 174 + סעיף 9(7)(ב)', () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         maternityLeaveMonths: 3,
       },
     });
@@ -1150,7 +1150,7 @@ describe("F-019 חופשת לידה — תקנות 168 + 174 (תיאום מס) +
   it("חל\"ת + maternity in same year → both reductions compose, not double-count", () => {
     const tp = makeTaxpayer({
       lifeEvents: {
-        changedJobs: false, pulledSeverancePay: false, hasForm161: false,
+        changedJobs: false, pulledSeverancePay: false, hasForm161: false, incomeIsAnnualizedProjection: true,
         chaltMonths: 2,
         maternityLeaveMonths: 3,
       },

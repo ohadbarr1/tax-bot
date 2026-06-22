@@ -1065,6 +1065,12 @@ export function calculateChaltAdjustment(
   taxableIncome: number
 ): LifeEventAdjustment {
   const cite = 'תקנה 5(ג)(4) לתקנות מס הכנסה (תיאום מס לאחר חזרה מחל"ת)';
+  // T5.3 — only reconcile when income is an annualized PROJECTION. For actual
+  // (Tofes-106) income the reduction would double-discount; the annual recompute
+  // already recovers any over-withholding.
+  if (!taxpayer.lifeEvents?.incomeIsAnnualizedProjection) {
+    return { adjustment: 0, cite, explanation: "ההכנסה שהוזנה היא בפועל (לא תחזית) — אין צורך בהתאמה." };
+  }
   const months = taxpayer.lifeEvents?.chaltMonths;
   if (!months || months <= 0 || taxableIncome <= 0) {
     return {
@@ -1118,6 +1124,10 @@ export function calculateMaternityLeaveAdjustment(
   taxableIncome: number
 ): LifeEventAdjustment {
   const cite = 'תקנות 168 + 174 + סעיף 9(7)(ב) (פטור על דמי לידה)';
+  // T5.3 — same projection gate as חל"ת (avoid double-discounting actual income).
+  if (!taxpayer.lifeEvents?.incomeIsAnnualizedProjection) {
+    return { adjustment: 0, cite, explanation: "ההכנסה שהוזנה היא בפועל (לא תחזית) — אין צורך בהתאמה." };
+  }
   const months = taxpayer.lifeEvents?.maternityLeaveMonths;
   if (!months || months <= 0 || taxableIncome <= 0) {
     return {
@@ -1341,9 +1351,18 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   // monthly withholding and the year's effective marginal rate × secondary
   // monthly gross — surfaced as a refund add-on so it is not silently lost
   // in the bracket math (which only sees the totals, not the timing).
+  // T5.3 — only add this estimate when income is an annualized PROJECTION. For
+  // actual annual figures the over-withholding is ALREADY recovered by the
+  // refundFromEmployment recompute (taxPaid − netTaxOwed); adding it again
+  // double-counts → phantom refund.
   let overlapOverWithholding = 0;
   const overlapMonths = taxpayer.lifeEvents?.multiEmployerOverlapMonths ?? 0;
-  if (overlapMonths > 0 && taxpayer.employers.length >= 2 && taxableIncome > 0) {
+  if (
+    taxpayer.lifeEvents?.incomeIsAnnualizedProjection &&
+    overlapMonths > 0 &&
+    taxpayer.employers.length >= 2 &&
+    taxableIncome > 0
+  ) {
     // Identify the secondary employer (smallest gross) for attribution.
     const sortedByGross = [...taxpayer.employers].sort(
       (a, b) => (a.grossSalary ?? 0) - (b.grossSalary ?? 0)

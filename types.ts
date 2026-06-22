@@ -90,6 +90,16 @@ export interface LifeEvent {
   changedJobs: boolean;
   pulledSeverancePay: boolean;
   hasForm161: boolean;
+  /**
+   * T5.3 — true ONLY when the income figures the user entered are a monthly-rate
+   * ANNUALIZED PROJECTION (the basis an employer used for withholding), NOT the
+   * actual annual totals. The חל"ת / maternity / multi-employer-overlap
+   * reconciliations remove a leave/overlap slice ASSUMING a 12-month projection;
+   * applied to actual Tofes-106 income they double-discount → phantom refund.
+   * Default false: a normal 106 reports actual income → no reconciliation, and
+   * the annual recompute (withheld vs. owed) already recovers any over-withholding.
+   */
+  incomeIsAnnualizedProjection?: boolean;
   /** Phase 3 — taxable portion of severance (Field 272) */
   taxableSeverancePay?: number;
   /**
