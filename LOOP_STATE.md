@@ -4,13 +4,15 @@
 
 ---
 
-## STATUS: 🔵 RUNNING — T0 Foundation (human stops at milestone = end of each track)
+## STATUS: 🚧 BLOCKED — pre-existing uncommitted work discovered; awaiting human decision
 
 - **Current track:** T0 · Foundation
-- **Current unit:** T0.2 — implement override contract
-- **Cycle step:** 4 (Fix)
-- **Open blockers:** none
+- **Current unit:** T0.2 — override contract (CODE DONE, gate green, not yet committed)
+- **Cycle step:** 7 (Gate — blocked on git-hygiene decision)
+- **Open blockers:** working tree had 15 modified files of prior "Phase 2 §2.B" work (controlling-shareholder/dividend codes, surtax, Form 867, docs page) uncommitted at loop start. Intermixed with T0.2 only in `appContext.tsx`. Need decision on how to commit. See Decisions section.
 - **Last commit:** T0.1 (plan + baseline)
+
+T0.2 status: `lib/provenance.ts` + `lib/__tests__/provenance.test.ts` (4 tests) created; `appContext.tsx` wired (resolveMinedFields + create-if-missing markFieldUserConfirmed + commitManual choke point). Gate: 526 pass / build ✓ / lint 0err 46warn. Awaiting commit pending decision.
 
 ---
 
