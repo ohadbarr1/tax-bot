@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Zap, FileDown, Loader2 } from "lucide-react";
 import { AuthGate } from "@/components/auth/AuthGate";
+import { CalcExplanation } from "@/components/CalcExplanation";
 import { useApp } from "@/lib/appContext";
 import { downloadGeneratedForm } from "@/lib/pdfDownload";
 import { refundHeadline } from "@/lib/refundDisplay";
@@ -131,6 +132,10 @@ function FilingInner() {
         >
           אתה במרחק חתימה
         </div>
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <CalcExplanation />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-5">
