@@ -8,11 +8,13 @@ import {
 import { useApp } from "@/lib/appContext";
 import { cn } from "@/lib/utils";
 
+// Order mirrors the canonical spine: questionnaire → documents → review →
+// calc → filing. ("הפרטים שלי" is the review/summary; it sits after documents.)
 const NAV_ITEMS = [
   { href: "/dashboard", label: "הבית", icon: Home },
-  { href: "/details", label: "הפרטים שלי", icon: User },
   { href: "/questionnaire", label: "שאלון", icon: ClipboardList },
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
+  { href: "/details", label: "הפרטים שלי", icon: User },
   { href: "/facts", label: "תמונת מצב", icon: PieChart },
   { href: "/filing", label: "הגשה", icon: FileText },
 ];

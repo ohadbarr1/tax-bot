@@ -20,6 +20,7 @@ import type {
   DisabilityType,
   Address,
   BankDetails,
+  IncomeSourceId,
 } from "@/types";
 
 // ─── Context value shape ─────────────────────────────────────────────────────
@@ -136,6 +137,9 @@ export function QuestionnaireProvider({
     completeQuestionnaire,
     updateTaxpayer,
     updateFinancials,
+    setIncomeSources,
+    markSourcesSelected,
+    commitManual,
   } = useApp();
   const { taxpayer, financials } = state;
 
@@ -436,6 +440,51 @@ export function QuestionnaireProvider({
         portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
       employersCount: employers.length,
     });
+
+    // Spine fix (T0.3): /documents drives its doc-request cards off
+    // onboarding.sources. Before the loop the questionnaire never set them, so a
+    // questionnaire-first user landed on a BLANK documents page. Merge the
+    // sources picked at /welcome with those implied by the answers.
+    const derivedSources: IncomeSourceId[] = [];
+    if (employers.some((e) => (e.name ?? "").trim() !== "" || e.grossSalary))
+      derivedSources.push("salary");
+    if (investsCapital || portfolioLocation) derivedSources.push("investments");
+    if (portfolioLocation === "foreign_broker") derivedSources.push("foreign");
+    const mergedSources = Array.from(
+      new Set<IncomeSourceId>([
+        ...(state.onboarding?.sources ?? []),
+        ...derivedSources,
+      ]),
+    );
+    // Default to "salary" when nothing could be derived and nothing was picked
+    // at /welcome, so a direct-entry user never lands on a blank /documents.
+    const finalSources =
+      mergedSources.length > 0 ? mergedSources : (["salary"] as IncomeSourceId[]);
+    setIncomeSources(finalSources);
+    markSourcesSelected();
+
+    // Lock manually-entered values: a later document upload may FILL blanks but
+    // must never silently overwrite what the user typed (manual = source of
+    // truth). Only non-empty fields are locked, so docs can still fill gaps.
+    const manualPaths: string[] = [];
+    const lock = (path: string, v: unknown) => {
+      if (v !== undefined && v !== null && v !== "") manualPaths.push(path);
+    };
+    lock("taxpayer.firstName", firstName);
+    lock("taxpayer.lastName", lastName);
+    lock("taxpayer.idNumber", idNumber);
+    lock("taxpayer.address.city", address.city);
+    lock("taxpayer.address.street", address.street);
+    lock("taxpayer.bank.account", bank.account);
+    lock("taxpayer.bank.branch", bank.branch);
+    employers.forEach((e, i) => {
+      lock(`taxpayer.employers[${i}].name`, e.name);
+      lock(`taxpayer.employers[${i}].grossSalary`, e.grossSalary);
+      lock(`taxpayer.employers[${i}].taxWithheld`, e.taxWithheld);
+      lock(`taxpayer.employers[${i}].pensionDeduction`, e.pensionDeduction);
+    });
+    if (manualPaths.length > 0) commitManual(manualPaths);
+
     completeQuestionnaire();
     router.push("/documents");
   };
