@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { Check, Zap, FileDown, Loader2 } from "lucide-react";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { useApp } from "@/lib/appContext";
 import { downloadGeneratedForm } from "@/lib/pdfDownload";
 import { refundHeadline } from "@/lib/refundDisplay";
@@ -8,6 +10,14 @@ import { refundHeadline } from "@/lib/refundDisplay";
 const fmt = (n: number) => "₪" + Math.round(n).toLocaleString("he-IL");
 
 export default function FilingPage() {
+  return (
+    <AuthGate>
+      <FilingInner />
+    </AuthGate>
+  );
+}
+
+function FilingInner() {
   const { state } = useApp();
   const refund = state.financials.estimatedRefund ?? 0;
   const headline = refundHeadline(refund);
@@ -82,6 +92,27 @@ export default function FilingPage() {
           { label: "עמלת השירות", value: "לא חלה", color: "var(--kc-ink-dim)" },
           { label: "סכום נטו", value: "—", color: "var(--kc-ink-dim)" },
         ];
+
+  // Completion guard: don't show an empty "no refund" filing shell to a user
+  // who hasn't finished onboarding — send them to the resume point instead.
+  if (!questionnaireCompleted && !hasCalc) {
+    return (
+      <div className="kc-rise px-5 md:px-10 pt-10 pb-20 max-w-xl mx-auto text-center">
+        <div className="rounded-2xl border border-border bg-card p-8 space-y-4">
+          <h1 className="text-2xl font-bold text-foreground">עוד לא סיימת את השאלון</h1>
+          <p className="text-sm text-muted-foreground">
+            כדי להפיק את הדוח ולחשב את ההחזר, יש להשלים את השאלון והעלאת המסמכים.
+          </p>
+          <Link
+            href="/questionnaire"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-kc-ink text-white text-sm font-semibold hover:bg-slate-800 transition-all"
+          >
+            המשך לשאלון ←
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="kc-rise px-5 md:px-10 pt-2 pb-20">

@@ -307,6 +307,9 @@ export function QuestionnaireProvider({
   // The first run is skipped — initial state equals the hydrated taxpayer /
   // financials, and we only persist user-driven changes.
   const isFirstSyncRef = useRef(true);
+  // Holds the latest pending write so an unmount (navigation away) within the
+  // 500ms window can flush it instead of losing the edit.
+  const pendingWriteRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (isFirstSyncRef.current) {
@@ -314,7 +317,7 @@ export function QuestionnaireProvider({
       return;
     }
 
-    const t = setTimeout(() => {
+    const doWrite = () => {
       const isMarried = maritalStatus === "married";
       const spousePayload = isMarried
         ? {
@@ -356,6 +359,12 @@ export function QuestionnaireProvider({
           portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
         employersCount: employers.length,
       });
+    };
+
+    pendingWriteRef.current = doWrite;
+    const t = setTimeout(() => {
+      doWrite();
+      pendingWriteRef.current = null;
     }, 500);
 
     return () => clearTimeout(t);
@@ -392,6 +401,15 @@ export function QuestionnaireProvider({
     controllingShareholder,
     dividendType,
   ]);
+
+  // Flush any pending debounced write on unmount (navigating away mid-window),
+  // so the last edits before leaving a step are never lost.
+  useEffect(() => {
+    return () => {
+      pendingWriteRef.current?.();
+      pendingWriteRef.current = null;
+    };
+  }, []);
 
   // ── Finish ──────────────────────────────────────────────────────────────────
 
