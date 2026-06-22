@@ -6,7 +6,15 @@
 
 ---
 
-## STATUS: 🔵 RUNNING — M1 core done & LIVE-VERIFIED. Mid-M1 (3 items left), then M2.
+## STATUS: ⏸️ CHECKPOINT — M1 (flow) + R3 (logout) + R4 (expenses) done & live-verified. R5 + smart-Q + R6 remain.
+
+- **Done & LIVE-VERIFIED:** R0 flow machine · R1 stepper+guard+back+mobile bar+הבית-resume-CTA · R2 reorder (docs→Q) · R3 auto-logout (warn+logout fired) · R4 expense display (red/parens; live check pending in R6 seeded run).
+- **Remaining:** R2 smart-questionnaire (skip doc-covered fields) · **R5 deep filing explanation + per-element drill-down (1.6)** — the big content piece, deserves focused attention, not a rush · R6 full E2E reel.
+- **Maps to user's 6:** 1.1 ✅(R3) · 1.2 ✅(R0/R2) · 1.3 ✅(R0/R1) · 1.4 ✅(R1) · 1.5 ✅(R4, live-check pending) · 1.6 ⬜(R5).
+- **Gate:** 588 pass · build ✓ · lint 0err/45warn. Branch `loop/flow-rebuild`.
+
+## (history below)
+## (prev) RUNNING — M1 core
 
 - **Done & live-verified:** R0 (flow state machine) · R1 core (stepper + no-skip guard + back-to-sources) · R2 core (reorder docs-before-questionnaire).
 - **LIVE proof (preview, desktop 1280):** /filing & /summary deep-links bounce to current stage; stepper shows sources✓→documents(active)→שאלון/סיכום/הגשה locked; new flow questionnaire starts at step 1 (פרטים אישיים); back-to-sources works; docs precede questionnaire.
