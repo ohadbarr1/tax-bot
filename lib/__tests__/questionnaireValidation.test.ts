@@ -97,3 +97,19 @@ describe("isValidTZ — hardened (T1/T7)", () => {
     expect(isValidTZ("000000018")).toBe(true);
   });
 });
+
+import { firstIncompleteStepSlug } from "../questionnaireValidation";
+import { INITIAL_TAXPAYER, INITIAL_FINANCIALS } from "../initialState";
+
+describe("firstIncompleteStepSlug — resume point (new-flow bug)", () => {
+  it("empty data resumes at step 1 (personal), never an advanced step", () => {
+    expect(firstIncompleteStepSlug(INITIAL_TAXPAYER, INITIAL_FINANCIALS)).toBe("personal");
+  });
+  it("personal filled → resumes at the next incomplete step, not the last visited", () => {
+    const tp = { ...INITIAL_TAXPAYER, firstName: "דוד", lastName: "כהן", idNumber: "123456782" };
+    // personal now valid; family (single, no kids) valid; education valid; capital valid;
+    // employers valid (no overlap); deductions valid (none); life-events valid →
+    // first incomplete is the last slug (ready to finish), NOT a jumped-to middle step.
+    expect(firstIncompleteStepSlug(tp, INITIAL_FINANCIALS)).toBe("credit-points");
+  });
+});
