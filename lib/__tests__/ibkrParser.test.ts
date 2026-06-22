@@ -200,3 +200,21 @@ describe("parseIbkrCsv — non-USD base currency (T7.2)", () => {
     expect(r.dividendsILS).toBe(400); // 100 × EUR rate 4.0 (NOT a USD rate)
   });
 });
+
+// ── T7.2 regression: a stray non-base currency line must NOT flip the base ───
+describe("parseIbkrCsv — currency majority vote (review fix)", () => {
+  beforeEach(() => __setFxDatasetForTesting("EUR", { currency: "EUR" as const, base: "ILS", source: "t", annualMean: { "2024": 4.0 }, rates: { "2024-03-15": 4.0, "2024-04-01": 4.0 } }));
+  afterEach(() => __resetFxDatasetForTesting());
+  it("USD-majority statement with one stray EUR dividend stays USD", () => {
+    const csv = [
+      "Dividends,Data,Currency,Date,Description,Amount",
+      "Dividends,Data,USD,2024-03-15,A,100.00",
+      "Dividends,Data,USD,2024-03-15,B,100.00",
+      "Dividends,Data,EUR,2024-04-01,C,100.00",
+    ].join("\n");
+    const r = parseIbkrCsv({ csv });
+    // 2 USD vs 1 EUR → USD base. If it wrongly picked EUR, dividendsILS would be 300×4=1200.
+    // USD rate fixture not set here → getFxRate USD default dataset; assert it did NOT use EUR (×4 = 1200).
+    expect(r.dividendsILS).not.toBe(1200);
+  });
+});

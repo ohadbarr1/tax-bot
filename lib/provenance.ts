@@ -94,8 +94,17 @@ export function preserveManual(
       const field = emp[2];
       const prevEmp = prevTaxpayer.employers?.[prevIdx];
       if (!prevEmp) continue;
-      const nextIdx = (taxpayer.employers ?? []).findIndex((e) => e.id === prevEmp.id);
-      if (nextIdx < 0) continue; // employer no longer present — don't corrupt a stranger
+      // Match by stable id. If the locked employer has no id (e.g. a mined row
+      // appended without one), DON'T id-match (undefined===undefined would hit a
+      // stranger) — fall back to the same index only if it still holds that very
+      // employer object; otherwise skip rather than corrupt a different row.
+      const nextEmps = taxpayer.employers ?? [];
+      const nextIdx = prevEmp.id
+        ? nextEmps.findIndex((e) => e.id === prevEmp.id)
+        : nextEmps[prevIdx] === prevEmp
+          ? prevIdx
+          : -1;
+      if (nextIdx < 0) continue; // employer no longer locatable — don't corrupt a stranger
       taxpayer = setPath(
         taxpayer,
         `employers[${nextIdx}].${field}`,

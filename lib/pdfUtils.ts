@@ -342,7 +342,17 @@ export function buildForm135Fields(
   // the main employer only; aggregating all employers here AND populating 069
   // double-counts the secondary employer's tax. Single-employer filers (the vast
   // majority routed to 135) are unaffected since main == only employer.
-  const mainEmp135    = taxpayer.employers?.find((e) => e.isMainEmployer) ?? taxpayer.employers?.[0];
+  // Prefer the flagged main employer, but only if it actually carries figures —
+  // the questionnaire seeds a blank `emp-main` row, so fall back to the first
+  // employer that has any salary/tax/name rather than stamping zeros.
+  const emps135 = taxpayer.employers ?? [];
+  const hasData135 = (e: typeof emps135[number]) =>
+    (e.grossSalary ?? 0) > 0 || (e.taxWithheld ?? 0) > 0 || !!e.name?.trim();
+  const mainEmp135 =
+    emps135.find((e) => e.isMainEmployer && hasData135(e)) ??
+    emps135.find(hasData135) ??
+    emps135.find((e) => e.isMainEmployer) ??
+    emps135[0];
   const mainGross     = mainEmp135?.grossSalary ?? 0;
   const mainTax       = mainEmp135?.taxWithheld ?? 0;
   const mainPension   = mainEmp135?.pensionDeduction ?? 0;

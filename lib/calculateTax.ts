@@ -168,6 +168,10 @@ export interface CalculationResult {
   surtaxActive: number;         // 3% on active income above the threshold
   surtaxPassive: number;        // 5% on capital/passive income above the threshold
   netRefund: number;            // refundFromEmployment − capitalGainsTax
+  /** T5.2 — §66 spouse separate-calc tax included in netTaxOwed (0 if N/A). */
+  spouseSeparateTax: number;
+  /** T5.2 — spouse withholding included in taxPaid (0 if N/A). */
+  spouseTaxWithheld: number;
   creditPointsCount: number;
   warnings?: string[];          // surfaced advisory issues (e.g. alimony default-spouse-100%)
   breakdown: {
@@ -1516,6 +1520,8 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     surtaxActive,
     surtaxPassive,
     netRefund,
+    spouseSeparateTax,
+    spouseTaxWithheld,
     creditPointsCount,
     warnings: incomeDeductionWarnings,
     breakdown: {

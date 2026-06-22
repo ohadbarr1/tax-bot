@@ -133,17 +133,26 @@ function rowUsdToIls(
  * absent or unrecognised, so existing USD statements are unaffected.
  */
 function detectCurrency(rows: unknown[][]): FxCurrency {
+  // Tally the currency code from each section's Currency column across DATA rows,
+  // then take the majority. A single stray non-base row (e.g. one FX line in a
+  // USD statement) can't flip the whole statement. Defaults to USD on empty/tie.
+  const tally: Record<FxCurrency, number> = { USD: 0, EUR: 0, GBP: 0 };
+  let currencyIdx = -1;
   for (const row of rows) {
     if (!row || row.length < 3) continue;
-    const idx = findCol(row, "Currency");
-    if (idx < 0) continue;
-    // Header row found — scan subsequent data rows in the same section for a code.
-    for (const r of rows) {
-      const v = String(r?.[idx] ?? "").trim().toUpperCase();
-      if (v === "EUR" || v === "GBP" || v === "USD") return v;
+    const headerIdx = findCol(row, "Currency");
+    if (headerIdx >= 0) {
+      currencyIdx = headerIdx; // a header re-defines the column for its section
+      continue;
     }
+    if (currencyIdx < 0 || String(row[1] ?? "").trim() !== "Data") continue;
+    const v = String(row[currencyIdx] ?? "").trim().toUpperCase();
+    if (v === "EUR" || v === "GBP" || v === "USD") tally[v as FxCurrency]++;
   }
-  return "USD";
+  const winner = (Object.keys(tally) as FxCurrency[]).reduce((a, b) =>
+    tally[b] > tally[a] ? b : a,
+  );
+  return tally[winner] > 0 ? winner : "USD";
 }
 
 export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOutput {

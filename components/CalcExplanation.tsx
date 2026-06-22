@@ -58,7 +58,7 @@ export function CalcExplanation() {
   //   estimate → split it out and flag it as an estimate, not true withholding.
   const rawBracketTax = r.calculatedTax + r.shiftWorkDiscount;
   const totalLiability = r.netTaxOwed + r.capitalGainsTax + r.surtax;
-  const employerWithheld = r.taxPaid - r.multiEmployerOverlapRefund;
+  const employerWithheld = r.taxPaid - r.multiEmployerOverlapRefund - r.spouseTaxWithheld;
   const creditsExceedTax =
     rawBracketTax - r.shiftWorkDiscount - r.creditPointsValue - r.deductionCredits - r.peripheryDiscount - r.foreignSalaryCredit < 0;
   const cgtNote = (state.taxpayer.capitalGains?.foreignTaxWithheld ?? 0) > 0 ? "לאחר זיכוי מס זר ששולם בחו״ל" : undefined;
@@ -73,6 +73,7 @@ export function CalcExplanation() {
     { label: "זיכויי מס (§46, §45א)", value: -r.deductionCredits, kind: "sub", note: "תרומות, ביטוח חיים וכד׳", hideIfZero: true },
     { label: "הנחת פריפריה (§11)", value: -r.peripheryDiscount, kind: "sub", hideIfZero: true },
     { label: "זיכוי מס זר על שכר (§67א)", value: -r.foreignSalaryCredit, kind: "sub", hideIfZero: true },
+    { label: "מס בן/בת זוג (חישוב נפרד §66)", value: r.spouseSeparateTax, kind: "add", hideIfZero: true },
     {
       label: "מס הכנסה לתשלום",
       value: r.netTaxOwed,
@@ -83,6 +84,7 @@ export function CalcExplanation() {
     { label: "מס יסף (§121ב)", value: r.surtax, kind: "add", hideIfZero: true },
     { label: "סך חבות המס", value: totalLiability, kind: "subtotal" },
     { label: "מס שנוכה במקור", value: -employerWithheld, kind: "sub", note: "ניכויים מהמשכורת ובמקור", hideIfZero: true },
+    { label: "מס שנוכה לבן/בת הזוג", value: -r.spouseTaxWithheld, kind: "sub", hideIfZero: true },
   ];
   if (r.multiEmployerOverlapRefund > 0) {
     rows.push({

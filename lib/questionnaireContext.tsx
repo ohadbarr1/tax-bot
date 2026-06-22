@@ -436,6 +436,8 @@ export function QuestionnaireProvider({
           firstName: spouseFirstName,
           lastName: spouseLastName,
           idNumber: spouseIdNumber,
+          income: spouseIncome ? spouseIncomeAmount : undefined,
+          taxWithheld: spouseIncome ? spouseTaxWithheld : undefined,
         }
       : undefined;
     updateTaxpayer({

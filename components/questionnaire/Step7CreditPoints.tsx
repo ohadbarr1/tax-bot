@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import type { Child, DisabilityType } from "@/types";
+import { numField } from "@/lib/utils";
 import { Label, InfoBox, SuccessBox, TogglePair } from "./StepShell";
 
 interface Props {
@@ -226,7 +227,7 @@ export default function Step7CreditPoints({
                   max={100}
                   placeholder="0-100"
                   value={disabilityPercent || ""}
-                  onChange={(e) => onDisabilityPercentChange(Number(e.target.value))}
+                  onChange={(e) => onDisabilityPercentChange(numField(e.target.value) ?? 0)}
                   className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
                 />
               </div>

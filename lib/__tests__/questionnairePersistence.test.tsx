@@ -282,6 +282,26 @@ describe("QuestionnaireProvider — partial-draft persistence (user-flow-1.3)", 
     expect(locked).not.toContain("taxpayer.bank.account");
   });
 
+  it("handleFinish persists spouse income/withholding for §66 (regression)", () => {
+    let captured: ReturnType<typeof useQuestionnaire> | null = null;
+    render(
+      <QuestionnaireProvider>
+        <ContextProbe onMount={(ctx) => (captured = ctx)} />
+      </QuestionnaireProvider>,
+    );
+    act(() => {
+      captured!.setMaritalStatus("married");
+      captured!.setSpouseIncome(true);
+      captured!.setSpouseIncomeAmount(180000);
+      captured!.setSpouseTaxWithheld(22000);
+    });
+    act(() => captured!.handleFinish());
+    const calls = (appStub.updateTaxpayer as ReturnType<typeof vi.fn>).mock.calls;
+    const withSpouse = calls.map((c) => c[0] as Partial<TaxPayer>).find((p) => p.spouse);
+    expect(withSpouse?.spouse?.income).toBe(180000);
+    expect(withSpouse?.spouse?.taxWithheld).toBe(22000);
+  });
+
   it("handleFinish never leaves /documents source-less (defaults to salary)", () => {
     let captured: ReturnType<typeof useQuestionnaire> | null = null;
     render(
