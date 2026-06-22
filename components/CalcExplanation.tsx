@@ -23,6 +23,8 @@ type Row = {
   kind?: "add" | "sub" | "subtotal" | "total";
   note?: string;
   hideIfZero?: boolean;
+  /** Money OUT (tax, withholding, loss) — render red & parenthesized: (₪1,234). */
+  expense?: boolean;
 };
 
 export function CalcExplanation() {
@@ -67,24 +69,25 @@ export function CalcExplanation() {
     { label: "הכנסה ברוטו כוללת", value: r.totalGrossIncome },
     { label: "ניכויים מההכנסה", value: -r.incomeDeductions, kind: "sub", note: "פנסיה, מזונות, פטור נכות וכד׳", hideIfZero: true },
     { label: "הכנסה חייבת", value: r.taxableIncome, kind: "subtotal" },
-    { label: "מס לפי מדרגות", value: rawBracketTax, kind: "add" },
+    { label: "מס לפי מדרגות", value: rawBracketTax, kind: "add", expense: true },
     { label: "הנחת עבודה במשמרות", value: -r.shiftWorkDiscount, kind: "sub", hideIfZero: true },
     { label: "נקודות זיכוי", value: -r.creditPointsValue, kind: "sub", note: `${r.creditPointsCount} נק׳ × ערך שנתי`, hideIfZero: true },
     { label: "זיכויי מס (§46, §45א)", value: -r.deductionCredits, kind: "sub", note: "תרומות, ביטוח חיים וכד׳", hideIfZero: true },
     { label: "הנחת פריפריה (§11)", value: -r.peripheryDiscount, kind: "sub", hideIfZero: true },
     { label: "זיכוי מס זר על שכר (§67א)", value: -r.foreignSalaryCredit, kind: "sub", hideIfZero: true },
-    { label: "מס בן/בת זוג (חישוב נפרד §66)", value: r.spouseSeparateTax, kind: "add", hideIfZero: true },
+    { label: "מס בן/בת זוג (חישוב נפרד §66)", value: r.spouseSeparateTax, kind: "add", expense: true, hideIfZero: true },
     {
       label: "מס הכנסה לתשלום",
       value: r.netTaxOwed,
       kind: "subtotal",
+      expense: true,
       note: creditsExceedTax ? "הזיכויים האישיים אינם מוחזרים — עודף הזיכוי לא נוצל" : undefined,
     },
-    { label: "מס על רווחי הון", value: r.capitalGainsTax, kind: "add", note: cgtNote, hideIfZero: true },
-    { label: "מס יסף (§121ב)", value: r.surtax, kind: "add", hideIfZero: true },
-    { label: "סך חבות המס", value: totalLiability, kind: "subtotal" },
-    { label: "מס שנוכה במקור", value: -employerWithheld, kind: "sub", note: "ניכויים מהמשכורת ובמקור", hideIfZero: true },
-    { label: "מס שנוכה לבן/בת הזוג", value: -r.spouseTaxWithheld, kind: "sub", hideIfZero: true },
+    { label: "מס על רווחי הון", value: r.capitalGainsTax, kind: "add", expense: true, note: cgtNote, hideIfZero: true },
+    { label: "מס יסף (§121ב)", value: r.surtax, kind: "add", expense: true, hideIfZero: true },
+    { label: "סך חבות המס", value: totalLiability, kind: "subtotal", expense: true },
+    { label: "מס שנוכה במקור", value: -employerWithheld, kind: "sub", expense: true, note: "כבר שולם — מקוזז מול החבות", hideIfZero: true },
+    { label: "מס שנוכה לבן/בת הזוג", value: -r.spouseTaxWithheld, kind: "sub", expense: true, hideIfZero: true },
   ];
   if (r.multiEmployerOverlapRefund > 0) {
     rows.push({
@@ -199,10 +202,10 @@ function Line({ row }: { row: Row }) {
       <span
         className={
           "text-sm tabular-nums " +
-          (row.kind === "sub" ? "text-emerald-700" : subtotal ? "font-bold text-foreground" : "text-foreground")
+          (row.expense ? "text-red-600" : row.kind === "sub" ? "text-emerald-700" : subtotal ? "font-bold text-foreground" : "text-foreground")
         }
       >
-        {ils(row.value)}
+        {row.expense ? `(${ils(Math.abs(row.value))})` : ils(row.value)}
       </span>
     </div>
   );
