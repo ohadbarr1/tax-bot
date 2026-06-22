@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Globe,
   HelpCircle,
+  Trash2,
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import {
@@ -164,7 +165,7 @@ type UploadState =
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export function SourceDrivenDocCards() {
+export function SourceDrivenDocCards({ onRemove }: { onRemove?: (id: string) => void }) {
   const {
     state,
     addDocument,
@@ -289,6 +290,7 @@ export function SourceDrivenDocCards() {
             matchedDoc={matchedDoc}
             uploadState={localState}
             onUpload={(file) => handleUpload(req, file)}
+            onRemove={onRemove}
           />
         );
       })}
@@ -304,12 +306,14 @@ function SourceDocCard({
   matchedDoc,
   uploadState,
   onUpload,
+  onRemove,
 }: {
   req: SourceDocRequest;
   source?: SourceCatalogEntry;
   matchedDoc?: VaultDocMeta;
   uploadState?: UploadState;
   onUpload: (file: File) => void;
+  onRemove?: (id: string) => void;
 }) {
   const hasDoc = !!matchedDoc && matchedDoc.status !== "pending_upload";
   const isMined = matchedDoc?.status === "mined";
@@ -347,6 +351,22 @@ function SourceDocCard({
               <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md">
                 {source.label}
               </span>
+            )}
+            {/* Delete the uploaded file (also un-does its effect on the calc). */}
+            {hasDoc && matchedDoc && onRemove && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`למחוק את "${matchedDoc.name}"? הנתונים שחולצו ממנו יוסרו מהחישוב.`)) {
+                    onRemove(matchedDoc.id);
+                  }
+                }}
+                aria-label={`מחק את ${matchedDoc.name}`}
+                title="מחק קובץ"
+                className="ms-auto text-muted-foreground hover:text-red-600 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             )}
           </div>
           {req.hint && (

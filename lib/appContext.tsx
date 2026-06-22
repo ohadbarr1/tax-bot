@@ -29,6 +29,7 @@ import { currentTaxYear } from "./currentTaxYear";
 import { calculateFullRefund, buildInsightsFromResult, buildActionItemsFromResult } from "./calculateTax";
 import { saveState, loadState, clearState } from "./db";
 import { deleteUserDocument } from "./firebase/storage";
+import { pruneToSavedDrafts, unsavedStoragePaths } from "./pruneSavedDrafts";
 import { useAuth } from "./firebase/authContext";
 import { carryForwardFromPriorDraft } from "./yoyCarryover";
 import { resolveMinedFields, makeManualEntry, markManualPaths, preserveManual } from "./provenance";
@@ -85,6 +86,8 @@ interface AppContextValue {
    * the sidebar "נקה נתונים" button (T2).
    */
   resetAllData: () => Promise<void>;
+  /** Persist saved-only state before sign-out; discard unsaved drafts + blobs. */
+  discardUnsavedForLogout: () => Promise<void>;
   // ── Provenance / prefill ──────────────────────────────────────────────────
   applyMiningResult: (docId: string, sourceLabel: string, fields: MinedField[]) => void;
   markFieldUserConfirmed: (fieldPath: string) => void;
@@ -597,6 +600,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState(INITIAL_STATE);
   }, []);
 
+  /**
+   * Strict save-required logout (R: persistence model). Called by the auth UI
+   * BEFORE signOut: persist only the EXPLICITLY-saved drafts (and their files)
+   * to the current user's Firestore doc, so the next login restores saved work
+   * only. Unsaved scratch drafts + their uploaded blobs are discarded.
+   */
+  const discardUnsavedForLogout = useCallback(async () => {
+    const pruned = pruneToSavedDrafts(state);
+    // Drop unsaved state in memory first so any in-flight debounced persist
+    // can't re-write the discarded drafts back before sign-out completes.
+    setState(pruned);
+    // Best-effort delete of the orphaned blobs from Cloud Storage.
+    for (const path of unsavedStoragePaths(state)) {
+      void deleteUserDocument(path);
+    }
+    try {
+      await saveState(pruned);
+    } catch (err) {
+      console.warn("[discardUnsavedForLogout] persist failed:", err);
+    }
+  }, [state]);
+
   const markDetailsConfirmed = () =>
     setState((s) => ({
       ...s,
@@ -742,6 +767,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         markDetailsConfirmed,
         discardCurrentDraft,
         resetAllData,
+        discardUnsavedForLogout,
         applyMiningResult,
         markFieldUserConfirmed,
         commitManual,

@@ -38,15 +38,12 @@ import {
   onAuthStateChanged,
   signInAnonymously,
   GoogleAuthProvider,
-  linkWithPopup,
-  linkWithRedirect,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut as fbSignOut,
   type User,
   type Auth,
-  type UserCredential,
 } from "firebase/auth";
 import { getClientAuth, isFirebaseConfigured } from "./client";
 
@@ -199,105 +196,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
 
-    const tryRedirect = async (kind: "sign-in" | "link"): Promise<void> => {
-      try {
-        if (kind === "link" && auth.currentUser && auth.currentUser.isAnonymous) {
-          await linkWithRedirect(auth.currentUser, provider);
-          return;
-        }
-        await signInWithRedirect(auth, provider);
-      } catch (err) {
-        const code = (err as { code?: string } | null)?.code;
-        console.error("[auth] redirect fallback failed:", err);
-        setAuthError(hebrewMessageFor(code));
-        throw err;
-      }
-    };
-
-    const runPopup = async (): Promise<UserCredential | void> => {
-      // No currentUser → Firebase persistence hung before anon sign-in
-      // completed. Skip the link step entirely and open the popup.
-      if (!auth.currentUser) {
-        return withPopupTimeout(signInWithPopup(auth, provider));
-      }
-      // If currently anonymous, upgrade the account in place.
-      if (auth.currentUser.isAnonymous) {
-        return withPopupTimeout(linkWithPopup(auth.currentUser, provider));
-      }
-      return withPopupTimeout(signInWithPopup(auth, provider));
-    };
-
+    // Strict save model ("discard pre-login work"): ALWAYS sign in fresh —
+    // never link the anonymous uid. A plain sign-in flips the Firebase uid, so
+    // AppContext re-hydrates from the Google account and the pre-login anon
+    // scratch (drafts + uploaded blobs) is dropped by design. There is no
+    // anon→Google merge, so the credential-already-in-use collision can't
+    // happen here anymore. The orphaned anon Firestore/Storage is throwaway.
+    //
+    // (Naming kept as `linkGoogle` so existing callers/UI don't churn.)
     try {
-      await runPopup();
+      await withPopupTimeout(signInWithPopup(auth, provider));
       setAuthError(null);
       return;
     } catch (err: unknown) {
       const code = (err as { code?: string } | null)?.code;
 
-      // credential-already-in-use: the Google account is already linked to a
-      // different Firebase UID (usually: same user signed in previously on
-      // another device, or anon→link was attempted twice). Drop the throwaway
-      // anon session and sign in as the existing Google-linked user.
-      if (code === "auth/credential-already-in-use" || code === "auth/email-already-in-use") {
-        // security-F1.1.2: anonymous→Google linking can orphan the data the
-        // user accumulated under the throwaway anon uid. Phase 0 only DETECTS
-        // this — Phase 1 will implement the actual merge (see UPGRADE_PLAN
-        // §1.A). For now, warn loudly so we have a Sentry breadcrumb when it
-        // happens in production.
-        const anonUid = auth.currentUser?.uid ?? "unknown";
-        console.warn(
-          "[auth] credential-already-in-use — anon uid",
-          anonUid,
-          "may have orphaned data (Firestore + Storage). Phase 1 will implement merge. See security-F1.1.2.",
-        );
-        try {
-          await fbSignOut(auth);
-          await withPopupTimeout(signInWithPopup(auth, provider));
-          setAuthError(null);
-          return;
-        } catch (err2) {
-          const code2 = (err2 as { code?: string } | null)?.code;
-          if (code2 && POPUP_FALLBACK_CODES.has(code2)) {
-            setAuthError(hebrewMessageFor(code2));
-            await tryRedirect("sign-in");
-            return;
-          }
-          console.error("[auth] fallback sign-in after link-collision failed:", err2);
-          setAuthError(hebrewMessageFor(code2));
-          throw err2;
-        }
-      }
-
-      // Popup failed in a way that redirect can recover from.
+      // Popup blocked / unsupported → fall back to a full-page redirect.
       if (code && POPUP_FALLBACK_CODES.has(code)) {
         setAuthError(hebrewMessageFor(code));
-        const kind: "sign-in" | "link" =
-          auth.currentUser?.isAnonymous ? "link" : "sign-in";
-        // If we timed out on linkWithPopup, try linkWithRedirect first; if
-        // that fails (or there's no currentUser), sign out anon and do a
-        // plain signInWithRedirect so the user ends up in *some* account.
         try {
-          await tryRedirect(kind);
-          return;
-        } catch {
-          // Last-chance: drop anon, plain sign-in redirect.
-          if (kind === "link") {
-            try {
-              await fbSignOut(auth);
-              await tryRedirect("sign-in");
-              return;
-            } catch {
-              // already reported via tryRedirect → setAuthError
-              return;
-            }
-          }
-          return;
+          await signInWithRedirect(auth, provider);
+        } catch (err2) {
+          console.error("[auth] redirect sign-in failed:", err2);
+          setAuthError(hebrewMessageFor((err2 as { code?: string } | null)?.code));
         }
+        return;
       }
 
       // Any other error — surface via toast and rethrow so the caller's
       // optimistic UI rollback still works.
-      console.error("[auth] Google link failed:", err);
+      console.error("[auth] Google sign-in failed:", err);
       setAuthError(hebrewMessageFor(code));
       throw err;
     }

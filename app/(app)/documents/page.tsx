@@ -482,7 +482,7 @@ function DocumentsPageInner() {
             <h2 className="text-base font-bold text-foreground mb-3">
               מסמכים נדרשים לפי מקורות הכנסה
             </h2>
-            <SourceDrivenDocCards />
+            <SourceDrivenDocCards onRemove={handleRemove} />
           </div>
           <hr className="border-border" />
         </>
