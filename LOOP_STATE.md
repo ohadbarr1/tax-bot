@@ -4,13 +4,13 @@
 
 ---
 
-## STATUS: 🚧 T6 in progress — awaiting CPA form-convention answers (T6.2/3/4).
+## STATUS: ⏸️ MILESTONE REACHED — T6 form-fill fidelity complete. Paused for human review.
 
-- **Current track:** T6 · Form-fill fidelity
-- **Done:** T6.1 (Hebrew rendering verified + mixed-digit fix), T6.6 (161/1214 already not reachable)
-- **Blocked on human (CPA):** T6.2 (135 main vs total), T6.3 (loss box sign), T6.4 (dividend codes 117/141/055) — ITA-form-convention questions; guessing risks making forms worse.
-- **KEY FINDING:** rendered the real stamping (poppler + macOS CoreGraphics) — pure-Hebrew names/cities render CORRECTLY. The audit's "all Hebrew reversed" (D7) is a FALSE ALARM. Only embedded multi-digit runs in mixed strings were reversed (fixed). Forms-fill complaint is the STRUCTURAL items (135 aggregate, codes), not Hebrew direction.
-- **Last measured gate:** 552 pass / build ✓ / lint 45
+- **Completed this run:** T6.1 (Hebrew verified + mixed-digit fix), T6.2/3/4 (form conventions via tax skill, flagged ASSUMPTION), T6.6 (161/1214 already unreachable). T6.5 (eyeballed coords) deferred — render correctly, low value.
+- **Next track:** T5 (tax correctness — surtax §121ב, §66 separate calc, phantom-refund fix), T7 (input/parsing), or T8 (coverage lock).
+- **KEY FINDING:** rendered real stamping (poppler + macOS CoreGraphics) — pure-Hebrew names/cities render CORRECTLY. Audit's "all Hebrew reversed" (D7) = FALSE ALARM. Only embedded multi-digit runs were reversed (fixed). Form-fill complaint = structural (135 aggregate double-count, dividend codes) — all fixed.
+- **Decisions (flagged ASSUMPTION, verify in DEFERRED_ACTIONS.md):** 135 158/068/258 = main only (removes secondary double-count); loss boxes = positive magnitude; dividends → 117/055 only, 141 empty.
+- **Last measured gate:** 554 pass / build ✓ / lint 0err/45warn
 - **Branch:** `loop/remediation`
 
 **Reviews (T3/T4):** product-lead PASS-w/-concerns, tax-pro FAIL → all fixed this iteration:
@@ -37,7 +37,7 @@
 
 ## NEXT ACTION (what the next iteration does — keep this concrete)
 
-> **HUMAN REVIEW POINT — T3/T4 milestone.** Both outputs done & verified live. When approved, recommended next: **T6 (form-fill fidelity — the Hebrew RTL headline + 135 main-vs-aggregate + loss sign)** since "forms fill wrong" is the owner's other top complaint, OR **T5 (tax correctness — surtax rebuild, §66 separate calc, phantom-refund fix)**. T5 makes the waterfall numbers correct; T6 makes the PDFs correct. Either order works; T6 is the more visible win.
+> **HUMAN REVIEW POINT — T6 milestone.** Form-fill done (Hebrew was a false alarm; structural bugs fixed, conventions flagged for CPA verification). When approved, recommended next: **T5 (tax correctness)** — surtax §121ב rebuild (single cumulative threshold), §66 married separate calc, fix the phantom חל"ת/maternity + multi-employer-overlap refunds (keep-but-fix per locked decision §3), CG 30% for controlling shareholder. This makes the calc-waterfall numbers themselves correct. Then T7 (input/parsing robustness) and T8 (coverage lock) to finish.
 
 ---
 
@@ -45,9 +45,9 @@
 
 | Gate | Expected (audit, 2026-06-22) | Last measured | When |
 |------|------------------------------|---------------|------|
-| `npm test` | 522 pass / 2 skip / 45 files | 547 pass / 2 skip / 48 files | Iter 12 |
-| `npm run build` | pass | pass | Iter 12 |
-| `npm run lint` | 0 err / 46 warn | 0 err / 45 warn | Iter 12 |
+| `npm test` | 522 pass / 2 skip / 45 files | 554 pass / 2 skip / 51 files | Iter 15 |
+| `npm run build` | pass | pass | Iter 15 |
+| `npm run lint` | 0 err / 46 warn | 0 err / 45 warn | Iter 15 |
 | `npm run forms:smoke` | 135: 14/14, 1301: 21/21 | 135 14/14, 1301 21/21 | Iter 1 |
 
 Rule: test count must never drop; lint warnings must never increase.
@@ -65,10 +65,21 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + reviewer P
 | T2 Override end-to-end | 🔵 | qa-lead | T2.1 ✅ | T2.1 done (all doc-write paths honor lock); remaining: inline-edit override UX, dedupe-by-name |
 | T3 Output 1 — data summary | ✅ | product-lead | PASS (fields added) | verified live; override badge cosmetic-only in spine order |
 | T4 Output 2 — calc waterfall | ✅ | product-lead + tax-pro | PASS (reconciles) | verified live: ₪300k→refund ₪16,604 |
+| T5 Tax correctness | ⬜ | tax-pro | — | surtax §121ב, §66 separate, phantom-refund, CG 30% |
+| T6 Form-fill fidelity | ✅ | (CPA/user to verify) | conventions flagged ASSUMPTION | Hebrew=false-alarm; 135 double-count + dividend codes fixed; T6.5 coords deferred |
 | T5 Tax correctness | ⬜ | tax-pro | — | surtax, §66, CG 30%, phantom-refund fix |
 | T6 Form-fill fidelity | ⬜ | tax-pro | — | RTL headline, 135 aggregate, loss sign, hide 161/1214 |
 | T7 Input/parsing robustness | ⬜ | qa-lead | — | TZ, NaN, locale, IBKR multi-ccy |
 | T8 Coverage lock | ⬜ | qa-lead | — | |
+
+### Track checklist — T6  (COMPLETE)
+- ✅ T6.1 Hebrew rendering: verified pure-Hebrew correct via poppler + CoreGraphics (D7 false alarm); fixed embedded multi-digit reversal (reverseDigitRuns) +5 tests
+- ✅ T6.2 Form 135 158/068/258 → main employer only (removes secondary double-count vs 069); goldens updated; +regression test
+- ✅ T6.3 Loss boxes 166/067 = positive magnitude (correct; +defensive abs)
+- ✅ T6.4 Dividends → 117/055 only; 141 left empty (disputed meaning)
+- ✅ T6.6 161/1214 already unreachable from active UI (no 503 exposure)
+- ⤳ T6.5 eyeballed page-1 coords → deferred (render correctly; replace with field-map later)
+- ⚠️ T6.2/3/4 flagged ASSUMPTION — verify vs real 2025 forms (DEFERRED_ACTIONS.md). The CPA user is the right reviewer.
 
 ### Track checklist — T3 + T4  (COMPLETE)
 - ✅ T3 Output 1: /summary route + SummaryView + pure lib/summary.ts; source badges; full field coverage; verified live
@@ -172,6 +183,18 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + reviewer P
 ### Iter 11 — 2026-06-22 — T4 consistency + live verify
 - Did: recalc on handleFinish + live-compute fallback; verified both outputs in preview (summary all-manual badges; facts waterfall ₪300k→₪16,604 refund).
 - Gate: 547 pass | Commit: 02ef392
+
+### Iter 13 — 2026-06-22 — T6.1 Hebrew (verify + fix)
+- Did: rendered actual stamping via pdftoppm (poppler) + sips (macOS CoreGraphics). Pure Hebrew correct → D7 false alarm. Fixed embedded multi-digit reversal in bidi.ts (reverseDigitRuns). +5 tests.
+- Gate: 552 pass | Commit: 1792be2
+
+### Iter 14 — 2026-06-22 — T6.6 / investigation
+- Did: confirmed 161/1214 unreachable (determineFormType only 135/1301; SeveranceWizard unmounted). Investigated 135 aggregate + dividend codes; invoked israeli-tax-returns skill (confirms rules, not box codes). Escalated 3 conventions → user delegated back ("use the skill, decide").
+
+### Iter 15 — 2026-06-22 — T6.2/3/4 form conventions
+- Did: decided via skill + field-map labels; 135 main-only (fix double-count), loss=positive, dividends 117/055 only (141 empty). Goldens updated; +regression test; ASSUMPTIONs logged in DEFERRED_ACTIONS.md.
+- Gate: 554 pass, build ✓, lint 45 | Commit: 0b0684e
+- Next: HUMAN REVIEW (T6 milestone). Then T5 (tax correctness) recommended.
 
 ### Iter 12 — 2026-06-22 — T3/T4 gate (product-lead + tax-pro) + fixes
 - Did: reviews → tax-pro FAIL (waterfall didn't reconcile) + product-lead concerns. Fixed waterfall arithmetic (shift-work, surtax placement, taxPaid split, disclosures) so lines tie to netRefund; expanded summary fields.
