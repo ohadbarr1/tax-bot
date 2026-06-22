@@ -1,10 +1,11 @@
 {
-  "_comment": "Phase 1 §1.D semantic-golden fixture for Form 1301 — REGENERATED after the BiDi-correct hebrewForPdf rewrite + the route's DRAW_LIST_1301 / POSITIONAL_DRAWS_1301 refactor. See semanticGolden135.expected.json for the layout description and BiDi rationale. Hebrew strings now appear in LOGICAL Unicode order (\"בר\", \"תל\", \"אביב\", \"דיזנגוף\", \"אוהד\") because lib/bidi.ts:shapeForPdf() retired the codepoint-reversal hack. The page-3 entry now also includes \"אוהד\" before the tax-year because the new POSITIONAL_DRAWS_1301 entry for code 031 (first name) lands on page 1 (tail of page 1's text stream). Page 4 now carries the signature block (\"אוהד\", \"בר\", date, \"X\") that the new POSITIONAL_DRAWS_1301 entry adds — Phase 1 §1.D's signature/declaration parity with Form 135. `requiredCodes` is the set of 3-digit codes the route's draws[] list expects the template to still print.",
+  "_comment": "Phase 2 §2.B regen — page-1 personal block now stamped via POSITIONAL_DRAWS_1301 (city/street/house) so the cover page is no longer empty. The pdf-parse extractor's tail-walk picks up the new page-1 stamps before the older 277/278/firstName tail entries; net effect is page-1 list reorders to start with city+street+house. Pages 2/3/4 unchanged from the prior dividend-routing regen.",
   "stampedPerPage": [
     [
-      "123456782",
-      "987654323",
-      "אוהד",
+      "תל",
+      "אביב",
+      "דיזנגוף",
+      "100",
       "2024"
     ],
     [
@@ -17,8 +18,6 @@
       "50,000",
       "8,000",
       "1,500",
-      "1,500",
-      "12,000",
       "5,000",
       "2,400",
       "7,200",
@@ -28,7 +27,8 @@
       "תל",
       "אביב",
       "דיזנגוף",
-      "100"
+      "100",
+      "12,000"
     ],
     [
       "2,400",

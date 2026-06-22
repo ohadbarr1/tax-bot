@@ -9,8 +9,14 @@
  */
 
 export function isValidTZ(tz: string): boolean {
-  const id = tz.padStart(9, "0");
-  if (id.length !== 9 || !/^\d{9}$/.test(id)) return false;
+  const raw = (tz ?? "").trim();
+  // Must be 1–9 digits (leading zeros are legitimate and get left-padded).
+  // Reject empty / non-numeric outright — the pre-fix bug let "" and short
+  // junk through because padStart synthesised a valid-looking "000000000".
+  if (!/^\d{1,9}$/.test(raw)) return false;
+  const id = raw.padStart(9, "0");
+  // All-zeros is never a real Teudat Zehut.
+  if (/^0{9}$/.test(id)) return false;
 
   let total = 0;
   for (let i = 0; i < 9; i++) {

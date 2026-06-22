@@ -123,7 +123,8 @@ export function DocRequestPanel({ sources, onComplete, onBack }: Props) {
                 dividends: d.dividendsILS,
               },
             },
-            { ibkrData: d, hasForeignBroker: true }
+            { ibkrData: d, hasForeignBroker: true },
+            { source: "document" }
           );
 
           const summary = `IBKR: רווח $${d.totalProfitUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })} · הפסד $${d.totalLossUSD.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;

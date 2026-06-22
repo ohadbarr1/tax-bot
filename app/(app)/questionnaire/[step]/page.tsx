@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect } from "react";
-import { useRouter, redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuestionnaire } from "@/lib/questionnaireContext";
 import { useApp } from "@/lib/appContext";
@@ -21,6 +21,7 @@ import Step4Employers from "@/components/questionnaire/Step4Employers";
 import Step5Deductions from "@/components/questionnaire/Step5Deductions";
 import Step6LifeEvents from "@/components/questionnaire/Step6LifeEvents";
 import Step7CreditPoints from "@/components/questionnaire/Step7CreditPoints";
+import { validateStep } from "@/lib/questionnaireValidation";
 
 export default function StepPage({
   params,
@@ -32,28 +33,35 @@ export default function StepPage({
   const ctx = useQuestionnaire();
   const { setQuestionnaireStep } = useApp();
 
-  if (!isValidSlug(slug)) {
-    redirect("/questionnaire/personal");
-  }
-
-  const currentStep = getStepBySlug(slug)!;
+  // All hooks run unconditionally (stable hook order) BEFORE any early return —
+  // the pre-loop code called redirect() mid-render, which dropped the effect
+  // below on an invalid slug and risked a hook-count mismatch.
+  const valid = isValidSlug(slug);
+  const currentStep = valid ? getStepBySlug(slug)! : undefined;
 
   // Track last-visited step so /questionnaire (no slug) resumes here.
-  // Two writes for resilience:
   //   1. localStorage  — sync, no auth race; consumed by /questionnaire.
   //   2. AppContext    — async; debounced into Firestore for cross-device.
   useEffect(() => {
+    if (!valid || !currentStep) {
+      router.replace("/questionnaire/personal");
+      return;
+    }
     try {
-      window.localStorage.setItem(
-        "taxbot.questionnaire.lastSlug",
-        slug,
-      );
+      window.localStorage.setItem("taxbot.questionnaire.lastSlug", slug);
     } catch { /* private mode etc. */ }
     setQuestionnaireStep(currentStep.id);
-  }, [slug, currentStep.id, setQuestionnaireStep]);
+  }, [valid, currentStep, slug, setQuestionnaireStep, router]);
+
+  if (!valid || !currentStep) return null;
+
   const prev = prevSlug(slug);
   const next = nextSlug(slug);
   const isLast = currentStep.id === LAST_STEP_ID;
+
+  // ── Per-step validation gating (T1) ────────────────────────────────────────
+  const errors = validateStep(slug, ctx);
+  const blocked = errors.length > 0;
 
   // ── Step component adapter ─────────────────────────────────────────────────
 
@@ -79,6 +87,8 @@ export default function StepPage({
           <Step1Personal
             maritalStatus={ctx.maritalStatus}
             spouseIncome={ctx.spouseIncome}
+            spouseIncomeAmount={ctx.spouseIncomeAmount}
+            spouseTaxWithheld={ctx.spouseTaxWithheld}
             spouseFirstName={ctx.spouseFirstName}
             spouseLastName={ctx.spouseLastName}
             spouseIdNumber={ctx.spouseIdNumber}
@@ -87,6 +97,8 @@ export default function StepPage({
             children={ctx.children}
             onMaritalStatusChange={ctx.setMaritalStatus}
             onSpouseIncomeChange={ctx.setSpouseIncome}
+            onSpouseIncomeAmountChange={ctx.setSpouseIncomeAmount}
+            onSpouseTaxWithheldChange={ctx.setSpouseTaxWithheld}
             onSpouseFirstNameChange={ctx.setSpouseFirstName}
             onSpouseLastNameChange={ctx.setSpouseLastName}
             onSpouseIdNumberChange={ctx.setSpouseIdNumber}
@@ -109,9 +121,13 @@ export default function StepPage({
             investsCapital={ctx.investsCapital}
             portfolioLocation={ctx.portfolioLocation}
             selectedBroker={ctx.selectedBroker}
+            controllingShareholder={ctx.controllingShareholder}
+            dividendType={ctx.dividendType}
             onInvestsCapitalChange={ctx.setInvestsCapital}
             onPortfolioLocationChange={ctx.setPortfolioLocation}
             onSelectedBrokerChange={ctx.setSelectedBroker}
+            onControllingShareholderChange={ctx.setControllingShareholder}
+            onDividendTypeChange={ctx.setDividendType}
           />
         );
       case "employers":
@@ -189,6 +205,17 @@ export default function StepPage({
     <div className="bg-white dark:bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
       <div className="p-8 space-y-6">{renderStep()}</div>
 
+      {/* ── Validation errors (block forward nav until resolved) ── */}
+      {blocked && (
+        <div className="mx-8 mb-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <ul className="list-disc pr-5 space-y-0.5">
+            {errors.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* ── Footer navigation ── */}
       <div className="px-8 pb-7 flex justify-between items-center border-t border-border pt-5">
         <button
@@ -206,16 +233,18 @@ export default function StepPage({
 
         {!isLast ? (
           <button
-            onClick={() => next && router.push(`/questionnaire/${next}`)}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-kc-ink text-white text-sm font-semibold hover:bg-slate-800 transition-all"
+            onClick={() => !blocked && next && router.push(`/questionnaire/${next}`)}
+            disabled={blocked}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-kc-ink text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             המשך
             <ChevronLeft className="w-4 h-4" />
           </button>
         ) : (
           <button
-            onClick={ctx.handleFinish}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 transition-all shadow-sm shadow-emerald-200"
+            onClick={() => !blocked && ctx.handleFinish()}
+            disabled={blocked}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm shadow-emerald-200"
           >
             <Check className="w-4 h-4" />
             סיים ועבור לדוח

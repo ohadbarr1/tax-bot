@@ -96,6 +96,24 @@ export function loadYearData(year: number): YearTaxData {
 }
 
 /**
+ * מס יסף (surtax §121ב) annual threshold. Frozen at ₪721,560 for 2024–2027
+ * (Israeli-tax-returns skill, Step 4); earlier years used lower indexed values.
+ * Kept as a function so a future indexed table slots in without touching callers.
+ */
+export function surtaxThresholdForYear(year: number): number {
+  const TABLE: Record<number, number> = {
+    2020: 651_600,
+    2021: 647_640,
+    2022: 663_240,
+    2023: 698_280,
+    2024: 721_560,
+    2025: 721_560,
+    2026: 721_560,
+  };
+  return TABLE[year] ?? 721_560;
+}
+
+/**
  * Set of years the engine fully supports. Mirrors `SupportedTaxYear` in
  * `currentTaxYear.ts`. Kept as a runtime list so tests can iterate it.
  */
@@ -145,7 +163,15 @@ export interface CalculationResult {
   taxPaid: number;              // sum of all employer taxWithheld + F-023 overlap refund
   refundFromEmployment: number; // taxPaid − netTaxOwed
   capitalGainsTax: number;      // net capital gains tax owed after foreign credit
+  /** Phase 2 §2.B — Mas Yesafim (surtax) on income above ₪721,560 (סעיף 121ב). */
+  surtax: number;
+  surtaxActive: number;         // 3% on active income above the threshold
+  surtaxPassive: number;        // 5% on capital/passive income above the threshold
   netRefund: number;            // refundFromEmployment − capitalGainsTax
+  /** T5.2 — §66 spouse separate-calc tax included in netTaxOwed (0 if N/A). */
+  spouseSeparateTax: number;
+  /** T5.2 — spouse withholding included in taxPaid (0 if N/A). */
+  spouseTaxWithheld: number;
   creditPointsCount: number;
   warnings?: string[];          // surfaced advisory issues (e.g. alimony default-spouse-100%)
   breakdown: {
@@ -1043,6 +1069,12 @@ export function calculateChaltAdjustment(
   taxableIncome: number
 ): LifeEventAdjustment {
   const cite = 'תקנה 5(ג)(4) לתקנות מס הכנסה (תיאום מס לאחר חזרה מחל"ת)';
+  // T5.3 — only reconcile when income is an annualized PROJECTION. For actual
+  // (Tofes-106) income the reduction would double-discount; the annual recompute
+  // already recovers any over-withholding.
+  if (!taxpayer.lifeEvents?.incomeIsAnnualizedProjection) {
+    return { adjustment: 0, cite, explanation: "ההכנסה שהוזנה היא בפועל (לא תחזית) — אין צורך בהתאמה." };
+  }
   const months = taxpayer.lifeEvents?.chaltMonths;
   if (!months || months <= 0 || taxableIncome <= 0) {
     return {
@@ -1096,6 +1128,10 @@ export function calculateMaternityLeaveAdjustment(
   taxableIncome: number
 ): LifeEventAdjustment {
   const cite = 'תקנות 168 + 174 + סעיף 9(7)(ב) (פטור על דמי לידה)';
+  // T5.3 — same projection gate as חל"ת (avoid double-discounting actual income).
+  if (!taxpayer.lifeEvents?.incomeIsAnnualizedProjection) {
+    return { adjustment: 0, cite, explanation: "ההכנסה שהוזנה היא בפועל (לא תחזית) — אין צורך בהתאמה." };
+  }
   const months = taxpayer.lifeEvents?.maternityLeaveMonths;
   if (!months || months <= 0 || taxableIncome <= 0) {
     return {
@@ -1295,7 +1331,32 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     );
   }
 
-  // Step 5: Net tax owed (floored at 0).
+  // T5.2 — §66 separate calculation (חישוב נפרד) for a married couple.
+  // Each spouse's personal-exertion (יגיעה אישית) income is taxed on its OWN
+  // bracket schedule with its own credit points — the default election, and
+  // lower than combining the incomes into one schedule.
+  // SIMPLIFICATION (ASSUMPTION — see DEFERRED_ACTIONS): the spouse gets the base
+  // resident credit (2.25 pts); child/gender/degree points stay with the
+  // registered taxpayer (the engine assigns them there). Requires
+  // spouse.income (annual personal-exertion) in the model.
+  let spouseSeparateTax = 0;
+  let spouseTaxWithheld = 0;
+  if (taxpayer.maritalStatus === "married" && (taxpayer.spouse?.income ?? 0) > 0) {
+    const spouseIncome = taxpayer.spouse!.income!;
+    const spouseBracketTax = calculateTaxOnIncome(spouseIncome, year).tax;
+    const spouseCreditValue = Math.round(2.25 * loadYearData(year).credit_point_annual_value);
+    spouseSeparateTax = Math.max(0, spouseBracketTax - spouseCreditValue);
+    spouseTaxWithheld = taxpayer.spouse!.taxWithheld ?? 0;
+    if ((taxpayer.children?.length ?? 0) > 0) {
+      incomeDeductionWarnings.push(
+        "חישוב נפרד (§66): נקודות הזיכוי של הילדים שויכו לנישום הרשום בלבד. " +
+          "כברירת מחדל נקודות הילדים שייכות לאם — ודאו את ההקצאה בין בני הזוג."
+      );
+    }
+  }
+
+  // Step 5: Net tax owed (floored at 0) — household = registered taxpayer's
+  // tax + the spouse's separate-calc tax.
   const netTaxOwed = Math.max(
     0,
     calculatedTax
@@ -1303,7 +1364,7 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
       - deductionCredits
       - peripheryDiscount
       - foreignSalaryCredit
-  );
+  ) + spouseSeparateTax;
 
   // Step 6: Tax already paid via employer withholding.
   const employerTaxWithheld = taxpayer.employers.reduce(
@@ -1319,9 +1380,18 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   // monthly withholding and the year's effective marginal rate × secondary
   // monthly gross — surfaced as a refund add-on so it is not silently lost
   // in the bracket math (which only sees the totals, not the timing).
+  // T5.3 — only add this estimate when income is an annualized PROJECTION. For
+  // actual annual figures the over-withholding is ALREADY recovered by the
+  // refundFromEmployment recompute (taxPaid − netTaxOwed); adding it again
+  // double-counts → phantom refund.
   let overlapOverWithholding = 0;
   const overlapMonths = taxpayer.lifeEvents?.multiEmployerOverlapMonths ?? 0;
-  if (overlapMonths > 0 && taxpayer.employers.length >= 2 && taxableIncome > 0) {
+  if (
+    taxpayer.lifeEvents?.incomeIsAnnualizedProjection &&
+    overlapMonths > 0 &&
+    taxpayer.employers.length >= 2 &&
+    taxableIncome > 0
+  ) {
     // Identify the secondary employer (smallest gross) for attribution.
     const sortedByGross = [...taxpayer.employers].sort(
       (a, b) => (a.grossSalary ?? 0) - (b.grossSalary ?? 0)
@@ -1337,13 +1407,15 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
       overlapOverWithholding = Math.round(perMonthRefund * Math.min(overlapMonths, secondary.monthsWorked ?? 12));
     }
   }
-  const taxPaid = employerTaxWithheld + overlapOverWithholding;
+  const taxPaid = employerTaxWithheld + overlapOverWithholding + spouseTaxWithheld;
 
   // Step 7: Refund from employment income.
   const refundFromEmployment = taxPaid - netTaxOwed;
 
   // Step 8: Capital gains tax (F-016: subtract carriedForwardLoss before 25% rate).
   let capitalGainsTax = 0;
+  let netGain = 0;
+  let dividendsAmount = 0;
   if (taxpayer.capitalGains) {
     const {
       totalRealizedProfit,
@@ -1352,14 +1424,53 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
       dividends = 0,
       carriedForwardLoss = 0,
     } = taxpayer.capitalGains;
+    dividendsAmount = dividends;
     // F-016: סעיף 92 — קיזוז הפסד הון מועבר לפני חישוב המס.
-    const netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
-    const grossCGTax = Math.round((netGain + dividends) * 0.25);
+    netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
+    // §91(ב) / §125ב — a בעל מניות מהותי (10%+ holder) is taxed at 30% on BOTH
+    // the capital GAIN and dividends from that holding (vs 25% for a regular
+    // individual). T5.4: the pre-fix code applied 30% only to dividends and left
+    // the gain at a flat 25%. (Israeli-tax-returns skill: "30% if the seller
+    // holds 10% or more of the company".)
+    const cgRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
+    const dividendRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
+    const grossCGTax = Math.round(netGain * cgRate + dividends * dividendRate);
     capitalGainsTax = Math.max(0, grossCGTax - foreignTaxWithheld);
+    if (taxpayer.controllingShareholder && (netGain > 0 || dividends > 0)) {
+      incomeDeductionWarnings.push(
+        "שיעור 30% (בעל מניות מהותי) הוחל על כל רווחי ההון והדיבידנדים. " +
+          "הוא חל רק על אחזקה שבה מוחזקים 10%+ — אם חלק מהתיק אינו כזה, ייתכן שחלקו במס 25%."
+      );
+    }
   }
 
+  // T5.1 — Mas Yesafim (surtax) per סעיף 121ב, rebuilt.
+  //
+  // FIX: the threshold applies ONCE to TOTAL chargeable income (active +
+  // passive), not separately to each bucket. The pre-fix code gave each bucket
+  // its own full ₪721,560 exemption, so e.g. ₪500k salary + ₪400k gains paid
+  // ₪0 surtax (both under the threshold) when ~₪8.9k is due.
+  //   • 3% on ALL income above the threshold.
+  //   • +2% ADDITIONAL on the capital/passive slice above the threshold
+  //     (effective 2025; §121ב(ב) as amended). Passive is treated as the top
+  //     slice for the surcharge.
+  // Threshold is ₪721,560, frozen 2024–2027 (Israeli-tax-returns skill, Step 4).
+  const SURTAX_THRESHOLD = surtaxThresholdForYear(year);
+  const activeIncomeForSurtax = Math.max(0, taxableIncome);
+  const passiveIncomeForSurtax = Math.max(0, netGain + dividendsAmount);
+  const totalForSurtax = activeIncomeForSurtax + passiveIncomeForSurtax;
+  const aboveThreshold = Math.max(0, totalForSurtax - SURTAX_THRESHOLD);
+  // Portion of the above-threshold amount attributable to passive income
+  // (passive sits "on top"): it gets the extra 2%.
+  const passiveAbove = Math.min(passiveIncomeForSurtax, aboveThreshold);
+  const activeAbove = Math.max(0, aboveThreshold - passiveAbove);
+  const extraRate = year >= 2025 ? 0.02 : 0; // 2% capital surcharge from 2025
+  const surtaxActive  = Math.round(activeAbove * 0.03);
+  const surtaxPassive = Math.round(passiveAbove * (0.03 + extraRate));
+  const surtaxTotal   = surtaxActive + surtaxPassive;
+
   // Step 9: Final net refund.
-  const netRefund = refundFromEmployment - capitalGainsTax;
+  const netRefund = refundFromEmployment - capitalGainsTax - surtaxTotal;
 
   // Step 10: F-013 §9(7א) auto-compute severance exemption + emit a warning
   // when the user-entered `taxableSeverancePay` (Field 272) appears to ignore
@@ -1405,7 +1516,12 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     taxPaid,
     refundFromEmployment,
     capitalGainsTax,
+    surtax: surtaxTotal,
+    surtaxActive,
+    surtaxPassive,
     netRefund,
+    spouseSeparateTax,
+    spouseTaxWithheld,
     creditPointsCount,
     warnings: incomeDeductionWarnings,
     breakdown: {

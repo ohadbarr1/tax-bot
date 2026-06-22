@@ -27,7 +27,7 @@
  */
 
 import Papa from "papaparse";
-import { getFxRate } from "./fx";
+import { getFxRate, type FxCurrency } from "./fx";
 
 export interface IbkrParseInput {
   /** Raw CSV text. */
@@ -113,15 +113,46 @@ function extractIsoDate(cell: unknown): string | undefined {
  * be extracted (e.g. summary-only rows in the Performance Summary section).
  */
 function rowUsdToIls(
-  amountUsd: number,
+  amount: number,
   date: string | undefined,
   taxYear: number,
-  override: number | undefined
+  override: number | undefined,
+  currency: FxCurrency = "USD"
 ): number {
-  if (typeof override === "number") return amountUsd * override;
-  if (date) return amountUsd * getFxRate("USD", date);
+  // Override is only meaningful for USD (the user-supplied USD→ILS rate).
+  if (typeof override === "number" && currency === "USD") return amount * override;
+  if (date) return amount * getFxRate(currency, date);
   // No row-level date (Performance Summary fallback) — use year mean.
-  return amountUsd * getFxRate("USD", `${taxYear}-06-30`);
+  return amount * getFxRate(currency, `${taxYear}-06-30`);
+}
+
+/**
+ * Detect the statement's base currency from a "Currency" column (T7.2). IBKR
+ * Activity Statements report each section in the account base currency; the
+ * Trades/Dividends sections carry a Currency column. Defaults to USD when
+ * absent or unrecognised, so existing USD statements are unaffected.
+ */
+function detectCurrency(rows: unknown[][]): FxCurrency {
+  // Tally the currency code from each section's Currency column across DATA rows,
+  // then take the majority. A single stray non-base row (e.g. one FX line in a
+  // USD statement) can't flip the whole statement. Defaults to USD on empty/tie.
+  const tally: Record<FxCurrency, number> = { USD: 0, EUR: 0, GBP: 0 };
+  let currencyIdx = -1;
+  for (const row of rows) {
+    if (!row || row.length < 3) continue;
+    const headerIdx = findCol(row, "Currency");
+    if (headerIdx >= 0) {
+      currencyIdx = headerIdx; // a header re-defines the column for its section
+      continue;
+    }
+    if (currencyIdx < 0 || String(row[1] ?? "").trim() !== "Data") continue;
+    const v = String(row[currencyIdx] ?? "").trim().toUpperCase();
+    if (v === "EUR" || v === "GBP" || v === "USD") tally[v as FxCurrency]++;
+  }
+  const winner = (Object.keys(tally) as FxCurrency[]).reduce((a, b) =>
+    tally[b] > tally[a] ? b : a,
+  );
+  return tally[winner] > 0 ? winner : "USD";
 }
 
 export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOutput {
@@ -129,6 +160,7 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
   const rows = parsed.data as unknown[][];
 
   const taxYear = detectYear(rows);
+  const baseCurrency = detectCurrency(rows);
   // Display-rate (year mean) — kept for the `exchangeRate` field on output.
   const displayRate = exchangeRate ?? getExchangeRateForYear(taxYear);
 
@@ -173,11 +205,11 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
         const txDate = tradesDateIdx >= 0 ? extractIsoDate(row[tradesDateIdx]) : undefined;
         if (pl > 0) {
           tradesProfit += pl;
-          tradesProfitIls += rowUsdToIls(pl, txDate, taxYear, exchangeRate);
+          tradesProfitIls += rowUsdToIls(pl, txDate, taxYear, exchangeRate, baseCurrency);
         } else if (pl < 0) {
           const abs = Math.abs(pl);
           tradesLoss += abs;
-          tradesLossIls += rowUsdToIls(abs, txDate, taxYear, exchangeRate);
+          tradesLossIls += rowUsdToIls(abs, txDate, taxYear, exchangeRate, baseCurrency);
         }
       }
     }
@@ -206,8 +238,8 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
         perfProfit += profit;
         perfLoss   += loss;
         // Performance Summary has no per-row date — use year-mean rate.
-        perfProfitIls += rowUsdToIls(profit, undefined, taxYear, exchangeRate);
-        perfLossIls   += rowUsdToIls(loss,   undefined, taxYear, exchangeRate);
+        perfProfitIls += rowUsdToIls(profit, undefined, taxYear, exchangeRate, baseCurrency);
+        perfLossIls   += rowUsdToIls(loss,   undefined, taxYear, exchangeRate, baseCurrency);
       }
     }
 
@@ -227,7 +259,7 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
         if (amt > 0) {
           totalDividends += amt;
           const txDate = divDateIdx >= 0 ? extractIsoDate(row[divDateIdx]) : undefined;
-          totalDividendsIls += rowUsdToIls(amt, txDate, taxYear, exchangeRate);
+          totalDividendsIls += rowUsdToIls(amt, txDate, taxYear, exchangeRate, baseCurrency);
         }
       }
     }
@@ -254,7 +286,7 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
           const abs = Math.abs(amt);
           foreignTaxWithheld += abs;
           const txDate = taxDateIdx >= 0 ? extractIsoDate(row[taxDateIdx]) : undefined;
-          foreignTaxWithheldIls += rowUsdToIls(abs, txDate, taxYear, exchangeRate);
+          foreignTaxWithheldIls += rowUsdToIls(abs, txDate, taxYear, exchangeRate, baseCurrency);
         }
       }
     }

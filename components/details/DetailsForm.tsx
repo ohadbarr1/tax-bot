@@ -284,7 +284,7 @@ export function DetailsForm() {
 
       <div className="flex gap-3 mt-8">
         <button
-          onClick={() => router.push("/welcome")}
+          onClick={() => router.push("/documents")}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-2 rounded-xl border border-border"
         >
           <ArrowLeft className="w-4 h-4" /> חזרה

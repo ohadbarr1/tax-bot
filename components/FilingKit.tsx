@@ -81,6 +81,21 @@ export function FilingKit() {
     ? (calibrate ? "form_1301_calibration.pdf" : "form_1301_ready.pdf")
     : (calibrate ? "form_135_calibration.pdf"  : "form_135_ready.pdf");
 
+  // ── Minimum-viable identity gate ──────────────────────────────────────────
+  // Block the download until we have enough taxpayer data to produce a non-
+  // empty form. Without these fields the stamper writes a 1.3 MB PDF with
+  // 90 % blank cells (the user would "submit" a useless form). List what's
+  // missing so the user knows how to unblock.
+  const missingFields: string[] = [];
+  if (!taxpayer.idNumber)            missingFields.push("מספר תעודת זהות");
+  if (!taxpayer.fullName?.trim())    missingFields.push("שם מלא");
+  if (!taxpayer.address?.city)       missingFields.push("עיר מגורים");
+  if (!taxpayer.bank?.bankId)        missingFields.push("פרטי בנק להחזר");
+  if (taxpayer.employers.length === 0 && !financials.hasForeignBroker) {
+    missingFields.push("מקור הכנסה (טופס 106 או IBKR / 867)");
+  }
+  const canDownload = missingFields.length === 0;
+
   const handleDownload = async () => {
     setDlState("generating");
     setErrorMsg("");
@@ -140,7 +155,14 @@ export function FilingKit() {
     >
       {/* ── Header ── */}
       {(() => {
-        const ready = financials.estimatedRefund > 0 && !!taxpayer.idNumber;
+        // IBKR-only filers (foreign-broker capital gains, no salaried income)
+        // are a first-class case for Form 1301 — don't gate "ready" on having
+        // an employer. `hasForeignBroker` OR an employer is sufficient as
+        // long as the user supplied an ID number.
+        const hasIncome =
+          taxpayer.employers.length > 0 ||
+          financials.hasForeignBroker === true;
+        const ready = financials.estimatedRefund > 0 && !!taxpayer.idNumber && hasIncome;
         return (
           <div className="flex items-center gap-2">
             <Package className="w-4 h-4 text-emerald-500" />
@@ -152,6 +174,37 @@ export function FilingKit() {
             >
               {ready ? "מוכן" : "בהכנה"}
             </span>
+          </div>
+        );
+      })()}
+
+      {/* ── Parse-failure banner (IBKR / 867 / 106) ───────────────────────────
+         A failed IBKR parse silently downgrades determineFormType from 1301
+         to 135 (no `hasForeignBroker`), letting the user file the wrong form.
+         Surface failures here so the IBKR → 1301 path doesn't slip through. */}
+      {(() => {
+        const failed = (state.documents ?? []).filter(
+          (d) =>
+            d.status === "failed" &&
+            (d.type === "ibkr" || d.type === "form867" || d.type === "form106"),
+        );
+        if (failed.length === 0) return null;
+        return (
+          <div
+            role="alert"
+            className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-800"
+          >
+            <p className="font-semibold mb-1">
+              ניתוח אוטומטי נכשל ל-{failed.length} מסמך — סיווג הטופס עלול להיות שגוי.
+            </p>
+            <ul className="list-disc ms-5 space-y-0.5">
+              {failed.map((d) => (
+                <li key={d.id}>
+                  {d.name}
+                  {d.miningError ? ` — ${d.miningError}` : ""}
+                </li>
+              ))}
+            </ul>
           </div>
         );
       })()}
@@ -231,7 +284,7 @@ export function FilingKit() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground">{formLabel.full}</p>
               <p className="text-xs text-slate-500 mt-0.5">
-                {taxpayer.fullName.split(" - ")[1]} · שנת מס {financials.taxYears[0]}
+                {(taxpayer.fullName ?? "").split(" - ")[1] ?? "—"} · שנת מס {financials.taxYears[0]}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {[
@@ -333,11 +386,26 @@ export function FilingKit() {
                     />
                     תצוגת אימות מיקומי שדות (calibration preview)
                   </label>
+                  {!canDownload && (
+                    <div
+                      role="status"
+                      className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-900"
+                    >
+                      <p className="font-semibold mb-1">חסרים פרטים להפקת הטופס:</p>
+                      <ul className="list-disc ms-5 space-y-0.5">
+                        {missingFields.map((f) => (
+                          <li key={f}>{f}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <button
                     onClick={handleDownload}
-                    disabled={dlState === "generating"}
+                    disabled={dlState === "generating" || !canDownload}
                     className={`w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                      dlState === "ready"
+                      !canDownload
+                        ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        : dlState === "ready"
                         ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-200"
                         : dlState === "error"
                         ? "bg-rose-500 text-white hover:bg-rose-600"

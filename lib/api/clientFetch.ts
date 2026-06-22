@@ -59,15 +59,37 @@ export class ClientFetchUnauthenticatedError extends Error {
  *     body: JSON.stringify(payload),
  *   });
  */
+/**
+ * Dev-only bypass: when the build was started with `NEXT_PUBLIC_DEV_AUTH_BYPASS=1`
+ * AND in development mode, skip the Firebase ID-token attach. The server-side
+ * counterpart in `lib/api/withUser.ts` accepts unauthenticated calls under the
+ * matching env flag and uses a deterministic `dev-local` uid. Lets the IBKR →
+ * 1301 path run E2E without a live Firebase project.
+ */
+function devAuthBypassEnabled(): boolean {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "1"
+  );
+}
+
 export async function clientFetch(
   input: RequestInfo | URL,
   init: ClientFetchInit = {},
 ): Promise<Response> {
   const auth = getClientAuth();
   const user = auth?.currentUser ?? null;
+
   if (!user) {
+    if (devAuthBypassEnabled()) {
+      const { forceRefreshToken: _drop, ...restInit } = init;
+      void _drop;
+      const headers = new Headers(init.headers ?? undefined);
+      return fetch(input, { ...restInit, headers });
+    }
     throw new ClientFetchUnauthenticatedError();
   }
+
   const token = await user.getIdToken(init.forceRefreshToken === true);
 
   const headers = new Headers(init.headers ?? undefined);

@@ -57,9 +57,26 @@ export type WithUserHandler = (
  * Exported for tests and direct route use; most callers should prefer
  * `withUser(handler)` below.
  */
+/**
+ * Dev-only auth bypass. Active when:
+ *   • NODE_ENV !== "production" AND
+ *   • DEV_AUTH_BYPASS=1
+ * Returns a deterministic fake uid so local dev runs end-to-end without a
+ * Firebase project. Production builds short-circuit this branch on the first
+ * condition. Never enable in any deployed env.
+ */
+export const DEV_AUTH_UID = "dev-local";
+function devAuthBypassEnabled(): boolean {
+  return (
+    process.env.NODE_ENV !== "production" &&
+    process.env.DEV_AUTH_BYPASS === "1"
+  );
+}
+
 export async function verifyBearerOrNull(
   request: Request | NextRequest,
 ): Promise<{ uid: string } | null> {
+  if (devAuthBypassEnabled()) return { uid: DEV_AUTH_UID };
   const authHeader = request.headers.get("authorization");
   if (!authHeader) return null;
   // RFC 6750 — case-insensitive scheme.

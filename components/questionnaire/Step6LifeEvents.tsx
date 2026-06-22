@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import type { LifeEvent } from "@/types";
+import { numField } from "@/lib/utils";
 import { Label, SuccessBox, WarnBox, TogglePair } from "./StepShell";
 
 interface Props {
@@ -99,7 +100,7 @@ export default function Step6LifeEvents({
                         value={lifeEvents.grossSeverancePay ?? ""}
                         onChange={(e) =>
                           onUpdateLifeEvent({
-                            grossSeverancePay: e.target.value === "" ? undefined : Number(e.target.value),
+                            grossSeverancePay: numField(e.target.value),
                           })
                         }
                         placeholder="לדוגמה: 120000"
@@ -115,7 +116,7 @@ export default function Step6LifeEvents({
                         value={lifeEvents.lastMonthlySalary ?? ""}
                         onChange={(e) =>
                           onUpdateLifeEvent({
-                            lastMonthlySalary: e.target.value === "" ? undefined : Number(e.target.value),
+                            lastMonthlySalary: numField(e.target.value),
                           })
                         }
                         placeholder="לדוגמה: 18000"
@@ -132,7 +133,7 @@ export default function Step6LifeEvents({
                         value={lifeEvents.yearsOfService ?? ""}
                         onChange={(e) =>
                           onUpdateLifeEvent({
-                            yearsOfService: e.target.value === "" ? undefined : Number(e.target.value),
+                            yearsOfService: numField(e.target.value),
                           })
                         }
                         placeholder="לדוגמה: 7.5"

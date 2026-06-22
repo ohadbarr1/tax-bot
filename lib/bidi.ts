@@ -140,13 +140,20 @@ export function shapeForPdf(text: string): string {
   if (allRtl) return RTL_MARK + text;
   if (allLtr) return text;
 
-  // Mixed content: keep the LOGICAL order in the stream (SHAAM-friendly),
-  // wrap with RTL_MARK so BiDi-aware viewers run the algorithm. We do
-  // NOT pre-apply visual reordering because that would CORRUPT the
-  // stream order pdf-parse extracts for round-trip tests.
-  //
-  // bidi-js exposes `getReorderSegments` for callers that want the visual
-  // order — we deliberately do NOT call it here. The trade-off is
-  // documented at the file header.
-  return RTL_MARK + text;
+  // Mixed content (Hebrew + embedded digit runs, e.g. "אלנבי 112 דירה 3").
+  // Empirically (pdf-lib 1.17 + fontkit + poppler/CoreGraphics renderers),
+  // pure-Hebrew runs shape correctly RTL, but an embedded MULTI-digit run is
+  // painted in stream order within the RTL flow → it renders reversed
+  // ("112" → "211", "1234" → "4321"). Pre-reverse each multi-digit run so the
+  // renderer's reversal cancels out and the number reads correctly. Verified by
+  // rasterizing the output (see lib/__tests__/bidi.test.ts).
+  // Single digits are symmetric and left untouched. Numeric-only fields never
+  // reach this function (they go through formatIlsForPdf, drawn LTR).
+  const fixed = reverseDigitRuns(text);
+  return RTL_MARK + fixed;
+}
+
+/** Reverse each run of 2+ ASCII digits in place. */
+export function reverseDigitRuns(text: string): string {
+  return text.replace(/\d{2,}/g, (run) => run.split("").reverse().join(""));
 }

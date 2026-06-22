@@ -151,7 +151,9 @@ export function AdvisorNudgeRail() {
 
       switch (action.kind) {
         case "nav_upload_doc":
-          router.push("/welcome");
+          // /welcome now resets the draft (pure source-picker); route doc
+          // uploads to the documents page instead.
+          router.push("/documents");
           return;
 
         case "set_marital_status":

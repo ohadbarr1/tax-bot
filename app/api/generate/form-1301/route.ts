@@ -90,8 +90,16 @@ export const DRAW_LIST_1301: ReadonlyArray<FieldDraw> = [
   { key: "capitalGainCenter", valueKey: "211",       code: "211", size: 11, align: "right" },
   { key: "capitalLoss",       valueKey: "067",       code: "067", size: 11, align: "right" },
   { key: "foreignTaxCode157", valueKey: "157",       code: "157", size: 10, align: "right" },
-  { key: "foreignTaxCode055", valueKey: "055_1301",  code: "055", size: 10, align: "right" },
-  { key: "otherIncome",       valueKey: "141",       code: "141", size: 10, align: "right" },
+  // Code 055 — דיבידנד לבעל מניות מהותי (10%+ holder, 30% rate). Stamped only
+  // when `taxpayer.controllingShareholder === true`; otherwise the engine
+  // emits "" and this row is correctly skipped by the route's empty-value guard.
+  { key: "controllingShareholderDiv055", valueKey: "055_1301",  code: "055", size: 10, align: "right" },
+  // Code 141 — ריבית ודיבידנד מני"ע סחירים בני פדיון (25% rate).
+  { key: "redemptionDiv141",             valueKey: "141",       code: "141", size: 10, align: "right" },
+  // Code 117 — דיבידנד רגיל (regular dividend at 25%). Engine routes the
+  // user's foreign-broker / Israeli-broker dividend bucket here unless the
+  // user flagged either redemption-eligible or controlling-shareholder.
+  { key: "regularDiv117",                valueKey: "117",       code: "117", size: 10, align: "right" },
 
   // ── Deductions — page 1 ──────────────────────────────────────────────────
   { key: "donations",       valueKey: "078", code: "078", size: 10, align: "right" },
@@ -139,11 +147,34 @@ export interface PositionalDraw {
 }
 
 export const POSITIONAL_DRAWS_1301: ReadonlyArray<PositionalDraw> = [
-  // 031 — first name. The auto-scanner did not detect a 3-digit "031" code
-  // near the first-name value-box on the 1301 (the form labels it with the
-  // Hebrew "שם פרטי" text only). Coordinates source: page-1 personal row,
-  // mirroring the first-name slot on Form 135.
-  { key: "firstName031", valueKey: "031", code: "031", page: 0, x: 360, y: 700, size: 9, heb: true, reverse: true },
+  // ── Page-1 personal block ("ב. פרטים אישיים") ───────────────────────────────
+  // The auto-scanner found NO 3-digit code labels in this section — the form
+  // labels the boxes in Hebrew only. Page 3 has the same fields with codes
+  // visible; the auto-map indexed page 3, leaving page 1 blank for every PDF.
+  // Phase 2 §2.B calibration pass adds positional stamps here so the cover
+  // page is no longer empty.
+  //
+  // Coordinate frame: A4 (595 × 842 pt), pdf-lib bottom-left origin. Layout
+  // walked top-down through the personal block with x split into two columns:
+  //   • Taxpayer (right column, "בן הזוג הרשום"): x ≈ 360 to 470
+  //   • Spouse (left column, "בן/בת הזוג"):       x ≈ 130 to 270
+  // Y coordinates are eyeballed against the calibration overlay; adjust if a
+  // future template revision shifts the row positions. The codes 012/013/022/
+  // 023/024/031/032 are duplicated on page 3 (see DRAW_LIST_1301 entries) so
+  // these positional draws are PER-FORM-INSTANCE redundant — but human-visible.
+  // Pass 3 calibration — observed iteration 2 landed names ~80pt too high.
+  // Visual anchor: the bottom "החזר המס" row (codes 277/278) sits at y≈158.
+  // Personal block is ABOVE that, address row between names and contact rows.
+  // Pass 4: names good (y=380/355). ID + address need slight up-shift.
+  { key: "taxpayerFirstName_p1", valueKey: "031", code: "031", page: 0, x: 400, y: 380, size: 10, heb: true },
+  { key: "taxpayerLastName_p1",  valueKey: "032", code: "032", page: 0, x: 400, y: 355, size: 10, heb: true },
+  { key: "taxpayerId012_p1",     valueKey: "012", code: "012", page: 0, x: 380, y: 350, size: 10 },
+  { key: "spouseFirstName_p1",   valueKey: "spouseFirstName", code: "031s", page: 0, x: 180, y: 380, size: 10, heb: true },
+  { key: "spouseLastName_p1",    valueKey: "spouseLastName",  code: "032s", page: 0, x: 180, y: 355, size: 10, heb: true },
+  { key: "spouseId013_p1",       valueKey: "013", code: "013", page: 0, x: 160, y: 350, size: 10 },
+  { key: "city022_p1",           valueKey: "022", code: "022", page: 0, x: 380, y: 295, size: 9, heb: true },
+  { key: "street023_p1",         valueKey: "023", code: "023", page: 0, x: 250, y: 295, size: 9, heb: true },
+  { key: "houseNumber024_p1",    valueKey: "024", code: "024", page: 0, x: 160, y: 295, size: 9 },
 
   // 015 — תאריך עליה (DD/MM/YYYY). Page-1 residency row.
   { key: "aliyahDate015", valueKey: "aliyahDate", code: "015", page: 0, x: 50, y: 56, size: 9 },
@@ -394,7 +425,6 @@ export const EXCLUDED_CODES_1301: Readonly<Record<string, string>> = {
   "092": "phase-1 — page-2 alternate-income classification",
   "096": "phase-1 — page-2 footer Yes/No row",
   "097": "phase-1 — page-2 alternate-income classification",
-  "117": "phase-1 — דיבידנד; 1301 page-2 (engine surfaces \"\" today; 1.K IBKR split)",
   "124": "phase-1 — ריבית ני\"ע סחירים; engine surfaces \"\" today; 1.K IBKR split",
   "126": "computation-row — page-1 life-insurance duplicate (drawn at p3 via code 036)",
   "142": "computation-row — page-1 individual-pension duplicate (drawn via 045_p3)",

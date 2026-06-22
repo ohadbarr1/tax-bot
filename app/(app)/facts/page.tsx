@@ -1,6 +1,7 @@
 "use client";
 import { useApp } from "@/lib/appContext";
 import { currentTaxYear } from "@/lib/currentTaxYear";
+import { CalcExplanation } from "@/components/CalcExplanation";
 
 const fmt = (n: number) => "₪" + Math.round(n).toLocaleString("he-IL");
 const EMPTY = "—";
@@ -166,6 +167,10 @@ export default function FactsPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div style={{ marginTop: 24 }}>
+        <CalcExplanation />
       </div>
 
     </div>

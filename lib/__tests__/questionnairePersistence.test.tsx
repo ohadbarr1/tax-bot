@@ -36,7 +36,11 @@ type AppStub = {
   state: { taxpayer: TaxPayer; financials: FinancialData } & Partial<AppState>;
   updateTaxpayer: (data: Partial<TaxPayer>) => void;
   updateFinancials: (data: Partial<FinancialData>) => void;
+  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, fin?: Partial<FinancialData>) => void;
   completeQuestionnaire: () => void;
+  setIncomeSources: (sources: unknown[]) => void;
+  markSourcesSelected: () => void;
+  commitManual: (paths: string[]) => void;
 };
 
 let appStub: AppStub;
@@ -65,7 +69,11 @@ function makeAppStub(initial?: {
     },
     updateTaxpayer: vi.fn(),
     updateFinancials: vi.fn(),
+    updateTaxpayerAndRecalculate: vi.fn(),
     completeQuestionnaire: vi.fn(),
+    setIncomeSources: vi.fn(),
+    markSourcesSelected: vi.fn(),
+    commitManual: vi.fn(),
   };
 }
 
@@ -221,6 +229,92 @@ describe("QuestionnaireProvider — partial-draft persistence (user-flow-1.3)", 
     expect(secondCtx!.idNumber).toBe("000000018");
     expect(secondCtx!.bank.account).toBe("111222");
     expect(secondCtx!.bank.bankName).toBe("לאומי");
+  });
+
+  it("handleFinish sets income sources so /documents is not blank (T0.3 spine)", () => {
+    let captured: ReturnType<typeof useQuestionnaire> | null = null;
+    render(
+      <QuestionnaireProvider>
+        <ContextProbe onMount={(ctx) => (captured = ctx)} />
+      </QuestionnaireProvider>,
+    );
+
+    act(() => {
+      // A salaried filer who also invests through a foreign broker.
+      captured!.updateEmployer("emp-main", { name: "מעסיק א'", grossSalary: 90000 });
+      captured!.setInvestsCapital(true);
+      captured!.setPortfolioLocation("foreign_broker");
+    });
+
+    act(() => captured!.handleFinish());
+
+    expect(appStub.setIncomeSources).toHaveBeenCalled();
+    expect(appStub.markSourcesSelected).toHaveBeenCalled();
+    const sources = (appStub.setIncomeSources as ReturnType<typeof vi.fn>).mock
+      .calls.at(-1)![0] as string[];
+    expect(sources).toContain("salary");
+    expect(sources).toContain("investments");
+    expect(sources).toContain("foreign");
+  });
+
+  it("handleFinish locks manually-entered values so docs can't overwrite them (T0.3/P0-1)", () => {
+    let captured: ReturnType<typeof useQuestionnaire> | null = null;
+    render(
+      <QuestionnaireProvider>
+        <ContextProbe onMount={(ctx) => (captured = ctx)} />
+      </QuestionnaireProvider>,
+    );
+
+    act(() => {
+      captured!.setFirstName("דוד");
+      captured!.setIdNumber("123456782");
+      captured!.updateEmployer("emp-main", { name: "מעסיק א'", grossSalary: 90000 });
+    });
+    act(() => captured!.handleFinish());
+
+    expect(appStub.commitManual).toHaveBeenCalled();
+    const locked = (appStub.commitManual as ReturnType<typeof vi.fn>).mock
+      .calls.at(-1)![0] as string[];
+    expect(locked).toContain("taxpayer.idNumber");
+    expect(locked).toContain("taxpayer.firstName");
+    expect(locked).toContain("taxpayer.employers[0].grossSalary");
+    // Empty fields are NOT locked, so a later doc upload can still fill them.
+    expect(locked).not.toContain("taxpayer.bank.account");
+  });
+
+  it("handleFinish persists spouse income/withholding for §66 (regression)", () => {
+    let captured: ReturnType<typeof useQuestionnaire> | null = null;
+    render(
+      <QuestionnaireProvider>
+        <ContextProbe onMount={(ctx) => (captured = ctx)} />
+      </QuestionnaireProvider>,
+    );
+    act(() => {
+      captured!.setMaritalStatus("married");
+      captured!.setSpouseIncome(true);
+      captured!.setSpouseIncomeAmount(180000);
+      captured!.setSpouseTaxWithheld(22000);
+    });
+    act(() => captured!.handleFinish());
+    const calls = (appStub.updateTaxpayer as ReturnType<typeof vi.fn>).mock.calls;
+    const withSpouse = calls.map((c) => c[0] as Partial<TaxPayer>).find((p) => p.spouse);
+    expect(withSpouse?.spouse?.income).toBe(180000);
+    expect(withSpouse?.spouse?.taxWithheld).toBe(22000);
+  });
+
+  it("handleFinish never leaves /documents source-less (defaults to salary)", () => {
+    let captured: ReturnType<typeof useQuestionnaire> | null = null;
+    render(
+      <QuestionnaireProvider>
+        <ContextProbe onMount={(ctx) => (captured = ctx)} />
+      </QuestionnaireProvider>,
+    );
+    // No employer data, no capital, no welcome sources → must still select one.
+    act(() => captured!.handleFinish());
+    expect(appStub.markSourcesSelected).toHaveBeenCalled();
+    const sources = (appStub.setIncomeSources as ReturnType<typeof vi.fn>).mock
+      .calls.at(-1)![0] as string[];
+    expect(sources.length).toBeGreaterThan(0);
   });
 
   it("mirrors questionnaire-only state slices to updateFinancials when relevant (Step 3)", async () => {

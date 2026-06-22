@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import type { Employer } from "@/types";
+import { numField } from "@/lib/utils";
 import { Label, InfoBox, SuccessBox, WarnBox, HEBREW_MONTHS, computeMonthsWorked } from "./StepShell";
 
 interface Props {
@@ -138,7 +139,7 @@ export default function Step4Employers({
                   value={emp.grossSalary ?? ""}
                   onChange={(e) =>
                     onUpdateEmployer(emp.id, {
-                      grossSalary: e.target.value ? Number(e.target.value) : undefined,
+                      grossSalary: numField(e.target.value),
                     })
                   }
                   className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
@@ -153,7 +154,7 @@ export default function Step4Employers({
                   value={emp.taxWithheld ?? ""}
                   onChange={(e) =>
                     onUpdateEmployer(emp.id, {
-                      taxWithheld: e.target.value ? Number(e.target.value) : undefined,
+                      taxWithheld: numField(e.target.value),
                     })
                   }
                   className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
@@ -168,7 +169,7 @@ export default function Step4Employers({
                   value={emp.pensionDeduction ?? ""}
                   onChange={(e) =>
                     onUpdateEmployer(emp.id, {
-                      pensionDeduction: e.target.value ? Number(e.target.value) : undefined,
+                      pensionDeduction: numField(e.target.value),
                     })
                   }
                   className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"

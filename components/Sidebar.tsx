@@ -3,16 +3,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  Home, User, ClipboardList, FolderOpen, PieChart, FileText, RotateCcw,
+  Home, ClipboardList, FolderOpen, ClipboardCheck, PieChart, FileText, RotateCcw,
 } from "lucide-react";
 import { useApp } from "@/lib/appContext";
 import { cn } from "@/lib/utils";
 
+// Order mirrors the canonical spine: questionnaire → documents → summary
+// (review, source-of-truth) → calc → filing.
 const NAV_ITEMS = [
   { href: "/dashboard", label: "הבית", icon: Home },
-  { href: "/details", label: "הפרטים שלי", icon: User },
   { href: "/questionnaire", label: "שאלון", icon: ClipboardList },
   { href: "/documents", label: "מסמכים", icon: FolderOpen },
+  { href: "/summary", label: "סיכום", icon: ClipboardCheck },
   { href: "/facts", label: "תמונת מצב", icon: PieChart },
   { href: "/filing", label: "הגשה", icon: FileText },
 ];

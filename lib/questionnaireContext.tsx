@@ -20,6 +20,7 @@ import type {
   DisabilityType,
   Address,
   BankDetails,
+  IncomeSourceId,
 } from "@/types";
 
 // ─── Context value shape ─────────────────────────────────────────────────────
@@ -40,6 +41,8 @@ interface QuestionnaireContextValue {
   // Step 1 — family
   maritalStatus: "single" | "married" | "divorced" | "widowed";
   spouseIncome: boolean;
+  spouseIncomeAmount: number | undefined;
+  spouseTaxWithheld: number | undefined;
   spouseFirstName: string;
   spouseLastName: string;
   spouseIdNumber: string;
@@ -47,6 +50,8 @@ interface QuestionnaireContextValue {
   children: Child[];
   setMaritalStatus: (v: "single" | "married" | "divorced" | "widowed") => void;
   setSpouseIncome: (v: boolean) => void;
+  setSpouseIncomeAmount: (v: number | undefined) => void;
+  setSpouseTaxWithheld: (v: number | undefined) => void;
   setSpouseFirstName: (v: string) => void;
   setSpouseLastName: (v: string) => void;
   setSpouseIdNumber: (v: string) => void;
@@ -63,9 +68,13 @@ interface QuestionnaireContextValue {
   investsCapital: boolean;
   portfolioLocation: "bank" | "local_broker" | "foreign_broker" | null;
   selectedBroker: string;
+  controllingShareholder: boolean;
+  dividendType: "regular_117" | "redemption_141";
   setInvestsCapital: (v: boolean) => void;
   setPortfolioLocation: (v: "bank" | "local_broker" | "foreign_broker" | null) => void;
   setSelectedBroker: (v: string) => void;
+  setControllingShareholder: (v: boolean) => void;
+  setDividendType: (v: "regular_117" | "redemption_141") => void;
 
   // Step 4 — employers
   employers: Employer[];
@@ -132,6 +141,10 @@ export function QuestionnaireProvider({
     completeQuestionnaire,
     updateTaxpayer,
     updateFinancials,
+    updateTaxpayerAndRecalculate,
+    setIncomeSources,
+    markSourcesSelected,
+    commitManual,
   } = useApp();
   const { taxpayer, financials } = state;
 
@@ -150,6 +163,13 @@ export function QuestionnaireProvider({
   const [maritalStatus, setMaritalStatus] = useState(taxpayer.maritalStatus);
   const [spouseIncome, setSpouseIncome] = useState(
     taxpayer.spouseHasIncome ?? false,
+  );
+  // T5.2 — spouse's annual personal-exertion income + withholding, for §66.
+  const [spouseIncomeAmount, setSpouseIncomeAmount] = useState<number | undefined>(
+    taxpayer.spouse?.income,
+  );
+  const [spouseTaxWithheld, setSpouseTaxWithheld] = useState<number | undefined>(
+    taxpayer.spouse?.taxWithheld,
   );
   const [spouseFirstName, setSpouseFirstName] = useState(
     taxpayer.spouse?.firstName ?? "",
@@ -178,6 +198,13 @@ export function QuestionnaireProvider({
   >(financials.hasForeignBroker ? "foreign_broker" : null);
   const [selectedBroker, setSelectedBroker] = useState(
     financials.brokerName ?? "",
+  );
+  // Phase 2 §2.B — drives Form 1301 codes 117 / 141 / 055.
+  const [controllingShareholder, setControllingShareholder] = useState(
+    taxpayer.controllingShareholder ?? false,
+  );
+  const [dividendType, setDividendType] = useState<"regular_117" | "redemption_141">(
+    taxpayer.dividendType ?? "regular_117",
   );
 
   // ── Step 4 ──────────────────────────────────────────────────────────────────
@@ -292,6 +319,9 @@ export function QuestionnaireProvider({
   // The first run is skipped — initial state equals the hydrated taxpayer /
   // financials, and we only persist user-driven changes.
   const isFirstSyncRef = useRef(true);
+  // Holds the latest pending write so an unmount (navigation away) within the
+  // 500ms window can flush it instead of losing the edit.
+  const pendingWriteRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (isFirstSyncRef.current) {
@@ -299,13 +329,15 @@ export function QuestionnaireProvider({
       return;
     }
 
-    const t = setTimeout(() => {
+    const doWrite = () => {
       const isMarried = maritalStatus === "married";
       const spousePayload = isMarried
         ? {
             firstName: spouseFirstName,
             lastName: spouseLastName,
             idNumber: spouseIdNumber,
+            income: spouseIncome ? spouseIncomeAmount : undefined,
+            taxWithheld: spouseIncome ? spouseTaxWithheld : undefined,
           }
         : undefined;
       updateTaxpayer({
@@ -332,6 +364,8 @@ export function QuestionnaireProvider({
         kibbutzMember,
         disabilityType: hasDisability ? disabilityType : undefined,
         disabilityPercent: hasDisability ? disabilityPercent : undefined,
+        controllingShareholder,
+        dividendType,
       });
       updateFinancials({
         hasForeignBroker: portfolioLocation === "foreign_broker",
@@ -339,6 +373,12 @@ export function QuestionnaireProvider({
           portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
         employersCount: employers.length,
       });
+    };
+
+    pendingWriteRef.current = doWrite;
+    const t = setTimeout(() => {
+      doWrite();
+      pendingWriteRef.current = null;
     }, 500);
 
     return () => clearTimeout(t);
@@ -351,6 +391,8 @@ export function QuestionnaireProvider({
     bank,
     maritalStatus,
     spouseIncome,
+    spouseIncomeAmount,
+    spouseTaxWithheld,
     spouseFirstName,
     spouseLastName,
     spouseIdNumber,
@@ -372,7 +414,18 @@ export function QuestionnaireProvider({
     disabilityPercent,
     portfolioLocation,
     selectedBroker,
+    controllingShareholder,
+    dividendType,
   ]);
+
+  // Flush any pending debounced write on unmount (navigating away mid-window),
+  // so the last edits before leaving a step are never lost.
+  useEffect(() => {
+    return () => {
+      pendingWriteRef.current?.();
+      pendingWriteRef.current = null;
+    };
+  }, []);
 
   // ── Finish ──────────────────────────────────────────────────────────────────
 
@@ -383,6 +436,8 @@ export function QuestionnaireProvider({
           firstName: spouseFirstName,
           lastName: spouseLastName,
           idNumber: spouseIdNumber,
+          income: spouseIncome ? spouseIncomeAmount : undefined,
+          taxWithheld: spouseIncome ? spouseTaxWithheld : undefined,
         }
       : undefined;
     updateTaxpayer({
@@ -412,13 +467,67 @@ export function QuestionnaireProvider({
       kibbutzMember,
       disabilityType: hasDisability ? disabilityType : undefined,
       disabilityPercent: hasDisability ? disabilityPercent : undefined,
+      controllingShareholder,
+      dividendType,
     });
-    updateFinancials({
-      hasForeignBroker: portfolioLocation === "foreign_broker",
-      brokerName:
-        portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
-      employersCount: employers.length,
+    // Recalculate on finish so estimatedRefund + calculationResult are populated
+    // (the questionnaire writes taxpayer without a recalc) — keeps the dashboard,
+    // facts headline, and the calc waterfall consistent. Empty taxpayer patch =
+    // recompute from the values just written above.
+    updateTaxpayerAndRecalculate(
+      {},
+      {
+        hasForeignBroker: portfolioLocation === "foreign_broker",
+        brokerName:
+          portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
+        employersCount: employers.length,
+      },
+    );
+
+    // Spine fix (T0.3): /documents drives its doc-request cards off
+    // onboarding.sources. Before the loop the questionnaire never set them, so a
+    // questionnaire-first user landed on a BLANK documents page. Merge the
+    // sources picked at /welcome with those implied by the answers.
+    const derivedSources: IncomeSourceId[] = [];
+    if (employers.some((e) => (e.name ?? "").trim() !== "" || e.grossSalary))
+      derivedSources.push("salary");
+    if (investsCapital || portfolioLocation) derivedSources.push("investments");
+    if (portfolioLocation === "foreign_broker") derivedSources.push("foreign");
+    const mergedSources = Array.from(
+      new Set<IncomeSourceId>([
+        ...(state.onboarding?.sources ?? []),
+        ...derivedSources,
+      ]),
+    );
+    // Default to "salary" when nothing could be derived and nothing was picked
+    // at /welcome, so a direct-entry user never lands on a blank /documents.
+    const finalSources =
+      mergedSources.length > 0 ? mergedSources : (["salary"] as IncomeSourceId[]);
+    setIncomeSources(finalSources);
+    markSourcesSelected();
+
+    // Lock manually-entered values: a later document upload may FILL blanks but
+    // must never silently overwrite what the user typed (manual = source of
+    // truth). Only non-empty fields are locked, so docs can still fill gaps.
+    const manualPaths: string[] = [];
+    const lock = (path: string, v: unknown) => {
+      if (v !== undefined && v !== null && v !== "") manualPaths.push(path);
+    };
+    lock("taxpayer.firstName", firstName);
+    lock("taxpayer.lastName", lastName);
+    lock("taxpayer.idNumber", idNumber);
+    lock("taxpayer.address.city", address.city);
+    lock("taxpayer.address.street", address.street);
+    lock("taxpayer.bank.account", bank.account);
+    lock("taxpayer.bank.branch", bank.branch);
+    employers.forEach((e, i) => {
+      lock(`taxpayer.employers[${i}].name`, e.name);
+      lock(`taxpayer.employers[${i}].grossSalary`, e.grossSalary);
+      lock(`taxpayer.employers[${i}].taxWithheld`, e.taxWithheld);
+      lock(`taxpayer.employers[${i}].pensionDeduction`, e.pensionDeduction);
     });
+    if (manualPaths.length > 0) commitManual(manualPaths);
+
     completeQuestionnaire();
     router.push("/documents");
   };
@@ -439,6 +548,8 @@ export function QuestionnaireProvider({
       setBank,
       maritalStatus,
       spouseIncome,
+      spouseIncomeAmount,
+      spouseTaxWithheld,
       spouseFirstName,
       spouseLastName,
       spouseIdNumber,
@@ -446,6 +557,8 @@ export function QuestionnaireProvider({
       children,
       setMaritalStatus,
       setSpouseIncome,
+      setSpouseIncomeAmount,
+      setSpouseTaxWithheld,
       setSpouseFirstName,
       setSpouseLastName,
       setSpouseIdNumber,
@@ -458,9 +571,13 @@ export function QuestionnaireProvider({
       investsCapital,
       portfolioLocation,
       selectedBroker,
+      controllingShareholder,
+      dividendType,
       setInvestsCapital,
       setPortfolioLocation,
       setSelectedBroker,
+      setControllingShareholder,
+      setDividendType,
       employers,
       setEmployers,
       addEmployer,
@@ -506,6 +623,8 @@ export function QuestionnaireProvider({
       bank,
       maritalStatus,
       spouseIncome,
+      spouseIncomeAmount,
+      spouseTaxWithheld,
       spouseFirstName,
       spouseLastName,
       spouseIdNumber,
@@ -516,6 +635,8 @@ export function QuestionnaireProvider({
       investsCapital,
       portfolioLocation,
       selectedBroker,
+      controllingShareholder,
+      dividendType,
       employers,
       hasOverlap,
       deductions,

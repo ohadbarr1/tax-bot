@@ -31,6 +31,7 @@ import { saveState, loadState, clearState } from "./db";
 import { deleteUserDocument } from "./firebase/storage";
 import { useAuth } from "./firebase/authContext";
 import { carryForwardFromPriorDraft } from "./yoyCarryover";
+import { resolveMinedFields, makeManualEntry, markManualPaths, preserveManual } from "./provenance";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ interface AppContextValue {
    * so uploading a Form 106 or IBKR statement instantly re-renders the Dashboard.
    * Optional financialsPatch is merged atomically to avoid the double-setState race.
    */
-  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) => void;
+  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>, opts?: { source?: "manual" | "document" }) => void;
   /** Whether the initial IndexedDB hydration is complete (avoids FOUC) */
   hydrated: boolean;
   // ── Multi-draft (P2) ──────────────────────────────────────────────────────
@@ -85,6 +86,8 @@ interface AppContextValue {
   // ── Provenance / prefill ──────────────────────────────────────────────────
   applyMiningResult: (docId: string, sourceLabel: string, fields: MinedField[]) => void;
   markFieldUserConfirmed: (fieldPath: string) => void;
+  /** Lock multiple field paths as manual overrides (questionnaire choke point). */
+  commitManual: (fieldPaths: string[]) => void;
   undoFieldMining: (fieldPath: string) => void;
   // ── AI Advisor (P5) ───────────────────────────────────────────────────────
   saveAdvisorMessage: (msg: AdvisorMessage) => void;
@@ -109,40 +112,6 @@ function useDebounce<T extends (...args: Parameters<T>) => void>(
     },
     [fn, delay]
   ) as T;
-}
-
-// ─── Dot-path set (used by applyMiningResult) ────────────────────────────────
-
-/**
- * Immutably sets `state[path] = value`, where path is a dot-path that may include
- * numeric array indices (e.g. "taxpayer.employers[0].grossSalary"). Creates
- * intermediate arrays/objects as needed. Used by the mining pipeline to write
- * extracted fields into the state tree without the UI having to hand-craft
- * setters for every possible target.
- */
-function setPath<T>(root: T, path: string, value: unknown): T {
-  const segments = path
-    .replace(/\[(\d+)\]/g, ".$1")
-    .split(".")
-    .filter(Boolean);
-  if (segments.length === 0) return root;
-
-  const rec = (node: unknown, i: number): unknown => {
-    const key = segments[i];
-    const isIndex = /^\d+$/.test(key);
-    const idx = isIndex ? Number(key) : key;
-    const last = i === segments.length - 1;
-
-    if (isIndex) {
-      const arr = Array.isArray(node) ? [...(node as unknown[])] : [];
-      arr[idx as number] = last ? value : rec(arr[idx as number], i + 1);
-      return arr;
-    }
-    const obj = (node && typeof node === "object" ? { ...(node as Record<string, unknown>) } : {}) as Record<string, unknown>;
-    obj[idx as string] = last ? value : rec(obj[idx as string], i + 1);
-    return obj;
-  };
-  return rec(root, 0) as T;
 }
 
 // ─── Migration helper ─────────────────────────────────────────────────────────
@@ -357,16 +326,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }));
 
-  const updateTaxpayerAndRecalculate = (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) =>
+  const updateTaxpayerAndRecalculate = (
+    patch: Partial<TaxPayer>,
+    financialsPatch?: Partial<FinancialData>,
+    opts?: { source?: "manual" | "document" },
+  ) =>
     setState((prev) => {
-      const newTaxpayer: TaxPayer = { ...prev.taxpayer, ...patch };
-      const year = prev.financials.taxYears[0] ?? currentTaxYear();
+      let newTaxpayer: TaxPayer = { ...prev.taxpayer, ...patch };
+      let newFinancialsBase: FinancialData = { ...prev.financials, ...financialsPatch };
+      // Document-sourced writes must never overwrite a user-locked value
+      // (manual = source of truth). Restore locked leaves after the merge.
+      if (opts?.source === "document") {
+        const preserved = preserveManual(
+          prev.taxpayer,
+          prev.financials,
+          newTaxpayer,
+          newFinancialsBase,
+          prev.provenance ?? {},
+        );
+        newTaxpayer = preserved.taxpayer;
+        newFinancialsBase = preserved.financials;
+      }
+      const year = newFinancialsBase.taxYears[0] ?? currentTaxYear();
       const result = calculateFullRefund(newTaxpayer, year);
       const insights = buildInsightsFromResult(result, newTaxpayer, year);
       const actionItems = buildActionItemsFromResult(result, newTaxpayer);
       const newFinancials: FinancialData = {
-        ...prev.financials,
-        ...financialsPatch,
+        ...newFinancialsBase,
         estimatedRefund: result.netRefund,
         insights,
         actionItems,
@@ -613,57 +599,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
    */
   const applyMiningResult = (docId: string, sourceLabel: string, fields: MinedField[]) =>
     setState((prev) => {
-      let nextTaxpayer = prev.taxpayer;
-      let nextFinancials = prev.financials;
-      const nextProvenance = { ...(prev.provenance ?? {}) };
       const now = new Date().toISOString();
-
-      // Resolve employer-conflict: the miner always emits `employers[0]`, but
-      // the user may have already added employer 0 from a previous upload.
-      // Find the mined employer's name, match against existing employers by
-      // (lowercased) name, and rewrite the field paths to the matched or
-      // next-free index. Fields that DON'T touch `employers[0]` pass through.
-      const employerNameField = fields.find(
-        (f) => f.fieldPath === "taxpayer.employers[0].name"
-      );
-      let resolvedEmployerIdx = 0;
-      if (employerNameField && typeof employerNameField.value === "string") {
-        const minedName = employerNameField.value.trim().toLowerCase();
-        const existing = nextTaxpayer.employers ?? [];
-        const matchIdx = existing.findIndex(
-          (e) => (e.name ?? "").trim().toLowerCase() === minedName && minedName.length > 0
-        );
-        resolvedEmployerIdx = matchIdx >= 0 ? matchIdx : existing.length;
-      }
-
-      const rewritePath = (path: string): string => {
-        if (resolvedEmployerIdx === 0) return path;
-        return path.replace(/^taxpayer\.employers\[0\]/, `taxpayer.employers[${resolvedEmployerIdx}]`);
-      };
-
-      for (const f of fields) {
-        const targetPath = rewritePath(f.fieldPath);
-        const existing = nextProvenance[targetPath];
-        if (existing?.userConfirmed) continue;
-
-        if (targetPath.startsWith("taxpayer.")) {
-          nextTaxpayer = setPath(nextTaxpayer, targetPath.slice("taxpayer.".length), f.value);
-        } else if (targetPath.startsWith("financials.")) {
-          nextFinancials = setPath(nextFinancials, targetPath.slice("financials.".length), f.value);
-        } else {
-          continue;
-        }
-
-        nextProvenance[targetPath] = {
-          fieldPath: targetPath,
-          sourceDocId: docId,
+      // The override rule (manual wins over re-mining) lives in resolveMinedFields.
+      const { taxpayer: nextTaxpayer, financials: nextFinancials, provenance: nextProvenance } =
+        resolveMinedFields(
+          prev.taxpayer,
+          prev.financials,
+          prev.provenance ?? {},
+          docId,
           sourceLabel,
-          confidence: f.confidence,
-          bbox: f.bbox,
-          minedAt: now,
-          userConfirmed: false,
-        };
-      }
+          fields,
+          now,
+        );
 
       const year = nextFinancials.taxYears[0] ?? currentTaxYear();
       const result = calculateFullRefund(nextTaxpayer, year);
@@ -696,9 +643,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const markFieldUserConfirmed = (fieldPath: string) =>
     setState((s) => {
-      const p = s.provenance?.[fieldPath];
-      if (!p) return s;
-      return { ...s, provenance: { ...s.provenance, [fieldPath]: { ...p, userConfirmed: true } } };
+      // Create-if-missing: a value typed from scratch (no prior provenance)
+      // must still be locked, or a later mining pass would overwrite it.
+      const now = new Date().toISOString();
+      const entry = makeManualEntry(fieldPath, now, s.provenance?.[fieldPath]);
+      return { ...s, provenance: { ...s.provenance, [fieldPath]: entry } };
+    });
+
+  /**
+   * Lock multiple field paths as manual overrides in one write. The choke point
+   * the questionnaire and other bulk editors call so every manually-entered
+   * field — not just those edited through <Field> — is protected from re-mining.
+   */
+  const commitManual = (fieldPaths: string[]) =>
+    setState((s) => {
+      if (fieldPaths.length === 0) return s;
+      const now = new Date().toISOString();
+      return { ...s, provenance: markManualPaths(s.provenance ?? {}, fieldPaths, now) };
     });
 
   const undoFieldMining = (fieldPath: string) =>
@@ -761,6 +722,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         resetAllData,
         applyMiningResult,
         markFieldUserConfirmed,
+        commitManual,
         undoFieldMining,
         saveAdvisorMessage,
         advisorMessages,
