@@ -8,6 +8,7 @@ import { CapitalGainsDetail } from "@/components/CapitalGainsDetail";
 import { useApp } from "@/lib/appContext";
 import { downloadGeneratedForm } from "@/lib/pdfDownload";
 import { refundHeadline } from "@/lib/refundDisplay";
+import { determineFormType, FORM_LABELS } from "@/lib/formTypeSelector";
 
 const fmt = (n: number) => "₪" + Math.round(n).toLocaleString("he-IL");
 
@@ -33,6 +34,11 @@ function FilingInner() {
   const bankName = state.taxpayer.bank?.bankName ?? "";
   const taxpayer = state.taxpayer;
   const financials = state.financials;
+
+  // R9: the form we actually generate is 135 (salary-only) or 1301 (any
+  // non-salary income). Drive all UI labels off this — never hardcode "135".
+  const formType = determineFormType(taxpayer, financials, state.onboarding?.sources).formType;
+  const formShort = FORM_LABELS[formType].short; // "טופס 135" | "טופס 1301"
 
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -74,7 +80,7 @@ function FilingInner() {
     { label: "מסמכים", detail: docsStatus, done: missing === 0 && docs.length > 0, active: false },
     { label: "שאלון", detail: questionnaireDetail, done: questionnaireCompleted, active: !questionnaireCompleted && idVerified },
     { label: "חישוב סופי", detail: "הסוכן מריץ recompute", done: hasCalc, active: questionnaireCompleted && !hasCalc },
-    { label: "חתימה והגשה", detail: "שולח ל-135 במס הכנסה", done: false, active: hasCalc },
+    { label: "הורדה והגשה עצמית", detail: `מורידים ${formShort} ומגישים באתר רשות המיסים`, done: false, active: hasCalc },
   ];
 
   const summary = headline.hasRefund
@@ -131,7 +137,7 @@ function FilingInner() {
             lineHeight: 1,
           }}
         >
-          אתה במרחק חתימה
+          אתה במרחק הורדה
         </div>
       </div>
 
@@ -141,6 +147,14 @@ function FilingInner() {
 
       <div style={{ marginBottom: 24 }}>
         <CapitalGainsDetail />
+        {(financials.ibkrData?.trades?.length ?? 0) > 0 && (
+          <Link
+            href="/filing/capital-gains"
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-kc-ink hover:text-emerald-600 transition-colors"
+          >
+            פירוט לפי עסקה — {financials.ibkrData!.trades!.length} מימושים ←
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-5">
@@ -182,7 +196,7 @@ function FilingInner() {
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--kc-lime)" }} />
-              טופס 135 · מוכן לחתימה
+              {formShort} · מוכן להורדה
             </div>
             <div
               style={{
@@ -195,14 +209,14 @@ function FilingInner() {
               }}
             >
               {headline.hasRefund
-                ? "עוד חתימה אחת והחזר בדרך"
+                ? "עוד הורדה אחת והטופס מוכן"
                 : headline.tone === "debt"
                   ? "טיוטה מראה יתרת חוב"
                   : "הטיוטה טרם שלמה"}
             </div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 10, lineHeight: 1.55, maxWidth: 440 }}>
               {headline.hasRefund
-                ? `ברגע שתחתום, נשלח את הטופס ישירות למחשב של מס הכנסה. ברוב המקרים הכסף מגיע תוך 21–45 יום ${bankName ? `לחשבון ${bankName} שלך` : "לחשבון הבנק שלך"}.`
+                ? `מורידים את ${formShort} כ-PDF ומגישים אותו עצמאית באזור האישי באתר רשות המיסים (אנחנו לא מגישים עבורכם). לאחר אישור הרשות, ברוב המקרים הכסף מגיע תוך 21–45 יום ${bankName ? `לחשבון ${bankName} שלך` : "לחשבון הבנק שלך"}.`
                 : headline.tone === "debt"
                   ? "לפי הנתונים כרגע, נוכה מהמעסיק פחות מהחבות בפועל. בדוק את הנתונים לפני הגשה — התשלום מבוצע ישירות מול רשות המיסים."
                   : "השלם שאלון, מסמכים וחישוב סופי כדי לראות אם מגיע לך החזר."}
@@ -428,7 +442,7 @@ function FilingInner() {
             ) : (
               <>
                 <FileDown size={16} />
-                הורד את טופס 135
+                הורד את {formShort}
               </>
             )}
           </button>

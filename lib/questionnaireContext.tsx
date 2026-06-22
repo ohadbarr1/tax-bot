@@ -229,7 +229,17 @@ export function QuestionnaireProvider({
     ]);
 
   const removeEmployer = (id: string) =>
-    setEmployers((prev) => prev.filter((e) => e.id !== id));
+    setEmployers((prev) => {
+      // R7: allow deleting ANY employer (incl. mined "ראשי" phantoms), but
+      // never drop the last one. If the removed row was the main employer,
+      // promote the first remaining row to main so the form still has one.
+      if (prev.length <= 1) return prev;
+      const next = prev.filter((e) => e.id !== id);
+      if (next.length > 0 && !next.some((e) => e.isMainEmployer)) {
+        next[0] = { ...next[0], isMainEmployer: true };
+      }
+      return next;
+    });
 
   const updateEmployer = (id: string, patch: Partial<Employer>) =>
     setEmployers((prev) =>

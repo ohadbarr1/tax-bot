@@ -61,9 +61,12 @@ export default function Step4Employers({
                   </span>
                 )}
               </div>
-              {!emp.isMainEmployer && (
+              {/* R7: deletable when >1 employer — incl. mined "ראשי" rows. */}
+              {employers.length > 1 && (
                 <button
                   onClick={() => onRemoveEmployer(emp.id)}
+                  aria-label={`מחק מעסיק ${idx + 1}`}
+                  title="מחק מעסיק"
                   className="text-slate-300 hover:text-rose-400 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

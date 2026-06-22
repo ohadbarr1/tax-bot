@@ -227,11 +227,21 @@ export function resolveMinedFields(
     // ── The override rule ──
     if (existing?.userConfirmed) continue;
 
+    // R7 root-cause: the miner always stamps `isMainEmployer: true` on the
+    // employer it emits. When that row is APPENDED as a new employer (idx > 0)
+    // — e.g. a pension/broker doc mis-classified as a 106 — it must NOT claim
+    // "ראשי". Only the first employer may be the main one. Force false for any
+    // appended row so we don't pile up undeletable phantom "ראשי" employers.
+    let value = f.value;
+    if (targetPath.endsWith(".isMainEmployer") && resolvedEmployerIdx > 0) {
+      value = false;
+    }
+
     if (targetPath.startsWith("taxpayer.")) {
       nextTaxpayer = setPath(
         nextTaxpayer,
         targetPath.slice("taxpayer.".length),
-        f.value,
+        value,
       );
     } else if (targetPath.startsWith("financials.")) {
       nextFinancials = setPath(

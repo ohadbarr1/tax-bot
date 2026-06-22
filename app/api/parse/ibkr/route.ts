@@ -108,6 +108,8 @@ async function handle(
       totalRealizedLoss:   result.totalRealizedLoss,
       foreignTaxWithheld:  result.foreignTaxWithheld,
       dividendsILS:        result.dividendsILS,
+      trades:              result.trades,
+      baseCurrency:        result.baseCurrency,
     },
   });
 }

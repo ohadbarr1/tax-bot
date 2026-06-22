@@ -81,6 +81,7 @@ describe("Route manifest", () => {
         "/education",
         "/facts",
         "/filing",
+        "/filing/capital-gains",
         "/history",
         "/how-it-works",
         "/income-tax",

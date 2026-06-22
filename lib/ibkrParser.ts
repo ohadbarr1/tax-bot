@@ -37,6 +37,29 @@ export interface IbkrParseInput {
   exchangeRate?: number;
 }
 
+/**
+ * One realized (P/L ≠ 0) trade row from the IBKR "Trades" section, retained so
+ * the capital-gains page can show the tax built trade-by-trade (R8). Opening
+ * lots (Realized P/L = 0) are NOT retained — they don't contribute to the tax.
+ */
+export interface IbkrTradeRow {
+  symbol: string;
+  assetCategory: string;
+  /** Transaction date, YYYY-MM-DD (from the Date/Time cell). */
+  date?: string;
+  quantity: number;
+  /** Proceeds in statement currency (USD/EUR/GBP). */
+  proceeds: number;
+  /** Cost basis in statement currency. */
+  basis: number;
+  /** Realized P/L in statement currency. */
+  realizedPL: number;
+  /** ILS-per-currency BoI publish rate applied to this row. */
+  fxRate: number;
+  /** Realized P/L converted to ILS at `fxRate`. */
+  realizedPLILS: number;
+}
+
 export interface IbkrParseOutput {
   taxYear: number;
   /** Year-end ILS-per-USD reference rate (annual mean). Per-row ILS values
@@ -53,6 +76,11 @@ export interface IbkrParseOutput {
   totalRealizedLoss: number;
   foreignTaxWithheld: number;
   dividendsILS: number;
+  /** Per-trade realized rows (P/L ≠ 0), in statement order. Empty when the
+   *  statement only had a Performance Summary (no per-trade Trades section). */
+  trades: IbkrTradeRow[];
+  /** Statement base currency (USD/EUR/GBP) — for per-row labels. */
+  baseCurrency: FxCurrency;
 }
 
 /**
@@ -126,6 +154,18 @@ function rowUsdToIls(
   return amount * getFxRate(currency, `${taxYear}-06-30`);
 }
 
+/** The ILS-per-currency rate applied to a row (mirrors rowUsdToIls's choice),
+ *  exposed so a per-trade row can display the exact rate it was converted at. */
+function rowFxRate(
+  date: string | undefined,
+  taxYear: number,
+  override: number | undefined,
+  currency: FxCurrency = "USD",
+): number {
+  if (typeof override === "number" && currency === "USD") return override;
+  return getFxRate(currency, date ?? `${taxYear}-06-30`);
+}
+
 /**
  * Detect the statement's base currency from a "Currency" column (T7.2). IBKR
  * Activity Statements report each section in the account base currency; the
@@ -176,8 +216,12 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
   let totalDividendsIls = 0;
   let foreignTaxWithheldIls = 0;
 
+  const trades: IbkrTradeRow[] = [];
+
   let tradesRealizedPLIdx = -1;
   let tradesDateIdx = -1;
+  let tradesSymbolIdx = -1, tradesQtyIdx = -1, tradesProceedsIdx = -1,
+      tradesBasisIdx = -1, tradesAssetIdx = -1;
   let stProfitIdx = -1, stLossIdx = -1, ltProfitIdx = -1, ltLossIdx = -1;
   let divAmtIdx = -1, divDateIdx = -1;
   let taxAmtIdx = -1, taxDateIdx = -1;
@@ -196,6 +240,11 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
           tradesRealizedPLIdx = idx;
           tradesDateIdx = findCol(row, "Date/Time");
           if (tradesDateIdx < 0) tradesDateIdx = findCol(row, "Date");
+          tradesSymbolIdx   = findCol(row, "Symbol");
+          tradesQtyIdx      = findCol(row, "Quantity");
+          tradesProceedsIdx = findCol(row, "Proceeds");
+          tradesBasisIdx    = findCol(row, "Basis");
+          tradesAssetIdx    = findCol(row, "Asset Category");
           return; // header row — skip data extraction
         }
       }
@@ -210,6 +259,22 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
           const abs = Math.abs(pl);
           tradesLoss += abs;
           tradesLossIls += rowUsdToIls(abs, txDate, taxYear, exchangeRate, baseCurrency);
+        }
+        // R8: retain realized (P/L ≠ 0) rows so the capital-gains page can show
+        // the tax trade-by-trade. Opening lots (P/L = 0) are skipped.
+        if (pl !== 0) {
+          const fx = rowFxRate(txDate, taxYear, exchangeRate, baseCurrency);
+          trades.push({
+            symbol:        tradesSymbolIdx >= 0 ? String(row[tradesSymbolIdx] ?? "").trim() : "",
+            assetCategory: tradesAssetIdx  >= 0 ? String(row[tradesAssetIdx] ?? "").trim() : "",
+            date:          txDate,
+            quantity:      tradesQtyIdx      >= 0 ? parseNum(row[tradesQtyIdx])      : 0,
+            proceeds:      tradesProceedsIdx >= 0 ? parseNum(row[tradesProceedsIdx]) : 0,
+            basis:         tradesBasisIdx    >= 0 ? parseNum(row[tradesBasisIdx])    : 0,
+            realizedPL:    pl,
+            fxRate:        Math.round(fx * 10000) / 10000,
+            realizedPLILS: Math.round(pl * fx),
+          });
         }
       }
     }
@@ -312,5 +377,7 @@ export function parseIbkrCsv({ csv, exchangeRate }: IbkrParseInput): IbkrParseOu
     totalRealizedLoss:   Math.round(totalLossIls),
     foreignTaxWithheld:  Math.round(foreignTaxWithheldIls),
     dividendsILS:        Math.round(totalDividendsIls),
+    trades,
+    baseCurrency,
   };
 }

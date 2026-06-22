@@ -642,6 +642,10 @@ export interface IbkrParseResponse {
     foreignTaxWithheld: number;
     /** Sum of dividend income — ILS (stored in capitalGains.dividends) */
     dividendsILS: number;
+    /** Per-trade realized rows (P/L ≠ 0) — drives the capital-gains page (R8). */
+    trades?: import("@/lib/ibkrParser").IbkrTradeRow[];
+    /** Statement base currency (USD/EUR/GBP). */
+    baseCurrency?: "USD" | "EUR" | "GBP";
   };
   error?: string;
 }

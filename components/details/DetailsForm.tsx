@@ -53,6 +53,11 @@ export function DetailsForm() {
   const removeEmployer = (idx: number) => {
     const next = [...(taxpayer.employers ?? [])];
     next.splice(idx, 1);
+    // R7: if we removed the main employer, promote the first remaining row so
+    // the form never ends up with rows but no designated main employer.
+    if (next.length > 0 && !next.some((e) => e.isMainEmployer)) {
+      next[0] = { ...next[0], isMainEmployer: true };
+    }
     updateTaxpayer({ employers: next });
   };
 

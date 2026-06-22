@@ -194,6 +194,44 @@ describe("override contract — manual wins over later mining", () => {
     expect(taxpayer.employers[0].grossSalary).toBe(90000);
   });
 
+  it("an APPENDED mined employer never claims isMainEmployer (R7)", () => {
+    // First doc → employer[0], legitimately main.
+    let s = resolveMinedFields(
+      INITIAL_TAXPAYER,
+      INITIAL_FINANCIALS,
+      {},
+      "doc-106",
+      "טופס 106",
+      [
+        mine("taxpayer.employers[0].name", "מעסיק אמיתי"),
+        mine("taxpayer.employers[0].isMainEmployer", true),
+      ],
+      NOW,
+    );
+    expect(s.taxpayer.employers[0].isMainEmployer).toBe(true);
+
+    // Second doc with a DIFFERENT name (e.g. a pension/broker doc mis-read as a
+    // 106). The miner stamps isMainEmployer:true, but as an appended row it must
+    // be forced false — otherwise we pile up undeletable phantom "ראשי" rows.
+    s = resolveMinedFields(
+      s.taxpayer,
+      s.financials,
+      s.provenance,
+      "doc-phoenix",
+      "הפניקס",
+      [
+        mine("taxpayer.employers[0].name", "הפניקס"),
+        mine("taxpayer.employers[0].isMainEmployer", true),
+      ],
+      NOW,
+    );
+    expect(s.taxpayer.employers).toHaveLength(2);
+    expect(s.taxpayer.employers[1].name).toBe("הפניקס");
+    expect(s.taxpayer.employers[1].isMainEmployer).toBe(false);
+    // Exactly one main employer survives.
+    expect(s.taxpayer.employers.filter((e) => e.isMainEmployer)).toHaveLength(1);
+  });
+
   it("non-confirmed mined fields are still overwritten by a newer mine", () => {
     let s = resolveMinedFields(
       INITIAL_TAXPAYER,

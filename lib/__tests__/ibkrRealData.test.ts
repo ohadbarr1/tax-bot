@@ -25,6 +25,28 @@ describe("real IBKR 2025 statement", () => {
     expect(r.foreignTaxWithheld).toBe(312);
   });
 
+  it("retains per-trade realized rows that reconcile to the aggregate (R8)", () => {
+    // Every retained row is a realized close (P/L ≠ 0) with the fields the
+    // capital-gains page needs.
+    expect(r.trades.length).toBeGreaterThan(0);
+    expect(r.baseCurrency).toBe("USD");
+    for (const t of r.trades) {
+      expect(t.realizedPL).not.toBe(0);
+      expect(typeof t.symbol).toBe("string");
+      expect(t.fxRate).toBeGreaterThan(0);
+      // ILS P/L is the USD P/L converted at the row's rate.
+      expect(t.realizedPLILS).toBe(Math.round(t.realizedPL * t.fxRate));
+    }
+    // Per-trade ILS profit/loss sums match the aggregate totals exactly.
+    const profitIls = r.trades.filter((t) => t.realizedPLILS > 0)
+      .reduce((s, t) => s + t.realizedPLILS, 0);
+    const lossIls = r.trades.filter((t) => t.realizedPLILS < 0)
+      .reduce((s, t) => s + Math.abs(t.realizedPLILS), 0);
+    // Allow ±1 ₪ per row for the round-then-sum vs sum-then-round difference.
+    expect(Math.abs(profitIls - r.totalRealizedProfit)).toBeLessThanOrEqual(r.trades.length);
+    expect(Math.abs(lossIls - r.totalRealizedLoss)).toBeLessThanOrEqual(r.trades.length);
+  });
+
   it("drives the capital-gains drill-down breakdown", () => {
     const taxpayer = {
       ...INITIAL_TAXPAYER,
