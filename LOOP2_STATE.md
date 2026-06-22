@@ -6,23 +6,23 @@
 
 ---
 
-## STATUS: ⏸️ DESIGNED — awaiting human "go"
+## STATUS: 🔵 RUNNING — M1 core done & LIVE-VERIFIED. Mid-M1 (3 items left), then M2.
 
-- **Current track:** R0 · Flow state machine
-- **Cycle step:** 1 (Spec)
-- **Baseline (from Loop 1 / current main):** 580 tests pass · build ✓ · lint 0err/45warn
-- **Branch:** will work on `loop/flow-rebuild` (off current main `6a6c748`)
+- **Done & live-verified:** R0 (flow state machine) · R1 core (stepper + no-skip guard + back-to-sources) · R2 core (reorder docs-before-questionnaire).
+- **LIVE proof (preview, desktop 1280):** /filing & /summary deep-links bounce to current stage; stepper shows sources✓→documents(active)→שאלון/סיכום/הגשה locked; new flow questionnaire starts at step 1 (פרטים אישיים); back-to-sources works; docs precede questionnaire.
+- **Still open in M1:** (a) **הבית hub** rebuild — /dashboard is still the old grab-bag (the stepper's "כסף חזרה" links to it); (b) **mobile stepper** — FlowChrome stepper is `hidden md:flex`, so on mobile flow routes have no nav (old Sidebar had bottom-tabs); (c) **R2 smart-questionnaire** — questionnaire still asks everything; should skip fields the docs already filled.
+- **Then M2:** R3 logout · R4 expense display · R5 deep filing. **M3:** R6 full E2E reel.
+- **Gate:** 585 pass · build ✓ · lint 0err/45warn.
+- **Branch:** `loop/flow-rebuild` (off main `6a6c748`).
 
 ---
 
 ## NEXT ACTION
 
-> Start R0. First, run a baseline LIVE walkthrough of the CURRENT flow in preview
-> and screenshot the actual glitches (new-flow-starts-mid-questionnaire; /documents
-> orphan; can't return to income sources) — capture the "before" so the fix is
-> provable. Then spec the flow state machine: enumerate the 5 stages, their
-> completion criteria, and the resume/guard rules; write a failing test for
-> "new draft → stage ①" and "cannot deep-link to an incomplete stage".
+> Finish M1: (1) rebuild /dashboard (הבית) as a hub — start new / resume / past
+> drafts — off the flow; (2) add a mobile stepper to FlowChrome (top bar) so flow
+> routes have nav < md; (3) R2 smart-questionnaire — hide/short-circuit steps
+> whose fields the mined docs already filled. Live-verify each. Then M2 (R3/R4/R5).
 
 ---
 
@@ -32,9 +32,9 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + LIVE scree
 
 | Track | Status | Reviewer | Fixes | Live-verified? |
 |-------|--------|----------|-------|----------------|
-| R0 Flow state machine | ⬜ | qa-lead | 1.2, 1.3 (stage-1) | — |
-| R1 IA rebuild (stepper + הבית + docs-in-flow) | ⬜ | product-lead | 1.3 (orphan), 1.4 | — |
-| R2 Reorder docs→questionnaire + smart Q | ⬜ | product-lead | 1.2 | — |
+| R0 Flow state machine | ✅ | qa-lead | 1.2, 1.3 (stage-1) | ✅ live |
+| R1 IA: stepper + guard + back | 🔵 | product-lead | 1.3 (orphan), 1.4 | ✅ stepper/guard live; ⬜ הבית hub, ⬜ mobile bar |
+| R2 Reorder docs→questionnaire + smart Q | 🔵 | product-lead | 1.2 | ✅ reorder live; ⬜ smart-skip |
 | R3 Session auto-logout (60 min) | ⬜ | qa-lead | 1.1 | — |
 | R4 Accounting expense display | ⬜ | product-lead | 1.5 | — |
 | R5 Deep filing explanation + drill-downs | ⬜ | tax-pro | 1.6 | — |
@@ -46,7 +46,11 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + LIVE scree
 
 ## Iteration log (newest first)
 
-*(empty — awaiting go)*
+### Iter 1 — 2026-06-22 — R0 + R1/R2 core
+- Did: lib/flowStage.ts (stage machine) +9 tests; createDraft full onboarding reset + clear lastSlug (new-flow-stage-1 fix); FlowChrome (gated stepper + guard) replaces Sidebar on flow routes; reordered welcome→documents→questionnaire→summary→filing with stage-completion markers; removed 2 obsolete tests.
+- Gate: 585 pass, build ✓, lint 45. LIVE-VERIFIED in preview (see STATUS).
+- Commits: 13223c7 (R0), 7bfaf4c (R1/R2 core)
+- Next: finish M1 — הבית hub rebuild, mobile stepper, smart-questionnaire skip.
 
 ---
 
