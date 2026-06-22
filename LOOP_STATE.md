@@ -4,12 +4,17 @@
 
 ---
 
-## STATUS: ⏸️ MILESTONE REACHED — T1 complete (+ T2.1). Paused for human review.
+## STATUS: ⏸️ MILESTONE REACHED — T3 + T4 complete (the two outputs). Paused for human review.
 
-- **Completed this run:** T2.1 (override lock on all doc-write paths) + T1 (rock-solid onboarding)
-- **Next track:** T2 (remainder) or T3/T4 (the two outputs) — human's call
-- **Last measured gate:** 542 pass / 2 skip · build ✓ · lint 0err/45warn · gating verified live in preview
+- **Completed this run:** T3 (Output 1 — data summary) + T4 (Output 2 — calc waterfall)
+- **Next track:** T5 (tax correctness) or T6 (form-fill fidelity / Hebrew RTL) — human's call
+- **Last measured gate:** 547 pass / 2 skip · build ✓ · lint 0err/45warn · BOTH outputs verified live in preview
 - **Branch:** `loop/remediation`
+
+**Reviews (T3/T4):** product-lead PASS-w/-concerns, tax-pro FAIL → all fixed this iteration:
+- tax-pro: waterfall didn't reconcile (shift-work double-count; surtax mis-placed) → FIXED, lines now tie to netRefund (raw bracket tax + own shift line; surtax/CGT into 'סך חבות המס'; netRefund = taxPaid − totalLiability). Split taxPaid (true withholding vs flagged overlap estimate); disclosed CGT foreign credit; preview badge on fallback.
+- product-lead: summary missing fields → FIXED (spouse income, alimony, life events, kibbutz, controlling-shareholder/dividend, provider names).
+- **Deferred (logged below):** override badge ("ידני · גובר על מסמך") only renders in a doc-mined-THEN-edited flow; in the default questionnaire-first order manual locks before any doc so it shows plain "הזנה ידנית". Enforcement (manual wins) is correct & tested — the badge is cosmetic. Recommend inline-edit on /summary as the natural override UX. Also: `/details` orphan; facts KPI cards compute inline vs the waterfall's engine result.
 
 **qa-lead verdict (T2.1+T1):** PASS-WITH-CONCERNS → 2 P1 fixed this iteration:
 - P1 FileDropzone (live dashboard upload) + DocRequestPanel omitted `{source:"document"}` → FIXED (lock now honored on every doc-write path).
@@ -30,7 +35,7 @@
 
 ## NEXT ACTION (what the next iteration does — keep this concrete)
 
-> **HUMAN REVIEW POINT — T1 milestone.** T2.1 + T1 complete & verified. When approved, recommended next: **T3 (Output 1 — data summary)** then **T4 (Output 2 — calc waterfall)** — the two outputs the owner explicitly asked for and that don't exist yet. T3 can reuse the provenance map to badge manual overrides (the override contract from T0/T2.1 now reliably feeds it). Alternatively finish T2 loose ends (the dedupe-by-name item under Deferred) first.
+> **HUMAN REVIEW POINT — T3/T4 milestone.** Both outputs done & verified live. When approved, recommended next: **T6 (form-fill fidelity — the Hebrew RTL headline + 135 main-vs-aggregate + loss sign)** since "forms fill wrong" is the owner's other top complaint, OR **T5 (tax correctness — surtax rebuild, §66 separate calc, phantom-refund fix)**. T5 makes the waterfall numbers correct; T6 makes the PDFs correct. Either order works; T6 is the more visible win.
 
 ---
 
@@ -38,9 +43,9 @@
 
 | Gate | Expected (audit, 2026-06-22) | Last measured | When |
 |------|------------------------------|---------------|------|
-| `npm test` | 522 pass / 2 skip / 45 files | 542 pass / 2 skip / 47 files | Iter 8 |
-| `npm run build` | pass | pass | Iter 8 |
-| `npm run lint` | 0 err / 46 warn | 0 err / 45 warn | Iter 8 |
+| `npm test` | 522 pass / 2 skip / 45 files | 547 pass / 2 skip / 48 files | Iter 12 |
+| `npm run build` | pass | pass | Iter 12 |
+| `npm run lint` | 0 err / 46 warn | 0 err / 45 warn | Iter 12 |
 | `npm run forms:smoke` | 135: 14/14, 1301: 21/21 | 135 14/14, 1301 21/21 | Iter 1 |
 
 Rule: test count must never drop; lint warnings must never increase.
@@ -55,13 +60,20 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + reviewer P
 |-------|--------|----------|----------|-------|
 | T0 Foundation (hybrid spine, override contract, kill dead flow) | ✅* | qa-lead | PASS w/ carryover→T2.1 | *one P0 deferred to T2.1 |
 | T1 Rock-solid onboarding | ✅ | qa-lead | PASS (P1s fixed) | gating verified live in preview |
-| T2 Override end-to-end | 🔵 | qa-lead | T2.1 ✅ | T2.1 done (all doc-write paths honor lock); remaining: /details `<Field>` audit, dedupe-by-name |
-| T3 Output 1 — data summary | ⬜ | product-lead | — | |
-| T4 Output 2 — calc waterfall | ⬜ | product-lead + tax-pro | — | |
+| T2 Override end-to-end | 🔵 | qa-lead | T2.1 ✅ | T2.1 done (all doc-write paths honor lock); remaining: inline-edit override UX, dedupe-by-name |
+| T3 Output 1 — data summary | ✅ | product-lead | PASS (fields added) | verified live; override badge cosmetic-only in spine order |
+| T4 Output 2 — calc waterfall | ✅ | product-lead + tax-pro | PASS (reconciles) | verified live: ₪300k→refund ₪16,604 |
 | T5 Tax correctness | ⬜ | tax-pro | — | surtax, §66, CG 30%, phantom-refund fix |
 | T6 Form-fill fidelity | ⬜ | tax-pro | — | RTL headline, 135 aggregate, loss sign, hide 161/1214 |
 | T7 Input/parsing robustness | ⬜ | qa-lead | — | TZ, NaN, locale, IBKR multi-ccy |
 | T8 Coverage lock | ⬜ | qa-lead | — | |
+
+### Track checklist — T3 + T4  (COMPLETE)
+- ✅ T3 Output 1: /summary route + SummaryView + pure lib/summary.ts; source badges; full field coverage; verified live
+- ✅ T4 Output 2: CalcExplanation waterfall on /facts + /filing; reconciles to netRefund; bracket detail; verified live
+- ✅ Recalc-on-finish so headline figures match the waterfall
+- ✅ T3/T4 gate: product-lead + tax-pro reviewed; all blocking findings fixed
+- ⤳ Deferred: inline-edit override UX on /summary; /details orphan; facts KPI vs engine result
 
 ### Track checklist — T2.1 + T1  (COMPLETE)
 - ✅ T2.1 All doc-write paths (`documents/page`, `SourceDrivenDocCards`, `FileDropzone`, `DocRequestPanel`) pass `{source:"document"}`; `preserveManual` (id-aware) restores locked leaves
@@ -145,7 +157,25 @@ Legend: ⬜ not started · 🔵 in progress · ✅ done (gate green + reviewer P
 - Tests: +2 | Gate: 542 pass, build ✓, lint 45
 - Reviewer: qa-lead a3c9cd0876da654d0 → PASS (P1s fixed)
 - Commit: 9f5b0b2
-- Next: HUMAN REVIEW (T1 milestone). Then T3/T4 (the two outputs) or finish T2.
+- Next: T3 → T4
+
+### Iter 9 — 2026-06-22 — T3 (Output 1)
+- Did: pure lib/summary.ts (buildSummary + sourceBadge) + SummaryView + /summary route; sidebar /details→/summary; route-manifest snapshot updated.
+- Tests: +5 | Gate: 547 pass | Commit: b3803df
+
+### Iter 10 — 2026-06-22 — T4 (Output 2)
+- Did: CalcExplanation waterfall mounted on /facts + /filing.
+- Gate: 547 pass | Commit: 3607fd5
+
+### Iter 11 — 2026-06-22 — T4 consistency + live verify
+- Did: recalc on handleFinish + live-compute fallback; verified both outputs in preview (summary all-manual badges; facts waterfall ₪300k→₪16,604 refund).
+- Gate: 547 pass | Commit: 02ef392
+
+### Iter 12 — 2026-06-22 — T3/T4 gate (product-lead + tax-pro) + fixes
+- Did: reviews → tax-pro FAIL (waterfall didn't reconcile) + product-lead concerns. Fixed waterfall arithmetic (shift-work, surtax placement, taxPaid split, disclosures) so lines tie to netRefund; expanded summary fields.
+- Reviewers: product-lead a3ed1e522b5b306e1, tax-pro af1444a7638f7003c → resolved
+- Gate: 547 pass, build ✓, lint 45 | Commit: 3377097
+- Next: HUMAN REVIEW (T3/T4 milestone). Then T5 (tax correctness) or T6 (form-fill / Hebrew RTL).
 
 ---
 
@@ -162,3 +192,5 @@ Anything skipped with correctness/UX impact goes to `DEFERRED_ACTIONS.md` (repo 
 
 - **106 employer dedupe by name** (documents/page.tsx ~182): the documents-page 106 write dedupes employers by `emp-${docId}` only, so a 106 for an employer the user typed manually appends a DUPLICATE row → double-counted salary. Pre-existing. Plan: route the 106 write through `resolveMinedFields` (name-match + lock-skip) to unify with the generic miner. Fold into T6 or a T2 follow-up. Verify: enter employer "X" manually, upload X's 106, assert one row.
 - **T1.6 income-annualized flag** → folded into T5 (captured + consumed with the חל"ת/maternity reconciliation fix).
+- **Override badge reachability / inline-edit** (T3): the "ידני · גובר על מסמך" badge only renders when a field was mined from a doc THEN edited. In the spine's questionnaire-first order, manual locks before any doc, so it shows plain "הזנה ידנית". Enforcement is correct; badge is cosmetic. Fix: add inline-edit on /summary (edit a mined value there → markFieldUserConfirmed keeps doc lineage) — the natural review-then-correct override UX. Decide /details fate at the same time (orphaned).
+- **Facts KPI vs engine** (T4): /facts hero cards compute annualIncome/taxPaid inline; can diverge from the waterfall's engine result. Drive them off calculationResult.
