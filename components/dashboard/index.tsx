@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { employersOverlap } from "@/lib/utils";
 import { downloadGeneratedForm } from "@/lib/pdfDownload";
+import { currentStage, STAGE_PATH } from "@/lib/flowStage";
 import type { InsightPillar, TaxInsight } from "@/types";
 import { Hero } from "./Hero";
 import { PillarGrid } from "./PillarGrid";
@@ -87,7 +88,7 @@ export default function Dashboard() {
         downloading={downloading}
         downloadDisabled={downloadDisabled}
         downloadDisabledReason={downloadDisabledReason}
-        onQuestionnaire={() => router.push("/questionnaire")}
+        onQuestionnaire={() => router.push(STAGE_PATH[currentStage(state)])}
       />
       {downloadError && (
         <div

@@ -163,6 +163,21 @@ export interface CalculationResult {
   taxPaid: number;              // sum of all employer taxWithheld + F-023 overlap refund
   refundFromEmployment: number; // taxPaid − netTaxOwed
   capitalGainsTax: number;      // net capital gains tax owed after foreign credit
+  /** R5 — step-by-step capital-gains breakdown for the filing drill-down page. */
+  capitalGainsBreakdown?: {
+    grossProfit: number;
+    losses: number;
+    carryForwardLoss: number;
+    netGain: number;
+    gainRate: number;
+    gainTax: number;
+    dividends: number;
+    dividendRate: number;
+    dividendTax: number;
+    foreignCredit: number;
+    total: number;
+    controllingShareholder: boolean;
+  };
   /** Phase 2 §2.B — Mas Yesafim (surtax) on income above ₪721,560 (סעיף 121ב). */
   surtax: number;
   surtaxActive: number;         // 3% on active income above the threshold
@@ -1416,6 +1431,7 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
   let capitalGainsTax = 0;
   let netGain = 0;
   let dividendsAmount = 0;
+  let capitalGainsBreakdown: CalculationResult["capitalGainsBreakdown"];
   if (taxpayer.capitalGains) {
     const {
       totalRealizedProfit,
@@ -1434,8 +1450,24 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     // holds 10% or more of the company".)
     const cgRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
     const dividendRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
-    const grossCGTax = Math.round(netGain * cgRate + dividends * dividendRate);
+    const gainTax = Math.round(netGain * cgRate);
+    const dividendTax = Math.round(dividends * dividendRate);
+    const grossCGTax = gainTax + dividendTax;
     capitalGainsTax = Math.max(0, grossCGTax - foreignTaxWithheld);
+    capitalGainsBreakdown = {
+      grossProfit: totalRealizedProfit,
+      losses: totalRealizedLoss,
+      carryForwardLoss: carriedForwardLoss,
+      netGain,
+      gainRate: cgRate,
+      gainTax,
+      dividends,
+      dividendRate,
+      dividendTax,
+      foreignCredit: foreignTaxWithheld,
+      total: capitalGainsTax,
+      controllingShareholder: !!taxpayer.controllingShareholder,
+    };
     if (taxpayer.controllingShareholder && (netGain > 0 || dividends > 0)) {
       incomeDeductionWarnings.push(
         "שיעור 30% (בעל מניות מהותי) הוחל על כל רווחי ההון והדיבידנדים. " +
@@ -1522,6 +1554,7 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     netRefund,
     spouseSeparateTax,
     spouseTaxWithheld,
+    capitalGainsBreakdown,
     creditPointsCount,
     warnings: incomeDeductionWarnings,
     breakdown: {

@@ -142,8 +142,6 @@ export function QuestionnaireProvider({
     updateTaxpayer,
     updateFinancials,
     updateTaxpayerAndRecalculate,
-    setIncomeSources,
-    markSourcesSelected,
     commitManual,
   } = useApp();
   const { taxpayer, financials } = state;
@@ -484,27 +482,9 @@ export function QuestionnaireProvider({
       },
     );
 
-    // Spine fix (T0.3): /documents drives its doc-request cards off
-    // onboarding.sources. Before the loop the questionnaire never set them, so a
-    // questionnaire-first user landed on a BLANK documents page. Merge the
-    // sources picked at /welcome with those implied by the answers.
-    const derivedSources: IncomeSourceId[] = [];
-    if (employers.some((e) => (e.name ?? "").trim() !== "" || e.grossSalary))
-      derivedSources.push("salary");
-    if (investsCapital || portfolioLocation) derivedSources.push("investments");
-    if (portfolioLocation === "foreign_broker") derivedSources.push("foreign");
-    const mergedSources = Array.from(
-      new Set<IncomeSourceId>([
-        ...(state.onboarding?.sources ?? []),
-        ...derivedSources,
-      ]),
-    );
-    // Default to "salary" when nothing could be derived and nothing was picked
-    // at /welcome, so a direct-entry user never lands on a blank /documents.
-    const finalSources =
-      mergedSources.length > 0 ? mergedSources : (["salary"] as IncomeSourceId[]);
-    setIncomeSources(finalSources);
-    markSourcesSelected();
+    // Loop 2 flow order: income sources are picked at stage ① and documents at
+    // stage ②, BEFORE the questionnaire (stage ③). So we no longer derive/set
+    // sources here — that would overwrite the user's stage-① selection.
 
     // Lock manually-entered values: a later document upload may FILL blanks but
     // must never silently overwrite what the user typed (manual = source of
@@ -529,7 +509,8 @@ export function QuestionnaireProvider({
     if (manualPaths.length > 0) commitManual(manualPaths);
 
     completeQuestionnaire();
-    router.push("/documents");
+    // Stage ③ → ④.
+    router.push("/summary");
   };
 
   // ── Memoised value ──────────────────────────────────────────────────────────

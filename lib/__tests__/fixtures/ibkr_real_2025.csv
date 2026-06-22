@@ -1,0 +1,1045 @@
+﻿Statement,Header,Field Name,Field Value
+Statement,Data,Title,Activity Statement
+Statement,Data,Period,"January 1, 2025 - December 31, 2025"
+Statement,Data,WhenGenerated,"2026-04-13, 02:11:11 EDT"
+Account Information,Header,Field Name,Field Value
+Account Information,Data,Name,Ohad Bar and Inbar Wechsler Bar
+Account Information,Data,Account,U14867394
+Account Information,Data,Master Name,Israel Interactive Trading - Mexem Ltd
+Account Information,Data,Account Type,Broker Client
+Account Information,Data,Customer Type,Joint
+Account Information,Data,Account Capabilities,Margin
+Account Information,Data,Base Currency,USD
+Net Asset Value,Header,Asset Class,Prior Total,Current Long,Current Short,Current Total,Change
+Net Asset Value,Data,Cash ,0,2601.920801934,-14429.272579012,-11827.351777078,-11827.351777078
+Net Asset Value,Data,Stock,0,66903.58,0,66903.58,66903.58
+Net Asset Value,Data,Options,0,2089.5,-202.98,1886.52,1886.52
+Net Asset Value,Data,Interest Accruals,0,0,-107.9588276,-107.9588276,-107.9588276
+Net Asset Value,Data,Total,0,71595.000801934,-14740.211406612,56854.789395322,56854.789395322
+Net Asset Value,Header,Time Weighted Rate of Return
+Net Asset Value,Data,22.239303982%
+Change in NAV,Header,Field Name,Field Value
+Change in NAV,Data,Starting Value,0
+Change in NAV,Data,Mark-to-Market,11378.21407864
+Change in NAV,Data,Deposits & Withdrawals,50766.325
+Change in NAV,Data,Dividends,263.93
+Change in NAV,Data,Withholding Tax,-66.01
+Change in NAV,Data,Change in Dividend Accruals,0.01
+Change in NAV,Data,Interest,-448.8854791
+Change in NAV,Data,Change in Interest Accruals,-107.5479024
+Change in NAV,Data,Other Fees,-4226.7011597
+Change in NAV,Data,Commissions,-704.12427312
+Change in NAV,Data,Other FX Translations,-0.4209252
+Change in NAV,Data,Ending Value,56854.789395322
+Mark-to-Market Performance Summary,Header,Asset Category,Symbol,Prior Quantity,Current Quantity,Prior Price,Current Price,Mark-to-Market P/L Position,Mark-to-Market P/L Transaction,Mark-to-Market P/L Commissions,Mark-to-Market P/L Other,Mark-to-Market P/L Total,Code
+Mark-to-Market Performance Summary,Data,Stocks,AMD,0,50,--,214.1600,5803.6,36.4,-10,0,5830,
+Mark-to-Market Performance Summary,Data,Stocks,AMZN,0,43,--,230.8200,1221.3,36.78,-7.16268865,0,1250.91731135,
+Mark-to-Market Performance Summary,Data,Stocks,APLD,0,200,--,24.5200,9796,-3940,-7.5498,0,5848.4502,
+Mark-to-Market Performance Summary,Data,Stocks,BMNR,0,800,--,27.1500,-13424,-4606,-2,4.5,-18027.5,
+Mark-to-Market Performance Summary,Data,Stocks,ELF,0,0,--,--,2929.6,122.4,-6.5,0,3045.5,
+Mark-to-Market Performance Summary,Data,Stocks,ETHA,0,70,--,22.4300,163.8,12.6,-2.5,0,173.9,
+Mark-to-Market Performance Summary,Data,Stocks,FUBO,0,800,--,2.5200,-517,-295,-3,0,-815,
+Mark-to-Market Performance Summary,Data,Stocks,GOOG,0,0,--,--,1716.42753,2.824753,-11.5,10.23,1717.982283,
+Mark-to-Market Performance Summary,Data,Stocks,GRAB,0,0,--,--,346,-44,-16.2,0,285.8,
+Mark-to-Market Performance Summary,Data,Stocks,HIMS,0,0,--,--,1113,-438,-2.5166,0,672.4834,
+Mark-to-Market Performance Summary,Data,Stocks,LMND,0,0,--,--,820,-820,-0.0332,0,-0.0332,
+Mark-to-Market Performance Summary,Data,Stocks,OSCR,0,0,--,--,1357,-657,-2.5166,0,697.4834,
+Mark-to-Market Performance Summary,Data,Stocks,QQQ,0,0.0111,--,614.3100,339.923352,66.490121,-7.8895005,5.39,403.9139725,
+Mark-to-Market Performance Summary,Data,Stocks,SOFI,0,380,--,26.1800,4007,138.6,-9.5,0,4136.1,
+Mark-to-Market Performance Summary,Data,Stocks,TLT,0,0,--,--,786.256026,81.8946935,-50.8636685,130.56,947.847051,
+Mark-to-Market Performance Summary,Data,Stocks,WHR,0,0,--,--,-603.910116,347.14539,-7.5,47.24,-217.024726,
+Mark-to-Market Performance Summary,Data,Stocks,ZETA,0,300,--,20.3500,585,-330,0,0,255,
+Mark-to-Market Performance Summary,Data,Total,,,,,,16439.996792,-10284.8650425,-147.23205765,197.92,6205.81969185,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 29AUG25 13 C,0,0,--,--,-76.78,20.78,-8,0,-64,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 29AUG25 17 C,0,0,--,--,173.14,-85.14,-4,0,84,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 19SEP25 14 C,0,0,--,--,-109,27,-8,0,-90,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 03OCT25 19 C,0,0,--,--,-1563.45,224.45,-12,0,-1351,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 10OCT25 21 C,0,0,--,--,-2411.58,3740.58,-6,0,1323,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 17OCT25 16 C,0,0,--,--,-172.76,-53.24,-8,0,-234,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 17OCT25 18 C,0,0,--,--,-2838.86,-913.14,-8,0,-3760,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 24OCT25 26 P,0,0,--,--,780.54,-42.54,-6,0,732,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 16JAN26 36 C,0,0,--,--,384.08,417.92,-8,0,794,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,APLD 20MAR26 44 C,0,0,--,--,1018.26,33.74,-8,0,1044,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 19SEP25 38 P,0,0,--,--,345.64,-7.64,-4,0,334,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 26SEP25 50 C,0,0,--,--,-620.11,-100.89,-4,0,-725,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 03OCT25 49 P,0,0,--,--,340.92,84.08,-2,0,423,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 03OCT25 54 P,0,0,--,--,63.48,70.52,-4,0,130,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 17OCT25 55 C,0,0,--,--,1074.32,112.68,-2,0,1185,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 17OCT25 57.5 P,0,0,--,--,-1527.21,2427.21,-6,0,894,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 17OCT25 60 P,0,0,--,--,-1077.52,2007.52,-4,0,926,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 21NOV25 50 P,0,0,--,--,710.3,-68.3,-8,0,634,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,BMNR 26DEC25 29.5 P,0,0,--,--,31,209,-4,0,236,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,FUBO 11JUL25 4 P,0,0,--,--,-150.95,345.95,-10,0,185,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,FUBO 15AUG25 4 C,0,0,--,--,93,21,-12,0,102,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,FUBO 15JAN27 5 C,0,50,--,0.4179,-3837.7,7.2,-100,0,-3930.5,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,GRAB 25JUL25 5 P,0,0,--,--,172.7,10.3,-40,0,143,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,GRAB 01AUG25 5 P,0,0,--,--,-25,182,-20,0,137,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,GRAB 15AUG25 5 C,0,0,--,--,-116.4,106.4,-33.0569,0,-43.0569,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 18JUL25 46 C,0,0,--,--,-201.24,-167.76,-4,0,-373,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 15AUG25 50 C,0,0,--,--,-351.33,366.33,-4,0,11,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 15AUG25 65 C,0,0,--,--,742.51,137.49,-2,0,878,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 22AUG25 45.5 C,0,0,--,--,30.5,24.5,-2,0,53,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 22AUG25 51 C,0,0,--,--,128.94,-187.94,-8,0,-67,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 29AUG25 46 C,0,0,--,--,40,15,-2,0,53,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 29AUG25 52 C,0,0,--,--,-615.7,-334.3,-4,0,-954,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 03OCT25 50 C,0,0,--,--,-61.31,265.31,-2,0,202,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,HIMS 17OCT25 36 P,0,0,--,--,251.04,-5.04,-8,0,238,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,LMND 10OCT25 51 P,0,0,--,--,-502,762,-4,0,256,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,LMND 17OCT25 52 C,0,0,--,--,240.76,-8.76,-4,0,228,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,LMND 24OCT25 51 C,0,0,--,--,-3.34,215.34,-4,0,208,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 18JUL25 14 P,0,0,--,--,127.5,46.5,-12,0,162,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 01AUG25 14 P,0,0,--,--,20.45,25.55,-2,0,44,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 08AUG25 14 C,0,0,--,--,-81,137,-2,0,54,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 08AUG25 14.5 P,0,0,--,--,377.58,-17.58,-4,0,356,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 08AUG25 17 C,0,0,--,--,226.84,-8.84,-4,0,214,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 29AUG25 17.5 C,0,0,--,--,10,-32,-8,0,-30,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 05SEP25 18.5 C,0,0,--,--,-86,168,-4,0,78,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 19SEP25 13 P,0,0,--,--,646.2,-22.2,-6,0,618,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 03OCT25 17.5 P,0,0,--,--,300.04,-12.04,-8,0,280,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,OSCR 28NOV25 16 P,0,0,--,--,322.32,64.68,-6,0,381,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,QQQ 18JUL25 525 C,0,0,--,--,266,-162,-8,0,96,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,QQQ 15AUG25 480 P,0,0,--,--,-482,156,-4,0,-330,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,QQQ 19SEP25 470 P,0,0,--,--,990,96,-4,0,1082,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 18JUL25 13 P,0,0,--,--,125,7,-8,0,124,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 22AUG25 18.5 P,0,0,--,--,110,32,-4,0,138,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 22AUG25 24 C,0,0,--,--,39,-36,-12,0,-9,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 29AUG25 26 C,0,0,--,--,121.5,-1.5,-6,0,114,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 26SEP25 28.5 C,0,0,--,--,81,25,-4,0,102,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 17OCT25 24 P,0,0,--,--,121,25,-4,0,142,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 24OCT25 30 C,0,0,--,--,209,-1,-4,0,204,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,SOFI 07NOV25 25 P,0,0,--,--,512.79,45.21,-6,0,552,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,ZETA 10OCT25 19.5 P,0,0,--,--,-180,330,-6,0,144,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,ZETA 17OCT25 19.5 C,0,0,--,--,112.5,-7.5,-6,0,99,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,ZETA 24OCT25 19 C,0,0,--,--,37.5,2.5,-2,0,38,
+Mark-to-Market Performance Summary,Data,Equity and Index Options,ZETA 16JAN26 21 C,0,-3,--,0.6766,84.84,-44.82,-6,0,34.02,
+Mark-to-Market Performance Summary,Data,Total,,,,,,-5629.05,10674.57,-517.0569,0,4528.4631,
+Mark-to-Market Performance Summary,Data,Forex,ILS,0,8284.7889,--,0.31406,225.15695964,-47.596099,-39.835315469,0,137.725545171,
+Mark-to-Market Performance Summary,Data,Forex,USD,0,-14429.272579012,1.0000,1.0000,0,0.001526,0,0,0.001526,
+Mark-to-Market Performance Summary,Data,Total,,,,,,225.15695964,-47.594573,-39.835315469,0,137.727071171,
+Mark-to-Market Performance Summary,Data,Total (All Assets),,,,,,11036.10375164,342.1103845,-704.124273119,197.92,10872.009863021,
+Mark-to-Market Performance Summary,Data,Broker Interest Paid and Received,,,,,,,,,,-448.8854791,
+Mark-to-Market Performance Summary,Data,Other Fees,,,,,,,,,,-4226.7011597,
+Total P/L for Statement Period,,,,,,,,,,,,6196.423224221,
+Realized & Unrealized Performance Summary,Header,Asset Category,Symbol,Cost Adj.,Realized S/T Profit,Realized S/T Loss,Realized L/T Profit,Realized L/T Loss,Realized Total,Unrealized S/T Profit,Unrealized S/T Loss,Unrealized L/T Profit,Unrealized L/T Loss,Unrealized Total,Total,Code
+Realized & Unrealized Performance Summary,Data,Stocks,AMD,0,0,0,0,0,0,5830,0,0,0,5830,5830,
+Realized & Unrealized Performance Summary,Data,Stocks,AMZN,0,38.15731135,0,0,0,38.15731135,1212.76,0,0,0,1212.76,1250.91731135,
+Realized & Unrealized Performance Summary,Data,Stocks,APLD,0,4288.61686667,0,0,0,4288.61686667,2882.833333,0,0,0,2882.833333,7171.45019967,
+Realized & Unrealized Performance Summary,Data,Stocks,BMNR,0,0,0,0,0,0,0,-15976,0,0,-15976,-15976,
+Realized & Unrealized Performance Summary,Data,Stocks,ELF,0,3045.5,0,0,0,3045.5,0,0,0,0,0,3045.5,
+Realized & Unrealized Performance Summary,Data,Stocks,ETHA,0,0,0,0,0,0,173.9,0,0,0,173.9,173.9,
+Realized & Unrealized Performance Summary,Data,Stocks,FUBO,0,0,0,0,0,0,0,-630,0,0,-630,-630,
+Realized & Unrealized Performance Summary,Data,Stocks,GOOG,0,1711.5,-3.747717,0,0,1707.752283,0,0,0,0,0,1707.752283,
+Realized & Unrealized Performance Summary,Data,Stocks,GRAB,0,422.8,0,0,0,422.8,0,0,0,0,0,422.8,
+Realized & Unrealized Performance Summary,Data,Stocks,HIMS,0,874.4834,0,0,0,874.4834,0,0,0,0,0,874.4834,
+Realized & Unrealized Performance Summary,Data,Stocks,LMND,0,463.9668,0,0,0,463.9668,0,0,0,0,0,463.9668,
+Realized & Unrealized Performance Summary,Data,Stocks,OSCR,0,920.75,-47.2666,0,0,873.4834,0,0,0,0,0,873.4834,
+Realized & Unrealized Performance Summary,Data,Stocks,QQQ,0,399.5604995,0,0,0,399.5604995,0,-1.036527,0,0,-1.036527,398.5239725,
+Realized & Unrealized Performance Summary,Data,Stocks,SOFI,0,0,0,0,0,0,4317.1,-181,0,0,4136.1,4136.1,
+Realized & Unrealized Performance Summary,Data,Stocks,TLT,0,944.94394072,-127.65689167,0,0,817.28704905,0,0,0,0,0,817.28704905,
+Realized & Unrealized Performance Summary,Data,Stocks,WHR,0,0,-264.264726,0,0,-264.264726,0,0,0,0,0,-264.264726,
+Realized & Unrealized Performance Summary,Data,Stocks,ZETA,0,0,0,0,0,0,399,0,0,0,399,399,
+Realized & Unrealized Performance Summary,Data,Total,,0,13110.27881824,-442.93593467,0,0,12667.34288357,14815.593333,-16788.036527,0,0,-1972.443194,10694.89968957,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 29AUG25 13 C,0,0,-64,0,0,-64,0,0,0,0,0,-64,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 29AUG25 17 C,0,84,0,0,0,84,0,0,0,0,0,84,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 19SEP25 14 C,0,0,-90,0,0,-90,0,0,0,0,0,-90,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 03OCT25 19 C,0,0,-1351,0,0,-1351,0,0,0,0,0,-1351,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 17OCT25 16 C,0,0,-234,0,0,-234,0,0,0,0,0,-234,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 17OCT25 18 C,0,0,-3760,0,0,-3760,0,0,0,0,0,-3760,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 24OCT25 26 P,0,732,0,0,0,732,0,0,0,0,0,732,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 16JAN26 36 C,0,794,0,0,0,794,0,0,0,0,0,794,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,APLD 20MAR26 44 C,0,1044,0,0,0,1044,0,0,0,0,0,1044,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,BMNR 19SEP25 38 P,0,334,0,0,0,334,0,0,0,0,0,334,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,BMNR 26SEP25 50 C,0,0,-725,0,0,-725,0,0,0,0,0,-725,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,BMNR 03OCT25 49 P,0,423,0,0,0,423,0,0,0,0,0,423,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,BMNR 03OCT25 54 P,0,130,0,0,0,130,0,0,0,0,0,130,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,BMNR 17OCT25 55 C,0,1185,0,0,0,1185,0,0,0,0,0,1185,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,BMNR 21NOV25 50 P,0,634,0,0,0,634,0,0,0,0,0,634,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,FUBO 15AUG25 4 C,0,102,0,0,0,102,0,0,0,0,0,102,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,FUBO 15JAN27 5 C,0,0,0,0,0,0,0,-3930.5,0,0,-3930.5,-3930.5,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,GRAB 25JUL25 5 P,0,143,0,0,0,143,0,0,0,0,0,143,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,GRAB 15AUG25 5 C,0,0,-43.0569,0,0,-43.0569,0,0,0,0,0,-43.0569,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 18JUL25 46 C,0,0,-373,0,0,-373,0,0,0,0,0,-373,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 15AUG25 50 C,0,11,0,0,0,11,0,0,0,0,0,11,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 15AUG25 65 C,0,878,0,0,0,878,0,0,0,0,0,878,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 22AUG25 45.5 C,0,53,0,0,0,53,0,0,0,0,0,53,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 22AUG25 51 C,0,107,-174,0,0,-67,0,0,0,0,0,-67,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 29AUG25 46 C,0,53,0,0,0,53,0,0,0,0,0,53,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 29AUG25 52 C,0,0,-954,0,0,-954,0,0,0,0,0,-954,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,HIMS 17OCT25 36 P,0,238,0,0,0,238,0,0,0,0,0,238,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,LMND 17OCT25 52 C,0,228,0,0,0,228,0,0,0,0,0,228,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 18JUL25 14 P,0,162,0,0,0,162,0,0,0,0,0,162,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 08AUG25 14.5 P,0,356,0,0,0,356,0,0,0,0,0,356,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 08AUG25 17 C,0,214,0,0,0,214,0,0,0,0,0,214,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 29AUG25 17.5 C,0,0,-30,0,0,-30,0,0,0,0,0,-30,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 19SEP25 13 P,0,618,0,0,0,618,0,0,0,0,0,618,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 03OCT25 17.5 P,0,280,0,0,0,280,0,0,0,0,0,280,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,OSCR 28NOV25 16 P,0,381,0,0,0,381,0,0,0,0,0,381,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,QQQ 18JUL25 525 C,0,96,0,0,0,96,0,0,0,0,0,96,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,QQQ 15AUG25 480 P,0,0,-330,0,0,-330,0,0,0,0,0,-330,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,QQQ 19SEP25 470 P,0,1082,0,0,0,1082,0,0,0,0,0,1082,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 18JUL25 13 P,0,124,0,0,0,124,0,0,0,0,0,124,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 22AUG25 18.5 P,0,138,0,0,0,138,0,0,0,0,0,138,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 22AUG25 24 C,0,0,-9,0,0,-9,0,0,0,0,0,-9,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 29AUG25 26 C,0,114,0,0,0,114,0,0,0,0,0,114,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 26SEP25 28.5 C,0,102,0,0,0,102,0,0,0,0,0,102,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 17OCT25 24 P,0,142,0,0,0,142,0,0,0,0,0,142,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 24OCT25 30 C,0,204,0,0,0,204,0,0,0,0,0,204,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,SOFI 07NOV25 25 P,0,552,0,0,0,552,0,0,0,0,0,552,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,ZETA 17OCT25 19.5 C,0,99,0,0,0,99,0,0,0,0,0,99,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,ZETA 24OCT25 19 C,0,38,0,0,0,38,0,0,0,0,0,38,
+Realized & Unrealized Performance Summary,Data,Equity and Index Options,ZETA 16JAN26 21 C,0,0,0,0,0,0,34.02,0,0,0,34.02,34.02,
+Realized & Unrealized Performance Summary,Data,Total,,0,11875,-8137.0569,0,0,3737.9431,34.02,-3930.5,0,0,-3896.48,-158.5369,
+Realized & Unrealized Performance Summary,Data,Forex,ILS,0,284.638819,-192.809483,0,0,91.829336,45.897731,0,0,0,45.897731,137.727067,
+Realized & Unrealized Performance Summary,Data,Total,,0,284.638819,-192.809483,0,0,91.829336,45.897731,0,0,0,45.897731,137.727067,
+Realized & Unrealized Performance Summary,Data,Total (All Assets),,0,25269.91763724,-8772.80231767,0,0,16497.11531957,14895.511064,-20718.536527,0,0,-5823.025463,10674.08985657,
+Cash Report,Header,Currency Summary,Currency,Total,Securities,Futures,
+Cash Report,Data,Starting Cash,Base Currency Summary,0,0,0,
+Cash Report,Data,Commissions,Base Currency Summary,-704.12427312,-704.12427312,0,
+Cash Report,Data,Deposits,Base Currency Summary,50766.325,50766.325,0,
+Cash Report,Data,Dividends,Base Currency Summary,218.12,218.12,0,
+Cash Report,Data,Broker Interest Paid and Received,Base Currency Summary,-448.8854791,-448.8854791,0,
+Cash Report,Data,Trades (Sales),Base Currency Summary,164256.4098436,164256.4098436,0,
+Cash Report,Data,Trades (Purchase),Base Currency Summary,-221893.4526684,-221893.4526684,0,
+Cash Report,Data,Other Fees,Base Currency Summary,-4226.7011597,-4226.7011597,0,
+Cash Report,Data,Payment In Lieu of Dividends,Base Currency Summary,45.81,45.81,0,
+Cash Report,Data,Withholding Tax,Base Currency Summary,-66.01,-66.01,0,
+Cash Report,Data,Cash FX Translation Gain/Loss,Base Currency Summary,225.15695964,225.15695964,0,
+Cash Report,Data,Ending Cash,Base Currency Summary,-11827.351777078,-11827.351777078,0,
+Cash Report,Data,Ending Settled Cash,Base Currency Summary,-11827.351777078,-11827.351777078,0,
+Cash Report,Data,Starting Cash,ILS,0,0,0,
+Cash Report,Data,Deposits,ILS,177500,177500,0,
+Cash Report,Data,Broker Interest Paid and Received,ILS,-121.07,-121.07,0,
+Cash Report,Data,Trades (Purchase),ILS,-155390.4811,-155390.4811,0,
+Cash Report,Data,Other Fees,ILS,-13703.66,-13703.66,0,
+Cash Report,Data,Ending Cash,ILS,8284.7889,8284.7889,0,
+Cash Report,Data,Ending Settled Cash,ILS,8284.7889,8284.7889,0,
+Cash Report,Data,Starting Cash,USD,0,0,0,
+Cash Report,Data,Commissions,USD,-704.12427312,-704.12427312,0,
+Cash Report,Data,Dividends,USD,218.12,218.12,0,
+Cash Report,Data,Broker Interest Paid and Received,USD,-411.74,-411.74,0,
+Cash Report,Data,Trades (Sales),USD,164256.4098436,164256.4098436,0,
+Cash Report,Data,Trades (Purchase),USD,-177720.7381495,-177720.7381495,0,
+Cash Report,Data,Other Fees,USD,-47,-47,0,
+Cash Report,Data,Payment In Lieu of Dividends,USD,45.81,45.81,0,
+Cash Report,Data,Withholding Tax,USD,-66.01,-66.01,0,
+Cash Report,Data,Ending Cash,USD,-14429.272579012,-14429.272579012,0,
+Cash Report,Data,Ending Settled Cash,USD,-14429.272579012,-14429.272579012,0,
+Open Positions,Header,DataDiscriminator,Asset Category,Currency,Symbol,Quantity,Mult,Cost Price,Cost Basis,Close Price,Value,Unrealized P/L,Code
+Open Positions,Data,Summary,Stocks,USD,AMD,50,1,97.56,4878,214.16,10708,5830,
+Open Positions,Data,Summary,Stocks,USD,AMZN,43,1,202.61627907,8712.5,230.82,9925.26,1212.76,
+Open Positions,Data,Summary,Stocks,USD,APLD,200,1,10.105833335,2021.166667,24.52,4904,2882.833333,
+Open Positions,Data,Summary,Stocks,USD,BMNR,800,1,47.12,37696,27.15,21720,-15976,
+Open Positions,Data,Summary,Stocks,USD,ETHA,70,1,19.945714286,1396.2,22.43,1570.1,173.9,
+Open Positions,Data,Summary,Stocks,USD,FUBO,800,1,3.3075,2646,2.52,2016,-630,
+Open Positions,Data,Summary,Stocks,USD,QQQ,0.0111,1,707.795225225,7.856527,614.31,6.82,-1.036527,
+Open Positions,Data,Summary,Stocks,USD,SOFI,380,1,15.295526316,5812.3,26.18,9948.4,4136.1,
+Open Positions,Data,Summary,Stocks,USD,ZETA,300,1,19.02,5706,20.35,6105,399,
+Open Positions,Total,,Stocks,USD,,,,,68876.023194,,66903.58,-1972.443194,
+Open Positions,Header,DataDiscriminator,Asset Category,Currency,Symbol,Quantity,Mult,Cost Price,Cost Basis,Close Price,Value,Unrealized P/L,Code
+Open Positions,Data,Summary,Equity and Index Options,USD,FUBO 15JAN27 5 C,50,100,1.204,6020,0.4179,2089.5,-3930.5,
+Open Positions,Data,Summary,Equity and Index Options,USD,ZETA 16JAN26 21 C,-3,100,0.79,-237,0.6766,-202.98,34.02,
+Open Positions,Total,,Equity and Index Options,USD,,,,,5783,,1886.52,-3896.48,
+Forex Balances,Header,Asset Category,Currency,Description,Quantity,Cost Price,Cost Basis in USD,Close Price,Value in USD,Unrealized P/L in USD,Code
+Forex Balances,Data,Forex,USD,ILS,8284.7889,0.30852,-2556.023071,0.31406,2601.920802,45.897731,
+Forex Balances,Data,Forex,USD,USD,-14429.272579012,0,14429.272579012,1,-14429.272579012,0,
+Forex Balances,Data,Total,,,,,11873.249508012,,-11827.351777012,45.897731,
+Net Stock Position Summary,Header,Asset Category,Currency,Symbol,Description,Shares at IB,Shares Borrowed,Shares Lent,Net Shares
+Net Stock Position Summary,Data,Stocks,USD,AMD,ADVANCED MICRO DEVICES,50,0,0,50
+Net Stock Position Summary,Data,Stocks,USD,AMZN,AMAZON.COM INC,43,0,0,43
+Net Stock Position Summary,Data,Stocks,USD,APLD,APPLIED DIGITAL CORP,200,0,0,200
+Net Stock Position Summary,Data,Stocks,USD,BMNR,BITMINE IMMERSION TECHNOLOGI,800,0,0,800
+Net Stock Position Summary,Data,Stocks,USD,ETHA,ISHARES ETHEREUM TRUST ETF,70,0,0,70
+Net Stock Position Summary,Data,Stocks,USD,FUBO,FUBOTV INC -CLASS A,800,0,0,800
+Net Stock Position Summary,Data,Stocks,USD,QQQ,INVESCO QQQ TRUST SERIES 1,0.0111,0,0,0.0111
+Net Stock Position Summary,Data,Stocks,USD,SOFI,SOFI TECHNOLOGIES INC,380,0,0,380
+Net Stock Position Summary,Data,Stocks,USD,ZETA,ZETA GLOBAL HOLDINGS CORP-A,300,0,0,300
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Stocks,USD,AMD,"2025-02-05, 08:55:24",20,107.4,112.01,-2148,-2.5,2150.5,0,92.2,O
+Trades,Data,Order,Stocks,USD,AMD,"2025-02-27, 15:45:16",10,100,99.51,-1000,-2.5,1002.5,0,-4.9,O
+Trades,Data,Order,Stocks,USD,AMD,"2025-04-08, 12:40:44",10,83,78.21,-830,-2.5,832.5,0,-47.9,O
+Trades,Data,Order,Stocks,USD,AMD,"2025-04-10, 10:00:48",10,89,88.7,-890,-2.5,892.5,0,-3,O
+Trades,SubTotal,,Stocks,USD,AMD,,50,,,-4868,-10,4878,0,36.4,
+Trades,Data,Order,Stocks,USD,AMZN,"2025-03-10, 10:52:04",10,192,194.54,-1920,-2.5,1922.5,0,25.4,O
+Trades,Data,Order,Stocks,USD,AMZN,"2025-03-31, 09:33:29",15,186,190.26,-2790,-2.5,2792.5,0,63.9,O
+Trades,Data,Order,Stocks,USD,AMZN,"2025-05-13, 15:51:28",-2,211.41,211.37,422.82,-0.162688646,-384.5,38.157311,0.08,C;L
+Trades,Data,Order,Stocks,USD,AMZN,"2025-10-10, 11:32:49",20,219,216.37,-4380,-2,4382,0,-52.6,O
+Trades,SubTotal,,Stocks,USD,AMZN,,43,,,-8667.18,-7.162688646,8712.5,38.157311,36.78,
+Trades,Data,Order,Stocks,USD,APLD,"2025-06-17, 09:39:11",250,11.2,10.99,-2800,-2.5,2802.5,0,-52.5,O
+Trades,Data,Order,Stocks,USD,APLD,"2025-06-18, 15:58:45",150,10.62,10.61,-1593,-2.5,1595.5,0,-1.5,O
+Trades,Data,Order,Stocks,USD,APLD,"2025-07-07, 09:32:04",100,9.55,9.66,-955,-2.5,957.5,0,11,O
+Trades,Data,Order,Stocks,USD,APLD,"2025-10-10, 16:20:00",-300,21,33.99,6300,-0.0498,-3334.333333,4288.616867,-3897,A;C
+Trades,SubTotal,,Stocks,USD,APLD,,200,,,952,-7.5498,2021.166667,4288.616867,-3940,
+Trades,Data,Order,Stocks,USD,BMNR,"2025-08-28, 12:58:00",100,46,45.57,-4600,-2,4602,0,-43,O
+Trades,Data,Order,Stocks,USD,BMNR,"2025-10-17, 16:20:00",300,57.5,49.85,-17250,0,17250,0,-2295,A;O
+Trades,Data,Order,Stocks,USD,BMNR,"2025-10-17, 16:20:00",200,60,49.85,-12000,0,12000,0,-2030,A;O
+Trades,Data,Order,Stocks,USD,BMNR,"2025-12-26, 16:20:00",200,29.5,28.31,-5900,0,5900,0,-238,A;O
+Trades,SubTotal,,Stocks,USD,BMNR,,800,,,-39750,-2,39752,0,-4606,
+Trades,Data,Order,Stocks,USD,ELF,"2025-02-07, 09:30:25",40,65,71.13,-2600,-2.5,2602.5,0,245.2,O
+Trades,Data,Order,Stocks,USD,ELF,"2025-09-15, 10:34:19",-10,141.3,144.37,1413,-2,-650.625,760.375,-30.7,C
+Trades,Data,Order,Stocks,USD,ELF,"2025-09-15, 10:35:01",-30,141.3,144.37,4239,-2,-1951.875,2285.125,-92.1,C
+Trades,SubTotal,,Stocks,USD,ELF,,0,,,3052,-6.5,0,3045.5,122.4,
+Trades,Data,Order,Stocks,USD,ETHA,"2025-02-13, 11:47:03",70,19.91,20.09,-1393.7,-2.5,1396.2,0,12.6,O
+Trades,SubTotal,,Stocks,USD,ETHA,,70,,,-1393.7,-2.5,1396.2,0,12.6,
+Trades,Data,Order,Stocks,USD,FUBO,"2025-04-10, 10:10:46",300,2.76,2.76,-828,-3,831,0,0,O;P
+Trades,Data,Order,Stocks,USD,FUBO,"2025-07-11, 16:20:00",500,4,3.41,-2000,0,2000,0,-295,A;O
+Trades,SubTotal,,Stocks,USD,FUBO,,800,,,-2828,-3,2831,0,-295,
+Trades,Data,Order,Stocks,USD,GOOG,"2025-02-25, 10:19:47",22,178,177.37,-3916,-2.5,3918.5,0,-13.86,O
+Trades,Data,Order,Stocks,USD,GOOG,"2025-03-18, 09:31:01",0.0186,165.54,162.67,-3.079044,-2.5,5.579044,0,-0.0534,O;R
+Trades,Data,Order,Stocks,USD,GOOG,"2025-06-17, 09:31:08",0.0194,177.685,177.23,-3.447089,-2.5,5.947089,0,-0.0088,O;R
+Trades,Data,Order,Stocks,USD,GOOG,"2025-09-16, 09:30:00",0.0137,252.32,251.42,-3.456784,-2,5.456784,0,-0.0123,O;R
+Trades,Data,Order,Stocks,USD,GOOG,"2025-09-19, 15:28:37",-22.0517,256,255.24,5645.2352,-2,-3935.482917,1707.752283,16.7593,C;P
+Trades,SubTotal,,Stocks,USD,GOOG,,0,,,1719.252283,-11.5,0,1707.752283,2.8248,
+Trades,Data,Order,Stocks,USD,GRAB,"2025-06-10, 09:31:02",200,4.84,4.68,-968,-2.5,970.5,0,-32,O
+Trades,Data,Order,Stocks,USD,GRAB,"2025-06-10, 09:49:51",200,4.75,4.68,-950,-2.5,952.5,0,-14,O
+Trades,Data,Order,Stocks,USD,GRAB,"2025-08-01, 16:20:00","1,000",5,4.96,-5000,0,5000,0,-40,A;O
+Trades,Data,Order,Stocks,USD,GRAB,"2025-08-13, 15:44:49",-400,5.1,5.12,2040,-3.2,-1923,113.8,-8,C
+Trades,Data,Order,Stocks,USD,GRAB,"2025-08-14, 09:36:41","-1,000",5.18,5.13,5180,-8,-4863,309,50,C
+Trades,SubTotal,,Stocks,USD,GRAB,,0,,,302,-16.2,137,422.8,-44,
+Trades,Data,Order,Stocks,USD,HIMS,"2025-06-25, 06:42:04",100,43.25,41.41,-4325,-2.5,4327.5,0,-184,O
+Trades,Data,Order,Stocks,USD,HIMS,"2025-10-03, 16:20:00",-100,50,52.54,5000,-0.0166,-4327.5,874.4834,-254,A;C
+Trades,SubTotal,,Stocks,USD,HIMS,,0,,,675,-2.5166,0,874.4834,-438,
+Trades,Data,Order,Stocks,USD,LMND,"2025-10-10, 16:20:00",200,51,48.04,-10200,0,10200,0,-592,A;O
+Trades,Data,Order,Stocks,USD,LMND,"2025-10-24, 16:20:00",-200,51,52.14,10200,-0.0332,-9944,463.9668,-228,A;C
+Trades,SubTotal,,Stocks,USD,LMND,,0,,,0,-0.0332,256,463.9668,-820,
+Trades,Data,Order,Stocks,USD,OSCR,"2025-07-11, 09:21:10",200,15,14.38,-3000,-2.5,3002.5,0,-124,O
+Trades,Data,Order,Stocks,USD,OSCR,"2025-08-01, 16:20:00",100,14,13.84,-1400,0,1400,0,-16,A;O
+Trades,Data,Order,Stocks,USD,OSCR,"2025-08-08, 16:20:00",-100,14,15.61,1400,-0.0166,-1501.25,-47.2666,-161,A;C
+Trades,Data,Order,Stocks,USD,OSCR,"2025-09-05, 16:20:00",-200,18.5,20.28,3700,0,-2857.25,920.75,-356,A;C
+Trades,SubTotal,,Stocks,USD,OSCR,,0,,,700,-2.5166,44,873.4834,-657,
+Trades,Data,Order,Stocks,USD,QQQ,"2025-01-27, 05:43:27",10,507.3,514.21,-5073,-2.5,5075.5,0,69.1,O
+Trades,Data,Order,Stocks,USD,QQQ,"2025-04-03, 11:00:24",5,453.16,450.66,-2265.8,-2.5,2268.3,0,-12.5,O
+Trades,Data,Order,Stocks,USD,QQQ,"2025-05-01, 09:32:17",0.0111,482.57,481.68,-5.356527,-2.5,7.856527,0,-0.0099,O;R
+Trades,Data,Order,Stocks,USD,QQQ,"2025-05-13, 15:51:28",-15,516.25,515.59,7743.75,-0.3895005,-7343.8,399.560499,9.9,C;L;P
+Trades,SubTotal,,Stocks,USD,QQQ,,0.0111,,,399.593473,-7.8895005,7.856527,399.560499,66.4901,
+Trades,Data,Order,Stocks,USD,SOFI,"2025-03-04, 09:50:17",100,12.8,13.09,-1280,-2.5,1282.5,0,29,O
+Trades,Data,Order,Stocks,USD,SOFI,"2025-03-31, 09:46:01",80,11.01,11.63,-880.8,-2.5,883.3,0,49.6,O
+Trades,Data,Order,Stocks,USD,SOFI,"2025-04-07, 05:24:22",100,8.45,9.86,-845,-2.5,847.5,0,141,O
+Trades,Data,Order,Stocks,USD,SOFI,"2025-11-06, 13:03:11",100,27.97,27.16,-2797,-2,2799,0,-81,O
+Trades,SubTotal,,Stocks,USD,SOFI,,380,,,-5802.8,-9.5,5812.3,0,138.6,
+Trades,Data,Order,Stocks,USD,TLT,"2025-01-23, 05:47:39",34,87.16,86.83,-2963.44,-2.5,2965.94,0,-11.22,O
+Trades,Data,Order,Stocks,USD,TLT,"2025-02-19, 08:43:46",30,87.82,88.21,-2634.6,-2.5,2637.1,0,11.7,O
+Trades,Data,Order,Stocks,USD,TLT,"2025-03-07, 09:31:09",0.1425,91.06,90.11,-12.97605,-2.5,15.47605,0,-0.1354,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-03-31, 08:28:49",-40,91.01,91.03,3640.4,-2.5,-3493.36,144.54,-0.8,C
+Trades,Data,Order,Stocks,USD,TLT,"2025-04-03, 10:59:21",-10,92.5,91.85,925,-2.5,-879.033334,43.466666,6.5,C;P
+Trades,Data,Order,Stocks,USD,TLT,"2025-04-03, 10:59:58",-14.1425,92.5,91.85,1308.18125,-2.5,-1246.122717,59.558533,9.1926,C;P
+Trades,Data,Order,Stocks,USD,TLT,"2025-04-07, 09:33:07",0.0642,91.89,90.05,-5.899338,-2.5,8.399338,0,-0.1181,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-07, 09:31:01",0.0001,87.92,87.9,-0.008792,-2.5,2.508792,0,0,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-14, 08:31:23",100,85.9,85.32,-8590,-2.5,8592.5,0,-58,O
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-14, 15:51:04",-100,85.2307,85.32,8523.07,-0.19131025,-8597.883152,-75.004463,-8.93,C;L
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-19, 06:50:26",100,84.7,86.05,-8470,-2.5,8472.5,0,135,O
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-21, 04:00:00",58,85,83.97,-4930,-2.5,4932.5,0,-59.74,O
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-21, 15:51:27",-54,83.965,83.97,4534.11,-0.17235825,-4575.227161,-41.289519,-0.27,C;L
+Trades,Data,Order,Stocks,USD,TLT,"2025-05-22, 08:14:43",70,83.08,84.41,-5815.6,-2.5,5818.1,0,93.1,O
+Trades,Data,Order,Stocks,USD,TLT,"2025-06-06, 09:33:10",0.4861,85.805,85.35,-41.7098105,-2.5,44.2098105,0,-0.2212,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-06-11, 10:46:08",-29.5504,86,86.14,2541.3344,-2.5,-2503.65764,35.17676,-4.1371,C;P
+Trades,Data,Order,Stocks,USD,TLT,"2025-06-12, 09:43:53",-45,86.85,87.17,3908.25,-2.5,-3821.686527,84.063473,-14.4,C
+Trades,Data,Order,Stocks,USD,TLT,"2025-07-08, 09:33:05",0.2878,85.53,86.03,-24.615534,-2.5,27.115534,0,0.1439,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-07-29, 12:42:56",-50.2878,87.014971385,87.32,4375.791478,-2.5,-4236.591188,136.70029,-15.3392,C;P
+Trades,Data,Order,Stocks,USD,TLT,"2025-08-07, 09:34:52",0.1409,87.95,87.67,-12.392155,-2,14.392155,0,-0.0395,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-09-08, 09:34:11",0.1384,89.135,89.74,-12.336284,-2,14.336284,0,0.0837,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-10-07, 09:32:20",0.1316,88.96,89.18,-11.707136,-2,13.707136,0,0.029,O;R
+Trades,Data,Order,Stocks,USD,TLT,"2025-10-21, 09:30:00",-50.4109,91.99,92,4637.298691,-2,-4205.223383,430.075308,-0.5041,C;P
+Trades,SubTotal,,Stocks,USD,TLT,,-0,,,868.1507195,-50.8636685,-0.0000025,817.287048,81.8946,
+Trades,Data,Order,Stocks,USD,WHR,"2025-01-29, 17:09:33",18,114.4,129.78,-2059.2,-2.5,2061.7,0,276.84,O
+Trades,Data,Order,Stocks,USD,WHR,"2025-06-17, 09:31:05",0.2556,92.385,91.27,-23.613606,-2.5,26.113606,0,-0.285,O;R
+Trades,Data,Order,Stocks,USD,WHR,"2025-07-16, 09:43:20",-18.2556,100.026779728,96.16,1826.04888,-2.5,-2087.813606,-264.264726,70.5904,C;P
+Trades,SubTotal,,Stocks,USD,WHR,,0,,,-256.764726,-7.5,-0,-264.264726,347.1454,
+Trades,Data,Order,Stocks,USD,ZETA,"2025-10-10, 16:20:00",300,19.5,18.4,-5850,0,5850,0,-330,A;O
+Trades,SubTotal,,Stocks,USD,ZETA,,300,,,-5850,0,5850,0,-330,
+Trades,Total,,Stocks,USD,,,,,,-60748.4482505,-147.232057646,71698.0231915,12667.342882,-10284.8651, 
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
+Trades,Data,Order,Equity and Index Options,USD,APLD 29AUG25 13 C,"2025-07-17, 10:40:03",-2,0.92,0.9281,184,-4,-180,0,-1.62,O
+Trades,Data,Order,Equity and Index Options,USD,APLD 29AUG25 13 C,"2025-07-18, 09:44:44",2,1.2,1.312,-240,-4,180,-64,22.4,C
+Trades,SubTotal,,Equity and Index Options,USD,APLD 29AUG25 13 C,,0,,,-56,-8,0,-64,20.78,
+Trades,Data,Order,Equity and Index Options,USD,APLD 29AUG25 17 C,"2025-08-18, 09:57:24",-2,0.44,0.8657,88,-4,-84,0,-85.14,O
+Trades,Data,Order,Equity and Index Options,USD,APLD 29AUG25 17 C,"2025-08-29, 16:20:00",2,0,0,0,0,84,84,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,APLD 29AUG25 17 C,,0,,,88,-4,0,84,-85.14,
+Trades,Data,Order,Equity and Index Options,USD,APLD 19SEP25 14 C,"2025-07-18, 09:44:44",-2,1.21,1.355,242,-4,-238,0,-29,O
+Trades,Data,Order,Equity and Index Options,USD,APLD 19SEP25 14 C,"2025-08-07, 13:38:14",2,1.62,1.9,-324,-4,238,-90,56,C;P
+Trades,SubTotal,,Equity and Index Options,USD,APLD 19SEP25 14 C,,0,,,-82,-8,0,-90,27,
+Trades,Data,Order,Equity and Index Options,USD,APLD 03OCT25 19 C,"2025-09-11, 12:19:25",-3,1.01,0.83,303,-6,-297,0,54,O;P
+Trades,Data,Order,Equity and Index Options,USD,APLD 03OCT25 19 C,"2025-10-01, 15:29:26",3,5.473333333,6.0415,-1642,-6,297,-1351,170.45,C;P
+Trades,SubTotal,,Equity and Index Options,USD,APLD 03OCT25 19 C,,0,,,-1339,-12,0,-1351,224.45,
+Trades,Data,Order,Equity and Index Options,USD,APLD 10OCT25 21 C,"2025-10-01, 15:29:26",-3,4.43,4.9514,1329,-6,-1323,0,-156.42,O;P
+Trades,Data,Order,Equity and Index Options,USD,APLD 10OCT25 21 C,"2025-10-10, 16:20:00",3,0,12.99,0,0,1323,0,3897,A;C
+Trades,SubTotal,,Equity and Index Options,USD,APLD 10OCT25 21 C,,0,,,1329,-6,0,0,3740.58,
+Trades,Data,Order,Equity and Index Options,USD,APLD 17OCT25 16 C,"2025-08-07, 13:38:14",-2,1.61,1.83,322,-4,-318,0,-44,O;P
+Trades,Data,Order,Equity and Index Options,USD,APLD 17OCT25 16 C,"2025-09-11, 14:27:19",2,2.74,2.6938,-548,-4,318,-234,-9.24,C;P
+Trades,SubTotal,,Equity and Index Options,USD,APLD 17OCT25 16 C,,0,,,-226,-8,0,-234,-53.24,
+Trades,Data,Order,Equity and Index Options,USD,APLD 17OCT25 18 C,"2025-09-11, 14:27:19",-2,1.84,1.82,368,-4,-364,0,4,O;P
+Trades,Data,Order,Equity and Index Options,USD,APLD 17OCT25 18 C,"2025-10-10, 09:44:24",2,20.6,16.0143,-4120,-4,364,-3760,-917.14,C
+Trades,SubTotal,,Equity and Index Options,USD,APLD 17OCT25 18 C,,0,,,-3752,-8,0,-3760,-913.14,
+Trades,Data,Order,Equity and Index Options,USD,APLD 24OCT25 26 P,"2025-10-06, 12:33:41",-3,2.46,2.6018,738,-6,-732,0,-42.54,O
+Trades,Data,Order,Equity and Index Options,USD,APLD 24OCT25 26 P,"2025-10-24, 16:20:00",3,0,0,0,0,732,732,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,APLD 24OCT25 26 P,,0,,,738,-6,0,732,-42.54,
+Trades,Data,Order,Equity and Index Options,USD,APLD 16JAN26 36 C,"2025-10-10, 09:44:24",-2,10.6,8.253,2120,-4,-2116,0,469.4,O
+Trades,Data,Order,Equity and Index Options,USD,APLD 16JAN26 36 C,"2025-11-03, 14:00:05",2,6.59,6.3326,-1318,-4,2116,794,-51.48,C
+Trades,SubTotal,,Equity and Index Options,USD,APLD 16JAN26 36 C,,0,,,802,-8,0,794,417.92,
+Trades,Data,Order,Equity and Index Options,USD,APLD 20MAR26 44 C,"2025-11-03, 14:00:05",-2,6.85,6.7313,1370,-4,-1366,0,23.74,O
+Trades,Data,Order,Equity and Index Options,USD,APLD 20MAR26 44 C,"2025-11-25, 13:29:38",2,1.59,1.64,-318,-4,1366,1044,10,C;P
+Trades,SubTotal,,Equity and Index Options,USD,APLD 20MAR26 44 C,,0,,,1052,-8,0,1044,33.74,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 19SEP25 38 P,"2025-08-28, 12:16:56",-2,1.69,1.7282,338,-4,-334,0,-7.64,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 19SEP25 38 P,"2025-09-19, 16:20:00",2,0,0,0,0,334,334,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 19SEP25 38 P,,0,,,338,-4,0,334,-7.64,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 26SEP25 50 C,"2025-08-28, 12:58:16",-1,4.66,4.3721,466,-2,-464,0,28.79,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 26SEP25 50 C,"2025-09-18, 09:55:44",1,11.87,10.5732,-1187,-2,464,-725,-129.68,C
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 26SEP25 50 C,,0,,,-721,-4,0,-725,-100.89,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 03OCT25 49 P,"2025-09-15, 11:14:22",-1,4.25,3.4092,425,-2,-423,0,84.08,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 03OCT25 49 P,"2025-10-03, 16:20:00",1,0,0,0,0,423,423,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 03OCT25 49 P,,0,,,425,-2,0,423,84.08,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 03OCT25 54 P,"2025-10-02, 14:52:16",-2,0.67,0.3174,134,-4,-130,0,70.52,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 03OCT25 54 P,"2025-10-03, 16:20:00",2,0,0,0,0,130,130,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 03OCT25 54 P,,0,,,134,-4,0,130,70.52,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 17OCT25 55 C,"2025-09-18, 09:55:44",-1,11.87,10.7432,1187,-2,-1185,0,112.68,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 17OCT25 55 C,"2025-10-17, 16:20:00",1,0,0,0,0,1185,1185,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 17OCT25 55 C,,0,,,1187,-2,0,1185,112.68,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 17OCT25 57.5 P,"2025-10-06, 11:25:25",-3,3,2.5593,900,-6,-894,0,132.21,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 17OCT25 57.5 P,"2025-10-17, 16:20:00",3,0,7.65,0,0,894,0,2295,A;C
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 17OCT25 57.5 P,,0,,,900,-6,0,0,2427.21,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 17OCT25 60 P,"2025-10-07, 13:17:42",-2,4.65,4.7624,930,-4,-926,0,-22.48,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 17OCT25 60 P,"2025-10-17, 16:20:00",2,0,10.15,0,0,926,0,2030,A;C
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 17OCT25 60 P,,0,,,930,-4,0,0,2007.52,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 21NOV25 50 P,"2025-09-22, 10:56:06",-2,7.75,8.2292,1550,-4,-1546,0,-95.84,O
+Trades,Data,Order,Equity and Index Options,USD,BMNR 21NOV25 50 P,"2025-10-07, 13:18:58",2,4.54,4.6777,-908,-4,1546,634,27.54,C;P
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 21NOV25 50 P,,0,,,642,-8,0,634,-68.3,
+Trades,Data,Order,Equity and Index Options,USD,BMNR 26DEC25 29.5 P,"2025-12-15, 15:43:24",-2,1.2,1.345,240,-4,-236,0,-29,O;P
+Trades,Data,Order,Equity and Index Options,USD,BMNR 26DEC25 29.5 P,"2025-12-26, 16:20:00",2,0,1.19,0,0,236,0,238,A;C
+Trades,SubTotal,,Equity and Index Options,USD,BMNR 26DEC25 29.5 P,,0,,,240,-4,0,0,209,
+Trades,Data,Order,Equity and Index Options,USD,FUBO 11JUL25 4 P,"2025-07-03, 12:56:42",-5,0.39,0.3881,195,-10,-185,0,0.95,O;P
+Trades,Data,Order,Equity and Index Options,USD,FUBO 11JUL25 4 P,"2025-07-11, 16:20:00",5,0,0.69,0,0,185,0,345,A;C
+Trades,SubTotal,,Equity and Index Options,USD,FUBO 11JUL25 4 P,,0,,,195,-10,0,0,345.95,
+Trades,Data,Order,Equity and Index Options,USD,FUBO 15AUG25 4 C,"2025-07-21, 09:52:35",-6,0.19,0.155,114,-12,-102,0,21,O
+Trades,Data,Order,Equity and Index Options,USD,FUBO 15AUG25 4 C,"2025-08-15, 16:20:00",6,0,0,0,0,102,102,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,FUBO 15AUG25 4 C,,0,,,114,-12,0,102,21,
+Trades,Data,Order,Equity and Index Options,USD,FUBO 15JAN27 5 C,"2025-07-31, 13:32:20",30,1.3,1.27,-3900,-60,3960,0,-90,O
+Trades,Data,Order,Equity and Index Options,USD,FUBO 15JAN27 5 C,"2025-08-11, 11:40:46",20,1.01,1.0586,-2020,-40,2060,0,97.2,O;P
+Trades,SubTotal,,Equity and Index Options,USD,FUBO 15JAN27 5 C,,50,,,-5920,-100,6020,0,7.2,
+Trades,Data,Order,Equity and Index Options,USD,GRAB 25JUL25 5 P,"2025-06-06, 12:25:40",-10,0.23,0.2,230,-20,-210,0,30,O;P
+Trades,Data,Order,Equity and Index Options,USD,GRAB 25JUL25 5 P,"2025-07-21, 11:15:25",10,0.047,0.0273,-47,-20,210,143,-19.7,C;P
+Trades,SubTotal,,Equity and Index Options,USD,GRAB 25JUL25 5 P,,0,,,183,-40,0,143,10.3,
+Trades,Data,Order,Equity and Index Options,USD,GRAB 01AUG25 5 P,"2025-07-21, 11:15:25",-10,0.157,0.175,157,-20,-137,0,-18,O;P
+Trades,Data,Order,Equity and Index Options,USD,GRAB 01AUG25 5 P,"2025-08-01, 16:20:00",10,0,0.2,0,0,137,0,200,A;C
+Trades,SubTotal,,Equity and Index Options,USD,GRAB 01AUG25 5 P,,0,,,157,-20,0,0,182,
+Trades,Data,Order,Equity and Index Options,USD,GRAB 15AUG25 5 C,"2025-08-04, 09:47:30",-10,0.12,0.125,120,-16.5424,-103.4576,0,-5,O;P
+Trades,Data,Order,Equity and Index Options,USD,GRAB 15AUG25 5 C,"2025-08-14, 11:10:21",10,0.13,0.2414,-130,-16.5145,103.4576,-43.0569,111.4,C
+Trades,SubTotal,,Equity and Index Options,USD,GRAB 15AUG25 5 C,,0,,,-10,-33.0569,0,-43.0569,106.4,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 18JUL25 46 C,"2025-06-26, 11:06:49",-1,2.81,4.3303,281,-2,-279,0,-152.03,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 18JUL25 46 C,"2025-06-27, 11:06:39",1,6.5,6.3427,-650,-2,279,-373,-15.73,C
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 18JUL25 46 C,,0,,,-369,-4,0,-373,-167.76,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 15AUG25 50 C,"2025-06-27, 11:06:39",-1,7.96,7.5546,796,-2,-794,0,40.54,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 15AUG25 50 C,"2025-07-23, 10:28:45",1,7.81,11.0679,-781,-2,794,11,325.79,C
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 15AUG25 50 C,,0,,,15,-4,0,11,366.33,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 15AUG25 65 C,"2025-07-31, 13:50:53",-1,8.8,7.4251,880,-2,-878,0,137.49,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 15AUG25 65 C,"2025-08-15, 16:20:00",1,0,0,0,0,878,878,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 15AUG25 65 C,,0,,,880,-2,0,878,137.49,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 22AUG25 45.5 C,"2025-08-21, 11:56:09",-1,0.55,0.305,55,-2,-53,0,24.5,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 22AUG25 45.5 C,"2025-08-22, 16:20:00",1,0,0,0,0,53,53,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 22AUG25 45.5 C,,0,,,55,-2,0,53,24.5,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 22AUG25 51 C,"2025-07-23, 10:28:45",-1,7.69,10.8166,769,-2,-767,0,-312.66,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 22AUG25 51 C,"2025-07-23, 11:11:23",1,9.39,10.8166,-939,-2,767,-174,142.66,C
+Trades,Data,Order,Equity and Index Options,USD,HIMS 22AUG25 51 C,"2025-08-13, 11:49:47",-1,1.16,1.315,116,-2,-114,0,-15.5,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 22AUG25 51 C,"2025-08-21, 11:56:09",1,0.05,0.0256,-5,-2,114,107,-2.44,C
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 22AUG25 51 C,,0,,,-59,-8,0,-67,-187.94,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 29AUG25 46 C,"2025-08-27, 12:45:47",-1,0.55,0.4,55,-2,-53,0,15,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 29AUG25 46 C,"2025-08-29, 16:20:00",1,0,0,0,0,53,53,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 29AUG25 46 C,,0,,,55,-2,0,53,15,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 29AUG25 52 C,"2025-07-23, 11:11:23",-1,9.3,10.6786,930,-2,-928,0,-137.86,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 29AUG25 52 C,"2025-07-31, 13:50:53",1,18.8,16.8356,-1880,-2,928,-954,-196.44,C
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 29AUG25 52 C,,0,,,-950,-4,0,-954,-334.3,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 03OCT25 50 C,"2025-09-03, 15:52:17",-1,2.04,1.9269,204,-2,-202,0,11.31,O
+Trades,Data,Order,Equity and Index Options,USD,HIMS 03OCT25 50 C,"2025-10-03, 16:20:00",1,0,2.54,0,0,202,0,254,A;C
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 03OCT25 50 C,,0,,,204,-2,0,0,265.31,
+Trades,Data,Order,Equity and Index Options,USD,HIMS 17OCT25 36 P,"2025-08-15, 15:34:19",-2,1.37,1.4,274,-4,-270,0,-6,O;P
+Trades,Data,Order,Equity and Index Options,USD,HIMS 17OCT25 36 P,"2025-10-07, 13:15:32",2,0.14,0.1448,-28,-4,270,238,0.96,C;P
+Trades,SubTotal,,Equity and Index Options,USD,HIMS 17OCT25 36 P,,0,,,246,-8,0,238,-5.04,
+Trades,Data,Order,Equity and Index Options,USD,LMND 10OCT25 51 P,"2025-10-06, 09:41:48",-2,1.3,0.45,260,-4,-256,0,170,O
+Trades,Data,Order,Equity and Index Options,USD,LMND 10OCT25 51 P,"2025-10-10, 16:20:00",2,0,2.96,0,0,256,0,592,A;C
+Trades,SubTotal,,Equity and Index Options,USD,LMND 10OCT25 51 P,,0,,,260,-4,0,0,762,
+Trades,Data,Order,Equity and Index Options,USD,LMND 17OCT25 52 C,"2025-10-13, 12:44:59",-2,1.16,1.2038,232,-4,-228,0,-8.76,O;P
+Trades,Data,Order,Equity and Index Options,USD,LMND 17OCT25 52 C,"2025-10-17, 16:20:00",2,0,0,0,0,228,228,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,LMND 17OCT25 52 C,,0,,,232,-4,0,228,-8.76,
+Trades,Data,Order,Equity and Index Options,USD,LMND 24OCT25 51 C,"2025-10-20, 15:19:16",-2,1.06,1.1233,212,-4,-208,0,-12.66,O
+Trades,Data,Order,Equity and Index Options,USD,LMND 24OCT25 51 C,"2025-10-24, 16:20:00",2,0,1.14,0,0,208,0,228,A;C
+Trades,SubTotal,,Equity and Index Options,USD,LMND 24OCT25 51 C,,0,,,212,-4,0,0,215.34,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 18JUL25 14 P,"2025-06-04, 12:14:46",-3,1.3,1.225,390,-6,-384,0,22.5,O;P
+Trades,Data,Order,Equity and Index Options,USD,OSCR 18JUL25 14 P,"2025-06-05, 13:19:47",3,0.72,0.8,-216,-6,384,162,24,C
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 18JUL25 14 P,,0,,,174,-12,0,162,46.5,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 01AUG25 14 P,"2025-07-24, 12:46:33",-1,0.46,0.6245,46,-2,-44,0,-16.45,O
+Trades,Data,Order,Equity and Index Options,USD,OSCR 01AUG25 14 P,"2025-08-01, 16:20:00",1,0,0.42,0,0,44,0,42,A;C
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 01AUG25 14 P,,0,,,46,-2,0,0,25.55,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 08AUG25 14 C,"2025-08-01, 15:07:40",-1,0.56,0.65,56,-2,-54,0,-9,O
+Trades,Data,Order,Equity and Index Options,USD,OSCR 08AUG25 14 C,"2025-08-08, 16:20:00",1,0,1.46,0,0,54,0,146,A;C
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 08AUG25 14 C,,0,,,56,-2,0,0,137,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 08AUG25 17 C,"2025-07-16, 15:33:23",-2,1.09,1.1342,218,-4,-214,0,-8.84,O;P
+Trades,Data,Order,Equity and Index Options,USD,OSCR 08AUG25 17 C,"2025-08-08, 16:20:00",2,0,0,0,0,214,214,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 08AUG25 17 C,,0,,,218,-4,0,214,-8.84,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 08AUG25 14.5 P,"2025-07-11, 10:13:22",-2,1.8,1.8879,360,-4,-356,0,-17.58,O;P
+Trades,Data,Order,Equity and Index Options,USD,OSCR 08AUG25 14.5 P,"2025-08-08, 16:20:00",2,0,0,0,0,356,356,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 08AUG25 14.5 P,,0,,,360,-4,0,356,-17.58,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 29AUG25 17.5 C,"2025-08-18, 09:58:32",-2,0.38,0.625,76,-4,-72,0,-49,O
+Trades,Data,Order,Equity and Index Options,USD,OSCR 29AUG25 17.5 C,"2025-08-19, 12:55:08",2,0.49,0.575,-98,-4,72,-30,17,C
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 29AUG25 17.5 C,,0,,,-22,-8,0,-30,-32,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 05SEP25 18.5 C,"2025-08-19, 12:55:08",-2,0.41,0.5,82,-4,-78,0,-18,O
+Trades,Data,Order,Equity and Index Options,USD,OSCR 05SEP25 18.5 C,"2025-09-05, 16:20:00",2,0,0.93,0,0,78,0,186,A;C
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 05SEP25 18.5 C,,0,,,82,-4,0,0,168,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 19SEP25 13 P,"2025-07-18, 09:48:21",-3,2.08,2.154,624,-6,-618,0,-22.2,O;P
+Trades,Data,Order,Equity and Index Options,USD,OSCR 19SEP25 13 P,"2025-09-19, 16:20:00",3,0,0,0,0,618,618,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 19SEP25 13 P,,0,,,624,-6,0,618,-22.2,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 03OCT25 17.5 P,"2025-09-15, 11:19:31",-4,0.72,0.7501,288,-8,-280,0,-12.04,O
+Trades,Data,Order,Equity and Index Options,USD,OSCR 03OCT25 17.5 P,"2025-10-03, 16:20:00",4,0,0,0,0,280,280,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 03OCT25 17.5 P,,0,,,288,-8,0,280,-12.04,
+Trades,Data,Order,Equity and Index Options,USD,OSCR 28NOV25 16 P,"2025-10-23, 13:10:08",-3,1.29,1.0744,387,-6,-381,0,64.68,O;P
+Trades,Data,Order,Equity and Index Options,USD,OSCR 28NOV25 16 P,"2025-11-28, 16:20:00",3,0,0,0,0,381,381,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,OSCR 28NOV25 16 P,,0,,,387,-6,0,381,64.68,
+Trades,Data,Order,Equity and Index Options,USD,QQQ 18JUL25 525 C,"2025-05-13, 10:17:45",-2,13.43,14.145,2686,-4,-2682,0,-143,O;P
+Trades,Data,Order,Equity and Index Options,USD,QQQ 18JUL25 525 C,"2025-05-21, 15:59:18",2,12.91,12.815,-2582,-4,2682,96,-19,C
+Trades,SubTotal,,Equity and Index Options,USD,QQQ 18JUL25 525 C,,0,,,104,-8,0,96,-162,
+Trades,Data,Order,Equity and Index Options,USD,QQQ 15AUG25 480 P,"2025-02-28, 13:03:56",-1,19.38,16.075,1938,-2,-1936,0,330.5,O
+Trades,Data,Order,Equity and Index Options,USD,QQQ 15AUG25 480 P,"2025-03-04, 09:43:33",1,22.64,20.895,-2264,-2,1936,-330,-174.5,C
+Trades,SubTotal,,Equity and Index Options,USD,QQQ 15AUG25 480 P,,0,,,-326,-4,0,-330,156,
+Trades,Data,Order,Equity and Index Options,USD,QQQ 19SEP25 470 P,"2025-03-04, 09:37:05",-1,20.83,20.125,2083,-2,-2081,0,70.5,O
+Trades,Data,Order,Equity and Index Options,USD,QQQ 19SEP25 470 P,"2025-05-13, 15:41:59",1,9.97,10.225,-997,-2,2081,1082,25.5,C
+Trades,SubTotal,,Equity and Index Options,USD,QQQ 19SEP25 470 P,,0,,,1086,-4,0,1082,96,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 18JUL25 13 P,"2025-06-04, 11:15:52",-2,0.75,0.7,150,-4,-146,0,10,O;P
+Trades,Data,Order,Equity and Index Options,USD,SOFI 18JUL25 13 P,"2025-06-26, 11:14:29",2,0.09,0.075,-18,-4,146,124,-3,C
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 18JUL25 13 P,,0,,,132,-8,0,124,7,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 22AUG25 24 C,"2025-07-17, 09:59:01",-3,1.04,1.15,312,-6,-306,0,-33,O;P
+Trades,Data,Order,Equity and Index Options,USD,SOFI 22AUG25 24 C,"2025-08-22, 15:32:22",3,1.03,1.02,-309,-6,306,-9,-3,C;P
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 22AUG25 24 C,,0,,,3,-12,0,-9,-36,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 22AUG25 18.5 P,"2025-07-22, 09:47:58",-2,0.71,0.55,142,-4,-138,0,32,O
+Trades,Data,Order,Equity and Index Options,USD,SOFI 22AUG25 18.5 P,"2025-08-22, 16:20:00",2,0,0,0,0,138,138,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 22AUG25 18.5 P,,0,,,142,-4,0,138,32,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 29AUG25 26 C,"2025-08-22, 15:32:22",-3,0.4,0.405,120,-6,-114,0,-1.5,O;P
+Trades,Data,Order,Equity and Index Options,USD,SOFI 29AUG25 26 C,"2025-08-29, 16:20:00",3,0,0,0,0,114,114,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 29AUG25 26 C,,0,,,120,-6,0,114,-1.5,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 26SEP25 28.5 C,"2025-09-11, 12:22:01",-2,0.53,0.405,106,-4,-102,0,25,O;P
+Trades,Data,Order,Equity and Index Options,USD,SOFI 26SEP25 28.5 C,"2025-09-26, 16:20:00",2,0,0,0,0,102,102,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 26SEP25 28.5 C,,0,,,106,-4,0,102,25,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 17OCT25 24 P,"2025-09-16, 10:26:19",-2,0.73,0.605,146,-4,-142,0,25,O
+Trades,Data,Order,Equity and Index Options,USD,SOFI 17OCT25 24 P,"2025-10-17, 16:20:00",2,0,0,0,0,142,142,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 17OCT25 24 P,,0,,,146,-4,0,142,25,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 24OCT25 30 C,"2025-09-26, 11:06:50",-2,1.04,1.045,208,-4,-204,0,-1,O;P
+Trades,Data,Order,Equity and Index Options,USD,SOFI 24OCT25 30 C,"2025-10-24, 16:20:00",2,0,0,0,0,204,204,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 24OCT25 30 C,,0,,,208,-4,0,204,-1,
+Trades,Data,Order,Equity and Index Options,USD,SOFI 07NOV25 25 P,"2025-09-30, 11:09:40",-3,1.86,1.7093,558,-6,-552,0,45.21,O
+Trades,Data,Order,Equity and Index Options,USD,SOFI 07NOV25 25 P,"2025-11-07, 16:20:00",3,0,0,0,0,552,552,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,SOFI 07NOV25 25 P,,0,,,558,-6,0,552,45.21,
+Trades,Data,Order,Equity and Index Options,USD,ZETA 10OCT25 19.5 P,"2025-10-07, 09:33:23",-3,0.5,0.5,150,-6,-144,0,0,O
+Trades,Data,Order,Equity and Index Options,USD,ZETA 10OCT25 19.5 P,"2025-10-10, 16:20:00",3,0,1.1,0,0,144,0,330,A;C
+Trades,SubTotal,,Equity and Index Options,USD,ZETA 10OCT25 19.5 P,,0,,,150,-6,0,0,330,
+Trades,Data,Order,Equity and Index Options,USD,ZETA 17OCT25 19.5 C,"2025-10-13, 13:57:45",-3,0.35,0.375,105,-6,-99,0,-7.5,O
+Trades,Data,Order,Equity and Index Options,USD,ZETA 17OCT25 19.5 C,"2025-10-17, 16:20:00",3,0,0,0,0,99,99,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,ZETA 17OCT25 19.5 C,,0,,,105,-6,0,99,-7.5,
+Trades,Data,Order,Equity and Index Options,USD,ZETA 24OCT25 19 C,"2025-10-20, 15:33:47",-1,0.4,0.375,40,-2,-38,0,2.5,O
+Trades,Data,Order,Equity and Index Options,USD,ZETA 24OCT25 19 C,"2025-10-24, 16:20:00",1,0,0,0,0,38,38,0,C;Ep
+Trades,SubTotal,,Equity and Index Options,USD,ZETA 24OCT25 19 C,,0,,,40,-2,0,38,2.5,
+Trades,Data,Order,Equity and Index Options,USD,ZETA 16JAN26 21 C,"2025-12-26, 14:28:53",-3,0.81,0.9594,243,-6,-237,0,-44.82,O
+Trades,SubTotal,,Equity and Index Options,USD,ZETA 16JAN26 21 C,,-3,,,243,-6,-237,0,-44.82,
+Trades,Total,,Equity and Index Options,USD,,,,,,3159,-517.0569,5783,3737.9431,10674.57, 
+Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,,Proceeds,Comm in USD,,,MTM in USD,Code
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-01-22, 03:38:46","3,000",3.5389,,-10616.7,-2.812781278,,,-0.385587,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-01-27, 05:40:59","5,530",3.6164,,-19998.692,-2.792672029,,,-2.038181,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-01-29, 17:15:00","2,000",3.612,,-7224,-2.760905577,,,-17.01304,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-01-31, 05:21:48","4,195",3.5751,,-14997.5445,-2.792126204,,,3.336288,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-02-13, 11:44:45","4,205",3.5666,,-14997.553,-2.787145684,,,-1.813617,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-02-26, 09:32:40","4,809",3.5677,,-17157.0693,-2.7918144,,,-14.195322,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-04-24, 13:18:46","3,309",3.6258,,-11997.7722,-2.741152929,,,-3.344949,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-05-15, 03:16:45","1,268",3.5481,,-4498.9908,-2.816742719,,,3.018757,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-05-16, 07:52:40","2,111",3.5513,,-7496.7943,-2.811674071,,,1.626988,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-05-19, 16:13:03","2,127",3.5289,,-7505.9703,-2.813651839,,,-2.068476,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-06-04, 07:09:36","3,427",3.5012,,-11998.6124,-2.841797153,,,-13.842078,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-07-10, 03:48:31","2,631",3.3061,,-8698.3491,-3.014681499,,,1.402084,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-09-05, 15:32:37","2,987",3.3402,,-9977.1774,-2.989179171,,,-0.665772,
+Trades,Data,Order,Forex,ILS,USD.ILS,"2025-11-03, 09:26:56","2,523",3.2557,,-8214.1311,-3.068990916,,,-1.613194,
+Trades,SubTotal,,Forex,ILS,USD.ILS,,44122,,,-155379.3564,-39.835315469,,,-47.596099,
+Trades,Total,,Forex,ILS,,,,,,-155379.3564,-39.835315469,,,-47.596099, 
+Trades,Total,,Forex,USD,,,,,,-44169.596098843,-39.835315469,,,-47.596099, 
+Trades,Data,Order,Forex,USD,ILS.USD,"2025-02-28, 23:48:49",-8.4412,0.27788184,,2.345656188,0,,,0.003139,
+Trades,Data,Order,Forex,USD,ILS.USD,"2025-05-21, 22:20:11",-0.4724,0.28062909,,0.132569182,0,,,0.001223,
+Trades,Data,Order,Forex,USD,ILS.USD,"2025-06-06, 22:16:37",-1.3876,0.2852145,,0.39576364,0,,,-0.001561,
+Trades,Data,Order,Forex,USD,ILS.USD,"2025-09-09, 21:42:18",-0.8235,0.29867103,,0.245955593,0,,,-0.001275,
+Trades,SubTotal,,Forex,USD,ILS.USD,,-11.1247,,,3.119944603,0,,,0.001526,
+Trades,Total,,Forex,USD,,,,,,3.119944603,0,,,0.001526, 
+Deposits & Withdrawals,Header,Currency,Settle Date,Description,Amount
+Deposits & Withdrawals,Data,ILS,2025-01-19,Electronic Fund Transfer,60000
+Deposits & Withdrawals,Data,ILS,2025-02-06,Electronic Fund Transfer,25000
+Deposits & Withdrawals,Data,ILS,2025-04-03,Electronic Fund Transfer,10000
+Deposits & Withdrawals,Data,ILS,2025-04-07,Electronic Fund Transfer,6500
+Deposits & Withdrawals,Data,ILS,2025-05-15,Electronic Fund Transfer,15000
+Deposits & Withdrawals,Data,ILS,2025-06-03,Electronic Fund Transfer,12000
+Deposits & Withdrawals,Data,ILS,2025-07-03,Electronic Fund Transfer,10000
+Deposits & Withdrawals,Data,ILS,2025-08-07,Electronic Fund Transfer,10000
+Deposits & Withdrawals,Data,ILS,2025-11-02,Electronic Fund Transfer,14000
+Deposits & Withdrawals,Data,ILS,2025-12-04,Electronic Fund Transfer,15000
+Deposits & Withdrawals,Data,Total,,,177500
+Deposits & Withdrawals,Data,Total in USD,,,50766.325
+Fees,Header,Subtitle,Currency,Date,Description,Amount
+Fees,Data,Other Fees,ILS,2025-06-10,Broker Fee: Manual,-1272.33
+Fees,Data,Other Fees,ILS,2025-07-11,Broker Fee: Manual,-36.4
+Fees,Data,Other Fees,ILS,2025-09-15,Broker Fee: Manual,-755.45
+Fees,Data,Other Fees,ILS,2025-10-13,Broker Fee: Manual,-5022.37
+Fees,Data,Other Fees,ILS,2025-11-14,Broker Fee: Manual,-4354.85
+Fees,Data,Other Fees,ILS,2025-12-15,Broker Fee: Manual,-2262.26
+Fees,Data,Total,,,,-13703.66
+Fees,Data,Total in USD,,,,-4179.7011597
+Fees,Data,Other Fees,USD,2025-07-17,b******45:US Equity and Options Add-On Streaming Bundle Non-Professional for Jul 2025,-4.5
+Fees,Data,Other Fees,USD,2025-07-17,b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Jul 2025,-10
+Fees,Data,Other Fees,USD,2025-08-04,b******45:US Equity and Options Add-On Streaming Bundle Non-Professional for Aug 2025,-4.5
+Fees,Data,Other Fees,USD,2025-08-04,b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Jul 2025,10
+Fees,Data,Other Fees,USD,2025-08-04,b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Aug 2025,-10
+Fees,Data,Other Fees,USD,2025-09-03,b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Sep 2025,-10
+Fees,Data,Other Fees,USD,2025-09-04,b******45:US Equity and Options Add-On Streaming Bundle Non-Professional for Sep 2025,-4.5
+Fees,Data,Other Fees,USD,2025-09-04,b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Aug 2025,10
+Fees,Data,Other Fees,USD,2025-10-03,cancel[b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Sep 2025,10
+Fees,Data,Other Fees,USD,2025-10-03,f******77:US Equity and Options Add-On Streaming Bundle Non-Professional for Oct 2025,-4.5
+Fees,Data,Other Fees,USD,2025-10-03,f******77:US Securities Snapshot and Futures Value Bundle Non-Professional for Oct 2025,-10
+Fees,Data,Other Fees,USD,2025-11-04,cancel[f******77:US Securities Snapshot and Futures Value Bundle Non-Professional for Oct 2025,10
+Fees,Data,Other Fees,USD,2025-11-04,f******77:US Equity and Options Add-On Streaming Bundle Non-Professional for Nov 2025,-4.5
+Fees,Data,Other Fees,USD,2025-11-04,f******77:US Securities Snapshot and Futures Value Bundle Non-Professional for Nov 2025,-10
+Fees,Data,Other Fees,USD,2025-12-02,b******45:US Equity and Options Add-On Streaming Bundle Non-Professional for Dec 2025,-4.5
+Fees,Data,Other Fees,USD,2025-12-02,b******45:US Securities Snapshot and Futures Value Bundle Non-Professional for Dec 2025,-10
+Fees,Data,Total,,,,-47
+Fees,Data,Total Other Fees in USD,,,,-4226.7011597
+Fees,Notes,"Market data is provided by Global Financial Information Services (GmbH). Your local broker collects amounts owed for fees and tax for such data on behalf of Global Financial Information Services (GmbH). Note, you are responsible for any applicable taxes relating to the provision of these services."
+Dividends,Header,Currency,Date,Description,Amount
+Dividends,Data,USD,2025-02-06,TLT(US4642874329) Cash Dividend USD 0.312282 per Share (Ordinary Dividend),10.62
+Dividends,Data,USD,2025-03-06,TLT(US4642874329) Payment in Lieu of Dividend (Ordinary Dividend),1.45
+Dividends,Data,USD,2025-03-06,TLT(US4642874329) Cash Dividend USD 0.289817 per Share (Ordinary Dividend),17.1
+Dividends,Data,USD,2025-03-17,GOOG(US02079K1079) Cash Dividend USD 0.20 per Share (Ordinary Dividend),4.4
+Dividends,Data,USD,2025-03-17,WHR(US9633201069) Cash Dividend USD 1.75 per Share (Ordinary Dividend),29.75
+Dividends,Data,USD,2025-03-17,WHR(US9633201069) Payment in Lieu of Dividend (Ordinary Dividend),1.75
+Dividends,Data,USD,2025-04-04,TLT(US4642874329) Payment in Lieu of Dividend (Ordinary Dividend),7.81
+Dividends,Data,USD,2025-04-04,TLT(US4642874329) Cash Dividend USD 0.325582 per Share (Ordinary Dividend),0.05
+Dividends,Data,USD,2025-04-30,QQQ(US46090E1038) Payment in Lieu of Dividend (Ordinary Dividend),2.86
+Dividends,Data,USD,2025-04-30,QQQ(US46090E1038) Cash Dividend USD 0.71571 per Share (Ordinary Dividend),4.29
+Dividends,Data,USD,2025-05-06,TLT(US4642874329) Cash Dividend USD 0.327612 per Share (Ordinary Dividend),0.02
+Dividends,Data,USD,2025-06-05,TLT(US4642874329) Cash Dividend USD 0.319532 per Share (Ordinary Dividend),55.62
+Dividends,Data,USD,2025-06-16,GOOG(US02079K1079) Cash Dividend USD 0.21 per Share (Ordinary Dividend),4.62
+Dividends,Data,USD,2025-06-16,WHR(US9633201069) Payment in Lieu of Dividend (Ordinary Dividend),31.5
+Dividends,Data,USD,2025-07-07,TLT(US4642874329) Cash Dividend USD 0.328301 per Share (Ordinary Dividend),32.83
+Dividends,Data,USD,2025-07-31,QQQ(US46090E1038) Cash Dividend USD 0.59111 per Share (Ordinary Dividend),0.01
+Dividends,Data,USD,2025-08-06,TLT(US4642874329) Cash Dividend USD 0.330802 per Share (Ordinary Dividend),16.54
+Dividends,Data,USD,2025-09-05,TLT(US4642874329) Cash Dividend USD 0.328083 per Share (Ordinary Dividend),16.45
+Dividends,Data,USD,2025-09-15,GOOG(US02079K1079) Cash Dividend USD 0.21 per Share (Ordinary Dividend),4.63
+Dividends,Data,USD,2025-10-06,TLT(US4642874329) Cash Dividend USD 0.310447 per Share (Ordinary Dividend),15.61
+Dividends,Data,USD,2025-10-31,QQQ(US46090E1038) Cash Dividend USD 0.69395 per Share (Ordinary Dividend),0.01
+Dividends,Data,USD,2025-12-29,BMNR(US09175A2069) Payment in Lieu of Dividend (Ordinary Dividend),0.44
+Dividends,Data,USD,2025-12-29,BMNR(US09175A2069) Cash Dividend USD 0.01 per Share (Ordinary Dividend),5.56
+Dividends,Data,USD,2025-12-31,QQQ(US46090E1038) Cash Dividend USD 0.79408 per Share (Ordinary Dividend),0.01
+Dividends,Data,Total,,,263.93
+Withholding Tax,Header,Currency,Date,Description,Amount,Code
+Withholding Tax,Data,USD,2025-02-06,TLT(US4642874329) Cash Dividend USD 0.312282 per Share - US Tax,-3.19,
+Withholding Tax,Data,USD,2025-02-06,TLT(US4642874329) Cash Dividend USD 0.312282 per Share - US Tax,3.19,
+Withholding Tax,Data,USD,2025-02-06,TLT(US4642874329) Cash Dividend USD 0.312282 per Share - US Tax,-2.66,
+Withholding Tax,Data,USD,2025-03-06,TLT(US4642874329) Payment in Lieu of Dividend - US Tax,-0.44,
+Withholding Tax,Data,USD,2025-03-06,TLT(US4642874329) Cash Dividend USD 0.289817 per Share - US Tax,-5.13,
+Withholding Tax,Data,USD,2025-03-06,TLT(US4642874329) Payment in Lieu of Dividend - US Tax,0.44,
+Withholding Tax,Data,USD,2025-03-06,TLT(US4642874329) Payment in Lieu of Dividend - US Tax,-0.36,
+Withholding Tax,Data,USD,2025-03-06,TLT(US4642874329) Cash Dividend USD 0.289817 per Share - US Tax,5.13,
+Withholding Tax,Data,USD,2025-03-06,TLT(US4642874329) Cash Dividend USD 0.289817 per Share - US Tax,-4.28,
+Withholding Tax,Data,USD,2025-03-17,GOOG(US02079K1079) Cash Dividend USD 0.20 per Share - US Tax,-1.32,
+Withholding Tax,Data,USD,2025-03-17,GOOG(US02079K1079) Cash Dividend USD 0.20 per Share - US Tax,1.32,
+Withholding Tax,Data,USD,2025-03-17,GOOG(US02079K1079) Cash Dividend USD 0.20 per Share - US Tax,-1.1,
+Withholding Tax,Data,USD,2025-03-17,WHR(US9633201069) Cash Dividend USD 1.75 per Share - US Tax,-8.93,
+Withholding Tax,Data,USD,2025-03-17,WHR(US9633201069) Payment in Lieu of Dividend - US Tax,-0.53,
+Withholding Tax,Data,USD,2025-03-17,WHR(US9633201069) Cash Dividend USD 1.75 per Share - US Tax,8.93,
+Withholding Tax,Data,USD,2025-03-17,WHR(US9633201069) Cash Dividend USD 1.75 per Share - US Tax,-7.44,
+Withholding Tax,Data,USD,2025-03-17,WHR(US9633201069) Payment in Lieu of Dividend - US Tax,0.53,
+Withholding Tax,Data,USD,2025-03-17,WHR(US9633201069) Payment in Lieu of Dividend - US Tax,-0.44,
+Withholding Tax,Data,USD,2025-04-04,TLT(US4642874329) Payment in Lieu of Dividend - US Tax,-1.95,
+Withholding Tax,Data,USD,2025-04-04,TLT(US4642874329) Cash Dividend USD 0.325582 per Share - US Tax,-0.01,
+Withholding Tax,Data,USD,2025-04-30,QQQ(US46090E1038) Payment in Lieu of Dividend - US Tax,-0.72,
+Withholding Tax,Data,USD,2025-04-30,QQQ(US46090E1038) Cash Dividend USD 0.71571 per Share - US Tax,-1.07,
+Withholding Tax,Data,USD,2025-05-06,TLT(US4642874329) Cash Dividend USD 0.327612 per Share - US Tax,-0.01,
+Withholding Tax,Data,USD,2025-06-05,TLT(US4642874329) Cash Dividend USD 0.319532 per Share - US Tax,-13.91,
+Withholding Tax,Data,USD,2025-06-16,GOOG(US02079K1079) Cash Dividend USD 0.21 per Share - US Tax,-1.16,
+Withholding Tax,Data,USD,2025-06-16,WHR(US9633201069) Payment in Lieu of Dividend - US Tax,-7.88,
+Withholding Tax,Data,USD,2025-07-07,TLT(US4642874329) Cash Dividend USD 0.328301 per Share - US Tax,-8.21,
+Withholding Tax,Data,USD,2025-08-06,TLT(US4642874329) Cash Dividend USD 0.330802 per Share - US Tax,-4.14,
+Withholding Tax,Data,USD,2025-09-05,TLT(US4642874329) Cash Dividend USD 0.328083 per Share - US Tax,-4.11,
+Withholding Tax,Data,USD,2025-09-15,GOOG(US02079K1079) Cash Dividend USD 0.21 per Share - US Tax,-1.16,
+Withholding Tax,Data,USD,2025-10-06,TLT(US4642874329) Cash Dividend USD 0.310447 per Share - US Tax,-3.9,
+Withholding Tax,Data,USD,2025-12-29,BMNR(US09175A2069) Payment in Lieu of Dividend - US Tax,-0.11,
+Withholding Tax,Data,USD,2025-12-29,BMNR(US09175A2069) Cash Dividend USD 0.01 per Share - US Tax,-1.39,
+Withholding Tax,Data,Total,,,-66.01,
+Interest,Header,Currency,Date,Description,Amount
+Interest,Data,ILS,2025-07-03,ILS Debit Interest for Jun-2025,-13.4
+Interest,Data,ILS,2025-08-05,ILS Debit Interest for Jul-2025,-1.46
+Interest,Data,ILS,2025-09-04,ILS Debit Interest for Aug-2025,-0.06
+Interest,Data,ILS,2025-10-03,ILS Debit Interest for Sep-2025,-6.04
+Interest,Data,ILS,2025-11-05,ILS Debit Interest for Oct-2025,-58.15
+Interest,Data,ILS,2025-12-03,ILS Debit Interest for Nov-2025,-41.96
+Interest,Data,Total,,,-121.07
+Interest,Data,Total in USD,,,-37.1454791
+Interest,Data,USD,2025-02-05,USD Debit Interest for Jan-2025,-3.27
+Interest,Data,USD,2025-03-05,USD Debit Interest for Feb-2025,-7.07
+Interest,Data,USD,2025-03-05,USD IBKR Managed Securities (SYEP) Interest for Feb-2025,0.01
+Interest,Data,USD,2025-04-03,USD Debit Interest for Mar-2025,-12.87
+Interest,Data,USD,2025-05-05,USD Debit Interest for Apr-2025,-43.92
+Interest,Data,USD,2025-06-04,USD Debit Interest for May-2025,-22.54
+Interest,Data,USD,2025-07-03,USD Debit Interest for Jun-2025,-15.69
+Interest,Data,USD,2025-07-03,USD IBKR Managed Securities (SYEP) Interest for Jun-2025,0.57
+Interest,Data,USD,2025-08-05,USD Debit Interest for Jul-2025,-46.07
+Interest,Data,USD,2025-09-04,USD Debit Interest for Aug-2025,-72.76
+Interest,Data,USD,2025-09-04,USD IBKR Managed Securities (SYEP) Interest for Aug-2025,0.21
+Interest,Data,USD,2025-10-03,USD Debit Interest for Sep-2025,-20.35
+Interest,Data,USD,2025-10-03,USD IBKR Managed Securities (SYEP) Interest for Sep-2025,0.29
+Interest,Data,USD,2025-11-05,USD Debit Interest for Oct-2025,-71.09
+Interest,Data,USD,2025-12-03,USD Debit Interest for Nov-2025,-97.19
+Interest,Data,Total,,,-411.74
+Interest,Data,Total Interest in USD,,,-448.8854791
+Interest Accruals,Header,Currency,Field Name,Field Value
+Interest Accruals,Data,Base Currency Summary,Starting Accrual Balance,0
+Interest Accruals,Data,Base Currency Summary,Interest Accrued,-556.4333815
+Interest Accruals,Data,Base Currency Summary,Accrual Reversal,448.8854791
+Interest Accruals,Data,Base Currency Summary,FX Translation,-0.4109252
+Interest Accruals,Data,Base Currency Summary,Ending Accrual Balance,-107.9588276
+Interest Accruals,Data,ILS,Starting Accrual Balance,0
+Interest Accruals,Data,ILS,Interest Accrued,-127.53
+Interest Accruals,Data,ILS,Accrual Reversal,121.07
+Interest Accruals,Data,ILS,Ending Accrual Balance,-6.46
+Interest Accruals,Data,ILS,Ending Accrual Balance in USD,-2.0288276
+Interest Accruals,Data,USD,Starting Accrual Balance,0
+Interest Accruals,Data,USD,Interest Accrued,-517.67
+Interest Accruals,Data,USD,Accrual Reversal,411.74
+Interest Accruals,Data,USD,Ending Accrual Balance,-105.93
+Change in Dividend Accruals,Header,Asset Category,Currency,Symbol,Date,Ex Date,Pay Date,Quantity,Tax,Fee,Gross Rate,Gross Amount,Net Amount,Code
+Change in Dividend Accruals,Data,Starting Dividend Accruals in USD,,,,,,,,,,,0,
+Change in Dividend Accruals,Data,Stocks,USD,BMNR,2025-12-05,2025-12-08,2025-12-29,600,1.5,0,0.01,6,4.5,Po
+Change in Dividend Accruals,Data,Stocks,USD,BMNR,2025-12-29,2025-12-08,2025-12-29,600,-1.5,0,0.01,-6,-4.5,Re
+Change in Dividend Accruals,Data,Stocks,USD,GOOG,2025-03-07,2025-03-10,2025-03-17,22,1.32,0,0.2,4.4,3.08,Po
+Change in Dividend Accruals,Data,Stocks,USD,GOOG,2025-03-17,2025-03-10,2025-03-17,22,-1.32,0,0.2,-4.4,-3.08,Re
+Change in Dividend Accruals,Data,Stocks,USD,GOOG,2025-06-06,2025-06-09,2025-06-16,22.0186,1.16,0,0.21,4.62,3.46,Po
+Change in Dividend Accruals,Data,Stocks,USD,GOOG,2025-06-16,2025-06-09,2025-06-16,22.0186,-1.16,0,0.21,-4.62,-3.46,Re
+Change in Dividend Accruals,Data,Stocks,USD,GOOG,2025-09-05,2025-09-08,2025-09-15,22.038,1.16,0,0.21,4.63,3.47,Po
+Change in Dividend Accruals,Data,Stocks,USD,GOOG,2025-09-15,2025-09-08,2025-09-15,22.038,-1.16,0,0.21,-4.63,-3.47,Re
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-03-21,2025-03-24,2025-04-30,10,1.79,0,0.71571,7.16,5.37,Po
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-04-30,2025-03-24,2025-04-30,10,-1.79,0,0.71571,-7.15,-5.36,Re
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-06-20,2025-06-23,2025-07-31,0.0111,0,0,0.59111,0.01,0.01,Po
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-07-31,2025-06-23,2025-07-31,0.0111,0,0,0.59111,-0.01,-0.01,Re
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-09-19,2025-09-22,2025-10-31,0.0111,0,0,0.69395,0.01,0.01,Po
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-10-31,2025-09-22,2025-10-31,0.0111,0,0,0.69395,-0.01,-0.01,Re
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-12-19,2025-12-22,2025-12-31,0.0111,0,0,0.79408,0.01,0.01,Po
+Change in Dividend Accruals,Data,Stocks,USD,QQQ,2025-12-31,2025-12-22,2025-12-31,0.0111,0,0,0.79408,-0.01,-0.01,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-01-31,2025-02-03,2025-02-06,34,3.19,0,0.312282,10.62,7.43,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-02-06,2025-02-03,2025-02-06,34,-3.19,0,0.312282,-10.62,-7.43,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-02-28,2025-03-03,2025-03-06,64,5.57,0,0.289817,18.55,12.98,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-03-06,2025-03-03,2025-03-06,64,-5.57,0,0.289817,-18.55,-12.98,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-03-31,2025-04-01,2025-04-04,24.1425,1.96,0,0.325582,7.86,5.9,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-04-04,2025-04-01,2025-04-04,24.1425,-1.96,0,0.325582,-7.86,-5.9,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-04-30,2025-05-01,2025-05-06,0.0642,0.01,0,0.327612,0.02,0.01,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-05-06,2025-05-01,2025-05-06,0.0642,-0.01,0,0.327612,-0.02,-0.01,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-05-30,2025-06-02,2025-06-05,174.0643,13.91,0,0.319532,55.62,41.71,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-06-05,2025-06-02,2025-06-05,174.0643,-13.91,0,0.319532,-55.62,-41.71,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-06-30,2025-07-01,2025-07-07,100,8.21,0,0.328301,32.83,24.62,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-07-07,2025-07-01,2025-07-07,100,-8.21,0,0.328301,-32.83,-24.62,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-07-31,2025-08-01,2025-08-06,50,4.14,0,0.330802,16.54,12.4,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-08-06,2025-08-01,2025-08-06,50,-4.14,0,0.330802,-16.54,-12.4,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-09-01,2025-09-02,2025-09-05,50.1409,4.11,0,0.328083,16.45,12.34,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-09-05,2025-09-02,2025-09-05,50.1409,-4.11,0,0.328083,-16.45,-12.34,Re
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-09-30,2025-10-01,2025-10-06,50.2793,3.9,0,0.310447,15.61,11.71,Po
+Change in Dividend Accruals,Data,Stocks,USD,TLT,2025-10-06,2025-10-01,2025-10-06,50.2793,-3.9,0,0.310447,-15.61,-11.71,Re
+Change in Dividend Accruals,Data,Stocks,USD,WHR,2025-02-27,2025-02-28,2025-03-17,18,9.45,0,1.75,31.5,22.05,Po
+Change in Dividend Accruals,Data,Stocks,USD,WHR,2025-02-27,2025-02-28,2025-03-17,18,9.46,0,1.75,31.5,22.04,Po
+Change in Dividend Accruals,Data,Stocks,USD,WHR,2025-02-27,2025-02-28,2025-03-17,18,-9.45,0,1.75,-31.5,-22.05,Re
+Change in Dividend Accruals,Data,Stocks,USD,WHR,2025-03-17,2025-02-28,2025-03-17,18,-9.46,0,1.75,-31.5,-22.04,Re
+Change in Dividend Accruals,Data,Stocks,USD,WHR,2025-05-15,2025-05-16,2025-06-16,18,7.88,0,1.75,31.5,23.62,Po
+Change in Dividend Accruals,Data,Stocks,USD,WHR,2025-06-16,2025-05-16,2025-06-16,18,-7.88,0,1.75,-31.5,-23.62,Re
+Change in Dividend Accruals,Data,Total,,,,,,,0,0,,0.01,0.01,
+Change in Dividend Accruals,Data,Ending Dividend Accruals in USD,,,,,,,,,,,0,
+Stock Yield Enhancement Program Securities Lent Activity,Header,Asset Category,Currency,Symbol,Date,Description, ,Transaction ID,Quantity,Collateral Amount
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-19,New Loan Allocation, ,SLB.107070826,-188,2068
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-20,Loan Return Allocation, ,SLB.107070826,188,-2068
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-20,New Loan Allocation, ,SLB.107221026,-227,2497
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-23,Loan Return Allocation, ,SLB.107221026,227,-2497
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-23,New Loan Allocation, ,SLB.107278664,-111,1221
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-24,Loan Return Allocation, ,SLB.107278664,111,-1221
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-24,New Loan Allocation, ,SLB.107336211,-153,1683
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-25,Loan Return Allocation, ,SLB.107336211,153,-1683
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-25,New Loan Allocation, ,SLB.107336211,-153,1683
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-26,Loan Return Allocation, ,SLB.107336211,153,-1683
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-26,New Loan Allocation, ,SLB.107451417,-136,1496
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-06-27,Loan Return Allocation, ,SLB.107451417,136,-1496
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-18,New Loan Allocation, ,SLB.109460973,-261,3915
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-19,Loan Return Allocation, ,SLB.109460973,261,-3915
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-19,New Loan Allocation, ,SLB.109515364,-309,5253
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-20,Loan Return Allocation, ,SLB.109515364,309,-5253
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-20,New Loan Allocation, ,SLB.109572696,-344,5504
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-21,Loan Return Allocation, ,SLB.109572696,344,-5504
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-21,New Loan Allocation, ,SLB.109572696,-298,5066
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-22,Loan Return Allocation, ,SLB.109572696,298,-5066
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-22,New Loan Allocation, ,SLB.109678377,-279,4743
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-25,Loan Return Allocation, ,SLB.109678377,279,-4743
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-26,New Loan Allocation, ,SLB.109678377,-208,3536
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-27,Loan Return Allocation, ,SLB.109678377,208,-3536
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-27,New Loan Allocation, ,SLB.109839735,-215,3655
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-28,Loan Return Allocation, ,SLB.109839735,215,-3655
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-28,New Loan Allocation, ,SLB.109893916,-296,5328
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-29,Loan Return Allocation, ,SLB.109893916,296,-5328
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-08-29,New Loan Allocation, ,SLB.109893916,-210,3570
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-01,Loan Return Allocation, ,SLB.109893916,210,-3570
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-12,New Loan Allocation, ,SLB.110504636,-359,6462
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-15,Loan Return Allocation, ,SLB.110504636,359,-6462
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-17,New Loan Allocation, ,SLB.110676892,-331,6620
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-18,Loan Return Allocation, ,SLB.110676892,331,-6620
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-19,New Loan Allocation, ,SLB.110793564,-323,6783
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-22,Loan Return Allocation, ,SLB.110793564,323,-6783
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-22,New Loan Allocation, ,SLB.110853861,-457,9597
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-23,Loan Return Allocation, ,SLB.110853861,457,-9597
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-23,New Loan Allocation, ,SLB.110914609,-458,11450
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-24,Loan Return Allocation, ,SLB.110914609,458,-11450
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-24,New Loan Allocation, ,SLB.110974232,-361,9386
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-25,Loan Return Allocation, ,SLB.110974232,361,-9386
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-25,New Loan Allocation, ,SLB.110974232,-238,5712
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-26,Loan Return Allocation, ,SLB.110974232,238,-5712
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-26,New Loan Allocation, ,SLB.111088863,-268,6432
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-29,Loan Return Allocation, ,SLB.111088863,268,-6432
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-29,New Loan Allocation, ,SLB.111088863,-277,6371
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,APLD,2025-09-30,Loan Return Allocation, ,SLB.111088863,277,-6371
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,HIMS,2025-09-29,New Loan Allocation, ,SLB.111146047,-88,5280
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,HIMS,2025-09-30,Loan Return Allocation, ,SLB.111146047,88,-5280
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,HIMS,2025-09-30,New Loan Allocation, ,SLB.111204028,-93,5673
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,HIMS,2025-10-01,Loan Return Allocation, ,SLB.111204028,93,-5673
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,OSCR,2025-08-04,New Loan Allocation, ,SLB.108909224,-96,1344
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,OSCR,2025-08-05,Loan Return Allocation, ,SLB.108909224,96,-1344
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-02-27,New Loan Allocation, ,SLB.102921578,-18,1926
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-02-28,Loan Return Allocation, ,SLB.102921578,18,-1926
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-06-16,New Loan Allocation, ,SLB.107013461,-18,1674
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-06-17,Loan Return Allocation, ,SLB.107013461,18,-1674
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-06-20,New Loan Allocation, ,SLB.107219000,-18,1692
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-06-23,Loan Return Allocation, ,SLB.107219000,18,-1692
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-06-23,New Loan Allocation, ,SLB.107278524,-18,1710
+Stock Yield Enhancement Program Securities Lent Activity,Data,Stocks,USD,WHR,2025-06-24,Loan Return Allocation, ,SLB.107278524,18,-1710
+Stock Yield Enhancement Program Securities Lent Activity,Data,Total,,,,,,,,0
+Stock Yield Enhancement Program Securities Lent Activity,Notes,"Important Notice re: SIPC Protection for Loans of Fully Paid and Excess Margin Securities:  Please be aware that if you execute loans of your fully paid or excess margin securities, the  provisions of the Securities Investor Protection Act of 1970 may not protect you with respect to the securities loan transaction.  Therefore, the collateral value credited to your account by Interactive Brokers (see above) may constitute the only source of satisfaction in the event that Interactive Brokers cannot return the securities."
+Stock Yield Enhancement Program Securities Lent Interest Details,Header,Currency,Value Date,Symbol,Start Date,Quantity,Collateral Amount,Market-based Rate (%),Interest Rate on Customer Collateral (%),Interest Paid to Customer,Code
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-02-27,WHR,2025-02-27,-18,1926,0.18,0.09,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-16,WHR,2025-06-16,-18,1674,0.17,0.09,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-19,APLD,2025-06-19,-188,2068,2.46,1.23,0.07,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-20,APLD,2025-06-20,-227,2497,2.47,1.24,0.09,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-20,WHR,2025-06-20,-18,1692,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-21,APLD,2025-06-20,-227,2497,2.47,1.24,0.09,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-21,WHR,2025-06-20,-18,1692,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-22,APLD,2025-06-20,-227,2497,2.47,1.24,0.09,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-22,WHR,2025-06-20,-18,1692,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-23,APLD,2025-06-23,-111,1221,2.33,1.17,0.04,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-23,WHR,2025-06-23,-18,1710,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-24,APLD,2025-06-24,-153,1683,2.18,1.09,0.05,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-25,APLD,2025-06-25,-153,1683,2.18,1.09,0.05,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-06-26,APLD,2025-06-26,-136,1496,1.91,0.96,0.04,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-04,OSCR,2025-08-04,-96,1344,0.62,0.31,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-18,APLD,2025-08-18,-261,3915,0.21,0.11,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-19,APLD,2025-08-19,-309,5253,0.23,0.12,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-20,APLD,2025-08-20,-344,5504,0.22,0.11,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-21,APLD,2025-08-21,-298,5066,0.21,0.11,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-22,APLD,2025-08-22,-279,4743,0.21,0.11,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-23,APLD,2025-08-22,-279,4743,0.21,0.11,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-24,APLD,2025-08-22,-279,4743,0.21,0.11,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-26,APLD,2025-08-26,-208,3536,0.21,0.11,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-27,APLD,2025-08-27,-215,3655,0.21,0.11,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-28,APLD,2025-08-28,-296,5328,0.21,0.11,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-29,APLD,2025-08-29,-210,3570,0.2,0.1,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-30,APLD,2025-08-29,-210,3570,0.2,0.1,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-08-31,APLD,2025-08-29,-210,3570,0.2,0.1,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-12,APLD,2025-09-12,-359,6462,0.2,0.1,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-13,APLD,2025-09-12,-359,6462,0.2,0.1,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-14,APLD,2025-09-12,-359,6462,0.2,0.1,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-17,APLD,2025-09-17,-331,6620,0.19,0.1,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-19,APLD,2025-09-19,-323,6783,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-20,APLD,2025-09-19,-323,6783,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-21,APLD,2025-09-19,-323,6783,0.11,0.06,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-22,APLD,2025-09-22,-457,9597,0.15,0.08,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-23,APLD,2025-09-23,-458,11450,0.16,0.08,0.03,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-24,APLD,2025-09-24,-361,9386,0.15,0.08,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-25,APLD,2025-09-25,-238,5712,0.14,0.07,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-26,APLD,2025-09-26,-268,6432,0.14,0.07,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-27,APLD,2025-09-26,-268,6432,0.14,0.07,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-28,APLD,2025-09-26,-268,6432,0.14,0.07,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-29,APLD,2025-09-29,-277,6371,0.14,0.07,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-29,HIMS,2025-09-29,-88,5280,0.16,0.08,0.01,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,USD,2025-09-30,HIMS,2025-09-30,-93,5673,0.18,0.09,0.02,Po
+Stock Yield Enhancement Program Securities Lent Interest Details,Data,Total,,,,,,,,1.08,
+Financial Instrument Information,Header,Asset Category,Symbol,Description,Conid,Security ID,Underlying,Listing Exch,Multiplier,Type,Code
+Financial Instrument Information,Data,Stocks,AMD,ADVANCED MICRO DEVICES,4391,US0079031078,AMD,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,AMZN,AMAZON.COM INC,3691937,US0231351067,AMZN,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,APLD,APPLIED DIGITAL CORP,556067819,US0381692070,APLD,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,BMNR,BITMINE IMMERSION TECHNOLOGI,785071865,US09175A2069,BMNR,AMEX,1,COMMON,
+Financial Instrument Information,Data,Stocks,ELF,ELF BEAUTY INC,248682005,US26856L1035,ELF,NYSE,1,COMMON,
+Financial Instrument Information,Data,Stocks,ETHA,ISHARES ETHEREUM TRUST ETF,717828992,US46438R1059,ETHA,NASDAQ,1,ETF,
+Financial Instrument Information,Data,Stocks,FUBO,FUBOTV INC -CLASS A,441289672,US35953D1046,FUBO,NYSE,1,COMMON,
+Financial Instrument Information,Data,Stocks,GOOG,ALPHABET INC-CL C,208813720,US02079K1079,GOOG,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,GRAB,GRAB HOLDINGS LTD - CL A,530319709,KYG4124C1096,GRAB,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,HIMS,HIMS & HERS HEALTH INC,466188387,US4330001060,HIMS,NYSE,1,COMMON,
+Financial Instrument Information,Data,Stocks,LMND,LEMONADE INC,430625913,US52567D1072,LMND,NYSE,1,COMMON,
+Financial Instrument Information,Data,Stocks,OSCR,OSCAR HEALTH INC - CLASS A,474517727,US6877931096,OSCR,NYSE,1,COMMON,
+Financial Instrument Information,Data,Stocks,QQQ,INVESCO QQQ TRUST SERIES 1,320227571,US46090E1038,QQQ,NASDAQ,1,ETF,
+Financial Instrument Information,Data,Stocks,SOFI,SOFI TECHNOLOGIES INC,494162724,US83406F1021,SOFI,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,TLT,ISHARES 20+ YEAR TREASURY BD,15547841,US4642874329,TLT,NASDAQ,1,ETF,
+Financial Instrument Information,Data,Stocks,WHR,WHIRLPOOL CORP,13751,US9633201069,WHR,NYSE,1,COMMON,
+Financial Instrument Information,Data,Stocks,ZETA,ZETA GLOBAL HOLDINGS CORP-A,495763832,US98956A1051,ZETA,NYSE,1,COMMON,
+Financial Instrument Information,Header,Asset Category,Symbol,Description,Conid,Underlying,Listing Exch,Multiplier,Expiry,Delivery Month,Type,Strike,Code
+Financial Instrument Information,Data,Equity and Index Options,APLD  250829C00013000,APLD 29AUG25 13 C,798307807,APLD,CBOE,100,2025-08-29,2025-08,C,13,
+Financial Instrument Information,Data,Equity and Index Options,APLD  250829C00017000,APLD 29AUG25 17 C,798524421,APLD,CBOE,100,2025-08-29,2025-08,C,17,
+Financial Instrument Information,Data,Equity and Index Options,APLD  250919C00014000,APLD 19SEP25 14 C,762760042,APLD,CBOE,100,2025-09-19,2025-09,C,14,
+Financial Instrument Information,Data,Equity and Index Options,APLD  251003C00019000,APLD 03OCT25 19 C,808932796,APLD,CBOE,100,2025-10-03,2025-10,C,19,
+Financial Instrument Information,Data,Equity and Index Options,APLD  251010C00021000,APLD 10OCT25 21 C,810338841,APLD,CBOE,100,2025-10-10,2025-10,C,21,
+Financial Instrument Information,Data,Equity and Index Options,APLD  251017C00016000,APLD 17OCT25 16 C,762760638,APLD,CBOE,100,2025-10-17,2025-10,C,16,
+Financial Instrument Information,Data,Equity and Index Options,APLD  251017C00018000,APLD 17OCT25 18 C,789052625,APLD,CBOE,100,2025-10-17,2025-10,C,18,
+Financial Instrument Information,Data,Equity and Index Options,APLD  251024P00026000,APLD 24OCT25 26 P,813462801,APLD,CBOE,100,2025-10-24,2025-10,P,26,
+Financial Instrument Information,Data,Equity and Index Options,APLD  260116C00036000,APLD 16JAN26 36 C,816950542,APLD,CBOE,100,2026-01-16,2026-01,C,36,
+Financial Instrument Information,Data,Equity and Index Options,APLD  260320C00044000,APLD 20MAR26 44 C,821944894,APLD,CBOE,100,2026-03-20,2026-03,C,44,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  250919P00038000,BMNR 19SEP25 38 P,803014734,BMNR,CBOE,100,2025-09-19,2025-09,P,38,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  250926C00050000,BMNR 26SEP25 50 C,805396583,BMNR,CBOE,100,2025-09-26,2025-09,C,50,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251003P00049000,BMNR 03OCT25 49 P,808957403,BMNR,CBOE,100,2025-10-03,2025-10,P,49,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251003P00054000,BMNR 03OCT25 54 P,808957983,BMNR,CBOE,100,2025-10-03,2025-10,P,54,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251017C00055000,BMNR 17OCT25 55 C,802217604,BMNR,CBOE,100,2025-10-17,2025-10,C,55,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251017P00057500,BMNR 17OCT25 57.5 P,816206271,BMNR,CBOE,100,2025-10-17,2025-10,P,57.5,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251017P00060000,BMNR 17OCT25 60 P,802217896,BMNR,CBOE,100,2025-10-17,2025-10,P,60,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251121P00050000,BMNR 21NOV25 50 P,801575900,BMNR,CBOE,100,2025-11-21,2025-11,P,50,
+Financial Instrument Information,Data,Equity and Index Options,BMNR  251226P00029500,BMNR 26DEC25 29.5 P,837217554,BMNR,CBOE,100,2025-12-26,2025-12,P,29.5,
+Financial Instrument Information,Data,Equity and Index Options,FUBO  250711P00004000,FUBO 11JUL25 4 P,788054905,FUBO,CBOE,100,2025-07-11,2025-07,P,4,
+Financial Instrument Information,Data,Equity and Index Options,FUBO  250815C00004000,FUBO 15AUG25 4 C,752769485,FUBO,CBOE,100,2025-08-15,2025-08,C,4,
+Financial Instrument Information,Data,Equity and Index Options,FUBO  270115C00005000,FUBO 15JAN27 5 C,752770603,FUBO,CBOE,100,2027-01-15,2027-01,C,5,
+Financial Instrument Information,Data,Equity and Index Options,GRAB  250725P00005000,GRAB 25JUL25 5 P,789567701,GRAB,CBOE,100,2025-07-25,2025-07,P,5,
+Financial Instrument Information,Data,Equity and Index Options,GRAB  250801P00005000,GRAB 01AUG25 5 P,791170156,GRAB,CBOE,100,2025-08-01,2025-08,P,5,
+Financial Instrument Information,Data,Equity and Index Options,GRAB  250815C00005000,GRAB 15AUG25 5 C,792672057,GRAB,CBOE,100,2025-08-15,2025-08,C,5,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250718C00046000,HIMS 18JUL25 46 C,758897424,HIMS,CBOE,100,2025-07-18,2025-07,C,46,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250815C00050000,HIMS 15AUG25 50 C,758898093,HIMS,CBOE,100,2025-08-15,2025-08,C,50,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250815C00065000,HIMS 15AUG25 65 C,761067534,HIMS,CBOE,100,2025-08-15,2025-08,C,65,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250822C00045500,HIMS 22AUG25 45.5 C,806052541,HIMS,CBOE,100,2025-08-22,2025-08,C,45.5,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250822C00051000,HIMS 22AUG25 51 C,796843518,HIMS,CBOE,100,2025-08-22,2025-08,C,51,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250829C00046000,HIMS 29AUG25 46 C,798350586,HIMS,CBOE,100,2025-08-29,2025-08,C,46,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  250829C00052000,HIMS 29AUG25 52 C,798350935,HIMS,CBOE,100,2025-08-29,2025-08,C,52,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  251003C00050000,HIMS 03OCT25 50 C,808981932,HIMS,CBOE,100,2025-10-03,2025-10,C,50,
+Financial Instrument Information,Data,Equity and Index Options,HIMS  251017P00036000,HIMS 17OCT25 36 P,794388537,HIMS,CBOE,100,2025-10-17,2025-10,P,36,
+Financial Instrument Information,Data,Equity and Index Options,LMND  251010P00051000,LMND 10OCT25 51 P,810436625,LMND,CBOE,100,2025-10-10,2025-10,P,51,
+Financial Instrument Information,Data,Equity and Index Options,LMND  251017C00052000,LMND 17OCT25 52 C,816244852,LMND,CBOE,100,2025-10-17,2025-10,C,52,
+Financial Instrument Information,Data,Equity and Index Options,LMND  251024C00051000,LMND 24OCT25 51 C,811837883,LMND,CBOE,100,2025-10-24,2025-10,C,51,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250718P00014000,OSCR 18JUL25 14 P,742228413,OSCR,CBOE,100,2025-07-18,2025-07,P,14,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250801P00014000,OSCR 01AUG25 14 P,791201438,OSCR,CBOE,100,2025-08-01,2025-08,P,14,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250808C00014000,OSCR 08AUG25 14 C,795054604,OSCR,CBOE,100,2025-08-08,2025-08,C,14,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250808C00017000,OSCR 08AUG25 17 C,795054945,OSCR,CBOE,100,2025-08-08,2025-08,C,17,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250808P00014500,OSCR 08AUG25 14.5 P,795055524,OSCR,CBOE,100,2025-08-08,2025-08,P,14.5,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250829C00017500,OSCR 29AUG25 17.5 C,798405320,OSCR,CBOE,100,2025-08-29,2025-08,C,17.5,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250905C00018500,OSCR 05SEP25 18.5 C,801921709,OSCR,CBOE,100,2025-09-05,2025-09,C,18.5,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  250919P00013000,OSCR 19SEP25 13 P,771854090,OSCR,CBOE,100,2025-09-19,2025-09,P,13,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  251003P00017500,OSCR 03OCT25 17.5 P,809047247,OSCR,CBOE,100,2025-10-03,2025-10,P,17.5,
+Financial Instrument Information,Data,Equity and Index Options,OSCR  251128P00016000,OSCR 28NOV25 16 P,821989200,OSCR,CBOE,100,2025-11-28,2025-11,P,16,
+Financial Instrument Information,Data,Equity and Index Options,QQQ   250718C00525000,QQQ 18JUL25 525 C,772854777,QQQ,CBOE,100,2025-07-18,2025-07,C,525,
+Financial Instrument Information,Data,Equity and Index Options,QQQ   250815P00480000,QQQ 15AUG25 480 P,757361012,QQQ,CBOE,100,2025-08-15,2025-08,P,480,
+Financial Instrument Information,Data,Equity and Index Options,QQQ   250919P00470000,QQQ 19SEP25 470 P,730098605,QQQ,CBOE,100,2025-09-19,2025-09,P,470,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  250718P00013000,SOFI 18JUL25 13 P,742323889,SOFI,CBOE,100,2025-07-18,2025-07,P,13,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  250822C00024000,SOFI 22AUG25 24 C,797881428,SOFI,CBOE,100,2025-08-22,2025-08,C,24,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  250822P00018500,SOFI 22AUG25 18.5 P,796959438,SOFI,CBOE,100,2025-08-22,2025-08,P,18.5,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  250829C00026000,SOFI 29AUG25 26 C,798605433,SOFI,CBOE,100,2025-08-29,2025-08,C,26,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  250926C00028500,SOFI 26SEP25 28.5 C,812731754,SOFI,CBOE,100,2025-09-26,2025-09,C,28.5,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  251017P00024000,SOFI 17OCT25 24 P,763163308,SOFI,CBOE,100,2025-10-17,2025-10,P,24,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  251024C00030000,SOFI 24OCT25 30 C,812355308,SOFI,CBOE,100,2025-10-24,2025-10,C,30,
+Financial Instrument Information,Data,Equity and Index Options,SOFI  251107P00025000,SOFI 07NOV25 25 P,817762757,SOFI,CBOE,100,2025-11-07,2025-11,P,25,
+Financial Instrument Information,Data,Equity and Index Options,ZETA  251010P00019500,ZETA 10OCT25 19.5 P,810440965,ZETA,CBOE,100,2025-10-10,2025-10,P,19.5,
+Financial Instrument Information,Data,Equity and Index Options,ZETA  251017C00019500,ZETA 17OCT25 19.5 C,816320068,ZETA,CBOE,100,2025-10-17,2025-10,C,19.5,
+Financial Instrument Information,Data,Equity and Index Options,ZETA  251024C00019000,ZETA 24OCT25 19 C,811902402,ZETA,CBOE,100,2025-10-24,2025-10,C,19,
+Financial Instrument Information,Data,Equity and Index Options,ZETA  260116C00021000,ZETA 16JAN26 21 C,840626241,ZETA,CBOE,100,2026-01-16,2026-01,C,21,
+Codes,Header,Code,Meaning,Code (Cont.),Meaning (Cont.)
+Codes,Data,A,Assignment
+Codes,Data,ADR,ADR Fee Accrual
+Codes,Data,AEx,Automatic exercise for dividend-related recommendation.
+Codes,Data,AFx,AutoFX conversion resulting from trading
+Codes,Data,Adj,Adjustment
+Codes,Data,Al,Allocation
+Codes,Data,Aw,Away Trade
+Codes,Data,B,Automatic Buy-in
+Codes,Data,Bo,Direct Borrow
+Codes,Data,C,Closing Trade
+Codes,Data,CD,Cash Delivery
+Codes,Data,CP,Complex Position
+Codes,Data,Ca,Cancelled
+Codes,Data,Co,Corrected Trade
+Codes,Data,Cx,Part or all of this transaction was a Crossing executed as dual agent by Broker for two Broker customers
+Codes,Data,DT,Discounted Trade
+Codes,Data,De,Delivery or Conversion Action
+Codes,Data,ETF,ETF Creation/Redemption
+Codes,Data,Ep,Resulted from an Expired Position
+Codes,Data,Ex,Exercise
+Codes,Data,FP,"Broker acted as agent for the fractional share portion of this trade, which was executed by a Broker affiliate as principal."
+Codes,Data,FPA,Broker acted as agent for both the fractional share portion and the whole share portion of this trade; the fractional share portion was executed by a Broker Affiliate as principal.
+Codes,Data,G,Trade in Guaranteed Account Segment
+Codes,Data,GEA,Exercise or Assignment resulting from offsetting positions
+Codes,Data,HC,Highest Cost tax basis election
+Codes,Data,HFI,Investment Transferred to Hedge Fund
+Codes,Data,HFR,Redemption from Hedge Fund
+Codes,Data,I,Internal Transfer
+Codes,Data,IA,This transaction was executed against a Broker affiliate
+Codes,Data,IM,A portion of the order was executed against a Broker affiliate; A broker acted as agent on a portion.
+Codes,Data,INV,Investment Transfer from Investor
+Codes,Data,IPO,This transaction was executed as part of an IPO in which Broker was a member of the selling group and is classified as a Principal trade.
+Codes,Data,L,Ordered by Broker (Margin Violation)
+Codes,Data,LD,Adjusted by Loss Disallowed from Wash Sale
+Codes,Data,LF,Liquidation of fractional position by IB
+Codes,Data,LI,"Last In, First Out (LIFO) tax basis election"
+Codes,Data,LT,Long Term P/L
+Codes,Data,Lo,Direct Loan
+Codes,Data,M,Entered manually by Broker
+Codes,Data,MEx,Manual exercise for dividend-related recommendation.
+Codes,Data,ML,Maximize Losses tax basis election
+Codes,Data,MLG,Maximize Long Term Gain tax basis election
+Codes,Data,MLL,Maximize Long Term Loss tax basis election
+Codes,Data,MSG,Maximize Short Term Gain tax basis election
+Codes,Data,MSL,Maximize Short Term Loss tax basis election
+Codes,Data,O,Opening Trade
+Codes,Data,Off,Yes and No contracts offset to $1.00 cash settlement
+Codes,Data,P,Partial Execution
+Codes,Data,PE,Perpetual Investment
+Codes,Data,PI,Price Improvement
+Codes,Data,PTA,Post Trade Allocation
+Codes,Data,Po,Interest or Dividend Accrual Posting
+Codes,Data,Pr,Part or all of this transaction was executed by the Exchange as a Crossing by Broker against a Broker affiliate and is therefore classified as a Principal and not an agency trade
+Codes,Data,R,Dividend Reinvestment
+Codes,Data,RED,Redemption to Investor
+Codes,Data,RI,Recurring Investment
+Codes,Data,RP,"Broker acted as agent for the fractional share portion of this trade, which was executed by a Broker affiliate as riskless principal."
+Codes,Data,RPA,Broker acted as agent for both the fractional share portion and the whole share portion of this trade; the fractional share portion was executed by a Broker Affiliate as riskless principal.
+Codes,Data,Rb,Rebill
+Codes,Data,Re,Interest or Dividend Accrual Reversal
+Codes,Data,Ri,Reimbursement
+Codes,Data,S0,Contract settled to zero value
+Codes,Data,S1,Contract settled to $1.00
+Codes,Data,SF,Trade is subject to IBKR Lite Surcharge Fee if volume of such trades exceeds 10% of the total monthly Lite trade volume
+Codes,Data,SI,This order was solicited by Broker
+Codes,Data,SL,Specific Lot tax basis election
+Codes,Data,SO,This order was marked as solicited by your Introducing Broker
+Codes,Data,SS,Customer designated this trade for shortened settlement and so is subject to execution at prices above the prevailing market
+Codes,Data,ST,Short Term P/L
+Codes,Data,T,Transfer
+Codes,Data,Un,Unvested shares from stock grant
+Codes,Data,XCH,Mutual Fund Exchange Transaction
+Notes/Legal Notes,Header,Type,Note
+Notes/Legal Notes,Data,Notes,"Stock exchange transactions generally settle on the trade date plus one business day (T+1). Options, futures and US open-end mutual fund transactions also settle on trade date plus one business day. Some exchanges and other transaction types may have longer or shorter settlement periods. Ending settled cash reflects the cash that has actually settled."
+Notes/Legal Notes,Data,Notes,Initial and maintenance margin requirements are available within the Account Window of the Trader Workstation.
+Notes/Legal Notes,Data,Notes,"Interactive Brokers LLC receives compensation from fund companies in connection with the purchase and holding of fund shares by customers of Interactive Brokers LLC. Such compensation includes, but is not limited to, Rule 12b-1 fees that are paid out of the funds assets. The source and amount of any remuneration received by Interactive Brokers LLC in connection with a transaction will be furnished upon written request of the customer.  IB may share a portion of the compensation received from fund companies with your independent advisor or introducing broker."
+Notes/Legal Notes,Data,Notes,"Quantities preceded by a ""-"" sign indicate sell transactions. Other transactions are purchases. "
+Notes/Legal Notes,Data,Notes,"IB acts as agent in executing the fractional share portion of your order. In certain circumstances, IB routes the fractional portion of your order to an affiliate, which may execute the fractional portion of the order as principal. In such circumstances, this is indicated by the codes associated with the trade. If an IB affiliate acts as principal in executing any fractional share portion of your order, the order will be executed at the price displayed for the opposite side of the NBBO from your order (the offer if you are buying and the bid if you are selling) at the time of execution. If an IB affiliate is acting as riskless principal in connection with filling the fractional share portion of your order, the affiliate will execute the fractional share portion of your order at the price it receives for the execution of the whole share."
+Notes/Legal Notes,Data,Notes,"In case of partial executions, commissions are charged on the total quantity executed on the original order. The commission is displayed on the first partial execution only."
+Notes/Legal Notes,Data,Notes,Trade execution times are displayed in Eastern Time.
+Notes/Legal Notes,Data,Notes,Applicable regulatory fees for your transactions are available on the IB website at www.interactivebrokers.com/en/accounts/fees/exchangeAndRegulatoryFees.php.
+Notes/Legal Notes,Data,Notes,"Borrow Fee Rate represents the cost to borrow stock expressed in percent per annum. It is applied to the collateral value on the stock borrow contract and is separate from any interest earned on credit cash balances. Similarly, Loan Fee Rate represents the benefit to lend stock. A positive rate indicates a cost to the borrower/benefit to the lender and a negative rate indicates a benefit to the borrower/cost to the lender. In general, the fee rates for hard-to-borrow stocks are higher than for normal availability stocks."
+Notes/Legal Notes,Data,Notes,Interest Rate on Customer Collateral represents the interest paid on the collateral posted to the customer's account and received from lending stock.  A positive rate indicates a benefit to the lender.
+Notes/Legal Notes,Data,Notes,"The closing prices on this Activity Statement are indicative and may come from third-party sources. Interactive Brokers does not warrant the accuracy of the prices provided by third-party sources. Due to time zone differences, certain non-US mutual funds may deliver closing prices after the Activity Statement has been produced and the closing prices for such funds will reflect the previous day's price."
+Notes/Legal Notes,Data,Notes,All Market Data and Research services are provided through Global Financial Information Services (GmbH).
+Notes/Legal Notes,Data,Notes,"Market data is provided by Global Financial Information Services (GmbH). Your local broker collects amounts owed for fees and tax for such data on behalf of Global Financial Information Services (GmbH). Note, you are responsible for any applicable taxes relating to the provision of these services."
+Notes/Legal Notes,Data,Notes,"The stated interest, commission, and/or fee rates on the Interactive Brokers website are for direct clients of Interactive Brokers. Clients introduced through another broker may be subject to a different rate at the election of the client’s introducing broker. Clients should contact their introducing broker about the rates that will apply to their account."
+Notes/Legal Notes,Data,Notes,RUS denotes Ruble balances that have been restricted by Russian authorities.
+Notes/Legal Notes,Data,Mutual Fund Notes,"All purchase and sales of mutual funds are calculated against the published NAV (Net Asset Value) of the underlying fund and is displayed on this confirmation as the ""C. Price"" (Closing Price). Due to any fees charged by a fund and/or any share rounding, the net price you pay may vary from the published NAV and is shown on this confirmation as the ""T. Price"" (Trade Price)."
+Notes/Legal Notes,Data,Fixed Income Notes,"Call features for bonds or preferred stocks may affect the yield. For zero coupon, compound interest and multiplier securities, there are no periodic payments and securities may be callable below maturity value without notice to holder unless registered. For asset-backed securities, the actual yield may vary depending on the speed at which the underlying note is pre-paid. For additional information regarding bond yield, please contact the IB Help Desk at: ibkr.com/help. If this debt security is unrated by a nationally recognized statistical rating organization, it may pose a high risk of default. You should consult an independent advisor to determine whether unrated bonds are appropriate for your portfolio in light of your goals and your financial circumstances. Fees charged by bond trading centers are included in the cost of bond transactions."
+Notes/Legal Notes,Data,Legal Notes,"Please promptly report any inaccuracy or discrepancy in this statement, or in your account to Interactive Brokers and to Israel Interactive Trading - Mexem Ltd, using the contact information below. If you report an error by phone, you should re-confirm such oral communication in writing in order to protect your rights, including rights under the Securities Investor Protection Act (SIPA).Interactive Brokers LLC, www.interactivebrokers.com, 1-877-442-2757 (U.S.)Israel Interactive Trading - Mexem Ltd, www.inter-il.com, 01197236083586"
+Notes/Legal Notes,Data,Legal Notes,"Unless otherwise noted, Interactive Brokers acted as agent in the execution of the above transactions. For those exchanges where IB is not a direct clearing member or custodian, IB may use one of the following clearing agents or sub-custodians: Interactive Brokers Australia Pty Limited; Interactive Brokers Canada Inc.; Interactive Brokers Hong Kong Limited; Interactive Brokers Ireland, Limited; Interactive Brokers Securities Japan, Inc.; Interactive Brokers (U.K.) Limited; IBKR Financial Services AG; ABN Amro Clearing Singapore Pte. Ltd.; Allfunds Bank, S.A.U.; Banco B3 S.A.; BBVA Bancomer, S.A.; BNP Securities Services, Milan Branch; BMO Bank N.A.; Citibank Europe plc; Skandinaviska Enskilda Banken AB (including select branches)."
+Notes/Legal Notes,Data,Legal Notes,"IB acts as agent or riskless principal in foreign currency exchange transactions and as riskless principal in spot precious metals transactions.  Such transactions are executed against an IB affiliate or a third party, which acts as principal in such transactions and may have a long or short position and may have profited or lost in connection with the transaction.  Foreign currency exchange and spot precious metals transactions executed by Customer through IB are not regulated or overseen by the SEC or the CFTC."
+Notes/Legal Notes,Data,Legal Notes,"IB accepts liquidity rebates or other order flow payments from Alternative Trading Systems, market makers and exchanges for certain orders in stocks. IB receives payment for some option orders pursuant to exchange-mandated marketing fee programs or other arrangements. The source and nature of any compensation received by IB in connection with any transaction is available upon written request of the customer. For further information, check the IB website and the Order Routing and Payment for Order Flow Disclosure provided when you opened your account and annually or visit ibkr.com/help.  "
+Notes/Legal Notes,Data,Legal Notes,"For security futures trades, if not already indicated on this statement, information about the time of any transaction, the identity of the counterparty to the transaction, and whether IB is acting as agent or principal, as agent for the counterparty, as agent for both parties to the contract, or as principal, and if acting as principal, whether the transaction was a block transaction or an exchange for physicals transaction, will be available upon written request of the customer."
+Notes/Legal Notes,Data,Legal Notes,Customer is requested to promptly advise Israel Interactive Trading - Mexem Ltd of any material change in Customers investment objectives.
+Notes/Legal Notes,Data,Legal Notes,"Interactive Brokers LLC, member Securities Investor Protection Corporation (SIPC), provides execution, clearing and carrying services for your account pursuant to an agreement with Israel Interactive Trading - Mexem Ltd. As with all securities firms, SIPC coverage provides protection against failure of a broker-dealer, not against loss of market value of securities.  Futures and options on futures are not covered by SIPC."
+Notes/Legal Notes,Data,Legal Notes,"A financial statement of Interactive Brokers LLC is available for your personal inspection at www.interactivebrokers.com or at its offices, or a copy of it will be mailed upon your written request."
+Notes/Legal Notes,Data,Legal Notes,"For trades executed on the ASX market, the ASX 24 market and the Cboe Australia market, this confirmation is issued subject to: (i) the Applicable Laws, the directions, decisions and requirements of the relevant market operator, the operating rules of the relevant market, the clearing rules and where relevant, the relevant settlement rules, (ii) the customs and usages of the relevant financial market, and (iii) the correction of errors and omissions. Trades in Cash Market Products (as that term is defined in the relevant ASIC market integrity rules) on ASX market and Cboe Australia are cleared by BNP Paribas, ARBN 149 440 291, AFSL 402467, who is a participant of ASX Clear Pty Ltd and ASX Settlement Pty Ltd. Trades in Derivative Products on ASX and all products on ASX 24 are cleared by Interactive Brokers Australia (“IBA”) as a participant of ASX Clear Pty Ltd and ASX Clear (Futures) Pty Ltd. If your transaction was a crossing transaction, IBA may have either acted on behalf of (i) both the buyer and seller of this transaction, or (ii) on behalf of the buyer or seller on one side of the transaction and acted as Principal on the other side. Under the Corporations Act 2001, where IBA enters into an exchange traded derivative on a customer's behalf, IBA is regarded as having issued the derivative to the customer."
+Notes/Legal Notes,Data,Legal Notes,"For All Options Trades Executed on the Stock Exchange of Hong Kong (""SEHK""): (a) Options can involve a high degree of risk and may not be suitable for every investor. Investors should ensure they understand those risks before participating in the options market. (b) All options contracts executed on the SEHK were executed by Interactive Brokers Hong Kong Limited on behalf of Interactive Brokers LLC. (c) In the event of a default committed by Interactive Brokers LLC resulting in the client suffering any pecuniary loss, the client shall have a right to claim under the Investor Compensation Fund established under the Hong Kong Securities and Futures Ordinance, subject to the terms of the Investor Compensation Fund from time to time. (d) All Exchange Traded Options Business made for or on behalf of a client shall be subject to the relevant provisions of the constitution, Rules of The Stock Exchange of Hong Kong Limited (""SEHK Rules""), regulations, the Articles, customs and usages of SEHK, the Options Trading Rules, the Clearing Rules of SEOCH, the CCASS Rules and the laws of Hong Kong, which shall be binding on both Interactive Brokers LLC and the client."
+Notes/Legal Notes,Data,Legal Notes,"Interactive Brokers LLC is a SIPC member. Deposits held away from Interactive Brokers LLC may not qualify under SIPC protection. Also, futures and options on futures are not covered by SIPC."
+Notes/Legal Notes,Data,,Interactive Brokers LLC is a SIPC Member

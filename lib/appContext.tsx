@@ -73,6 +73,8 @@ interface AppContextValue {
   // ── Onboarding (new paradigm) ─────────────────────────────────────────────
   setIncomeSources: (sources: IncomeSourceId[]) => void;
   markSourcesSelected: () => void;
+  markDocumentsConfirmed: () => void;
+  markSummaryConfirmed: () => void;
   markDetailsConfirmed: () => void;
   /** Wipe the current in-progress onboarding draft back to a fresh slate. */
   discardCurrentDraft: () => void;
@@ -382,11 +384,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const carry = carryForwardFromPriorDraft(s.drafts, taxYear, draftId);
       const seededTaxpayer = carry.taxpayer;
       const seededFinancials = { ...INITIAL_STATE.financials, taxYears: [taxYear] };
+      // Loop 2 / R0 — a NEW flow must start at stage ① (sources). Reset the
+      // onboarding stage flags and clear the stale resume hint, else the new
+      // draft inherits the prior draft's stage and lands mid-questionnaire.
+      try { window.localStorage.removeItem("taxbot.questionnaire.lastSlug"); } catch { /* private mode */ }
       return {
         ...s,
         currentDraftId: draftId,
-        currentView: "questionnaire",
+        currentView: "onboarding",
         questionnaire: { step: 1, completed: false },
+        onboarding: { sources: [], sourcesSelected: false, detailsConfirmed: false },
         taxpayer: seededTaxpayer,
         financials: seededFinancials,
         // Merge carried provenance on top of any preexisting map — prior-year
@@ -524,6 +531,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({
       ...s,
       onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), sourcesSelected: true },
+    }));
+
+  // Loop 2 / R0 — stage ② / ④ completion flags for the gated flow.
+  const markDocumentsConfirmed = () =>
+    setState((s) => ({
+      ...s,
+      onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), documentsConfirmed: true },
+    }));
+
+  const markSummaryConfirmed = () =>
+    setState((s) => ({
+      ...s,
+      onboarding: { ...(s.onboarding ?? { sources: [], sourcesSelected: false, detailsConfirmed: false }), summaryConfirmed: true },
     }));
 
   // Expanded in T2 to also wipe documents, advisor history, and provenance so
@@ -717,6 +737,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         linkDocumentToProcess,
         setIncomeSources,
         markSourcesSelected,
+        markDocumentsConfirmed,
+        markSummaryConfirmed,
         markDetailsConfirmed,
         discardCurrentDraft,
         resetAllData,

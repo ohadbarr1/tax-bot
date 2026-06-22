@@ -9,6 +9,7 @@
  */
 
 import { isValidTZ } from "./validateTZ";
+import { employersOverlap } from "./utils";
 import type {
   Address,
   BankDetails,
@@ -16,6 +17,8 @@ import type {
   Degree,
   Employer,
   PersonalDeduction,
+  TaxPayer,
+  FinancialData,
 } from "@/types";
 
 export interface StepValidationInput {
@@ -120,4 +123,54 @@ export function validateStep(
   }
 
   return errors;
+}
+
+const QUESTIONNAIRE_SLUGS = [
+  "personal", "family", "education", "capital",
+  "employers", "deductions", "life-events", "credit-points",
+] as const;
+
+/** Build the validation input from saved taxpayer/financials (mirrors the
+ *  questionnaire context's hydration derivations). */
+export function taxpayerToValidationInput(t: TaxPayer, f: FinancialData): StepValidationInput {
+  return {
+    firstName: t.firstName ?? "",
+    lastName: t.lastName ?? "",
+    idNumber: t.idNumber ?? "",
+    address: t.address ?? { city: "", street: "", houseNumber: "" },
+    bank: t.bank ?? { bankId: "", bankName: "", branch: "", account: "" },
+    maritalStatus: t.maritalStatus,
+    spouseFirstName: t.spouse?.firstName ?? "",
+    spouseLastName: t.spouse?.lastName ?? "",
+    spouseIdNumber: t.spouse?.idNumber ?? t.spouseId ?? "",
+    children: t.children ?? [],
+    hasDegree: (t.degrees?.length ?? 0) > 0,
+    degrees: t.degrees ?? [],
+    investsCapital: !!f.hasForeignBroker,
+    portfolioLocation: f.hasForeignBroker ? "foreign_broker" : null,
+    selectedBroker: f.brokerName ?? "",
+    employers: t.employers ?? [],
+    hasOverlap: employersOverlap(t.employers ?? []),
+    deductions: t.personalDeductions ?? [],
+    isOleh: !!t.aliyahDate,
+    aliyahDate: t.aliyahDate ?? "",
+    servedInArmy: t.dischargeYear != null,
+    dischargeYear: t.dischargeYear,
+    hasDisability: t.disabilityType != null || (t.disabilityPercent ?? 0) > 0,
+    disabilityPercent: t.disabilityPercent ?? 0,
+  };
+}
+
+/**
+ * The questionnaire slug to RESUME on: the first step that fails validation
+ * given the saved data. Empty data → "personal" (step 1), so a new/empty flow
+ * never jumps to an advanced step. If every step is valid, returns the last slug
+ * (ready to finish).
+ */
+export function firstIncompleteStepSlug(t: TaxPayer, f: FinancialData): string {
+  const input = taxpayerToValidationInput(t, f);
+  for (const slug of QUESTIONNAIRE_SLUGS) {
+    if (validateStep(slug, input).length > 0) return slug;
+  }
+  return QUESTIONNAIRE_SLUGS[QUESTIONNAIRE_SLUGS.length - 1];
 }

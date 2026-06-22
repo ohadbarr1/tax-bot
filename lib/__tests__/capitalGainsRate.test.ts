@@ -24,4 +24,15 @@ describe("capital-gains rate", () => {
     const r = calculateFullRefund(cg(100_000, 40_000, true), 2025);
     expect(r.capitalGainsTax).toBe(Math.round(100_000 * 0.30 + 40_000 * 0.30)); // 42,000
   });
+
+  it("capitalGainsBreakdown exposes the step-by-step drill-down (R5)", () => {
+    const r = calculateFullRefund(cg(100_000, 40_000, false), 2025);
+    const b = r.capitalGainsBreakdown!;
+    expect(b.grossProfit).toBe(100_000);
+    expect(b.netGain).toBe(100_000);
+    expect(b.gainRate).toBe(0.25);
+    expect(b.gainTax).toBe(25_000);
+    expect(b.dividendTax).toBe(10_000);
+    expect(b.total).toBe(35_000); // 25,000 + 10,000, no foreign credit
+  });
 });
