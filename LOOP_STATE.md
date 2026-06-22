@@ -4,7 +4,12 @@
 
 ---
 
-## STATUS: ⏸️ MILESTONE REACHED — T5 tax correctness complete. Paused for human review.
+## STATUS: 🔵 RUNNING — T7 input/parsing → T8 coverage. Final milestone = end of T8.
+
+- **Current track:** T7 · Input/parsing robustness, then T8 · Coverage lock
+- **Units:** T7.1 NaN/locale guards (client calc) · T7.2 IBKR multi-currency + locale · T7.3 Tofes-106 parser filters · T8 coverage lock + final gate.
+
+## (prev) MILESTONE — T5 tax correctness complete.
 
 - **Completed this run:** T5.1 surtax §121ב rebuild · T5.2 §66 separate calc (engine+UI) · T5.3 phantom-refund gate · T5.4 CG 30% controlling shareholder · T5.5 tax-pro gate.
 - **tax-pro verdict:** PASS-with-concerns — all 4 core fixes confirmed CORRECT. Edge simplifications surfaced as user warnings (§66 child-credit allocation; CG-30% portfolio scope); deeper edges (surtax 2% ordering, שבח base, §66(ד)) logged in DEFERRED_ACTIONS.

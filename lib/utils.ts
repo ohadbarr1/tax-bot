@@ -34,3 +34,20 @@ export function employersOverlap(employers: Employer[]): boolean {
   }
   return false;
 }
+
+/**
+ * Parse a numeric form-input value, returning `undefined` for empty/blank AND
+ * for non-numeric input (so `Number("abc")` → undefined, never NaN). Prevents
+ * NaN from entering state and surfacing as "NaN ₪" in the calc/dashboard (T7.1).
+ */
+export function numField(raw: string): number | undefined {
+  const t = raw.trim();
+  if (t === "") return undefined;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** Coerce any value to a finite number, falling back to 0. Defensive display guard. */
+export function finiteOr0(n: unknown): number {
+  return typeof n === "number" && Number.isFinite(n) ? n : 0;
+}

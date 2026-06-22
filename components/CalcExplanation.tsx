@@ -12,8 +12,10 @@ import { currentTaxYear } from "@/lib/currentTaxYear";
  * net refund/balance. Renders the engine's existing `breakdown`; no new math.
  */
 
-const ils = (n: number) =>
-  (n < 0 ? "−₪" : "₪") + Math.round(Math.abs(n)).toLocaleString("he-IL");
+const ils = (n: number) => {
+  const v = Number.isFinite(n) ? n : 0; // never render "NaN ₪"
+  return (v < 0 ? "−₪" : "₪") + Math.round(Math.abs(v)).toLocaleString("he-IL");
+};
 
 type Row = {
   label: string;

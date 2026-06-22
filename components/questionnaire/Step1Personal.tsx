@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { Child } from "@/types";
 import { Label, InfoBox, SuccessBox, TogglePair } from "./StepShell";
 import { isValidTZ } from "@/lib/validateTZ";
+import { numField } from "@/lib/utils";
 
 interface Props {
   maritalStatus: "single" | "married" | "divorced" | "widowed";
@@ -162,7 +163,7 @@ export default function Step1Personal({
                       placeholder="ברוטו שנתי"
                       value={spouseIncomeAmount ?? ""}
                       onChange={(e) =>
-                        onSpouseIncomeAmountChange(e.target.value === "" ? undefined : Number(e.target.value))
+                        onSpouseIncomeAmountChange(numField(e.target.value))
                       }
                     />
                   </div>
@@ -174,7 +175,7 @@ export default function Step1Personal({
                       placeholder="מס הכנסה שנוכה"
                       value={spouseTaxWithheld ?? ""}
                       onChange={(e) =>
-                        onSpouseTaxWithheldChange(e.target.value === "" ? undefined : Number(e.target.value))
+                        onSpouseTaxWithheldChange(numField(e.target.value))
                       }
                     />
                   </div>

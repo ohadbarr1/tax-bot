@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import type { PersonalDeduction } from "@/types";
+import { numField } from "@/lib/utils";
 import { Label, SuccessBox, WarnBox } from "./StepShell";
 
 interface Props {
@@ -103,7 +104,7 @@ export default function Step5Deductions({
                       value={ded.amount || ""}
                       onChange={(e) =>
                         onUpdateDeduction(ded.id, {
-                          amount: Number(e.target.value),
+                          amount: numField(e.target.value) ?? 0,
                         })
                       }
                       className="w-full ps-7 pe-3 py-2.5 rounded-xl border border-border text-sm bg-background dark:bg-secondary focus:outline-none focus:ring-2 focus:ring-kc-ink/20 focus:border-kc-ink"
