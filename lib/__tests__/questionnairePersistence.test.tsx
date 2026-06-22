@@ -36,6 +36,7 @@ type AppStub = {
   state: { taxpayer: TaxPayer; financials: FinancialData } & Partial<AppState>;
   updateTaxpayer: (data: Partial<TaxPayer>) => void;
   updateFinancials: (data: Partial<FinancialData>) => void;
+  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, fin?: Partial<FinancialData>) => void;
   completeQuestionnaire: () => void;
   setIncomeSources: (sources: unknown[]) => void;
   markSourcesSelected: () => void;
@@ -68,6 +69,7 @@ function makeAppStub(initial?: {
     },
     updateTaxpayer: vi.fn(),
     updateFinancials: vi.fn(),
+    updateTaxpayerAndRecalculate: vi.fn(),
     completeQuestionnaire: vi.fn(),
     setIncomeSources: vi.fn(),
     markSourcesSelected: vi.fn(),

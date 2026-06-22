@@ -137,6 +137,7 @@ export function QuestionnaireProvider({
     completeQuestionnaire,
     updateTaxpayer,
     updateFinancials,
+    updateTaxpayerAndRecalculate,
     setIncomeSources,
     markSourcesSelected,
     commitManual,
@@ -452,12 +453,19 @@ export function QuestionnaireProvider({
       controllingShareholder,
       dividendType,
     });
-    updateFinancials({
-      hasForeignBroker: portfolioLocation === "foreign_broker",
-      brokerName:
-        portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
-      employersCount: employers.length,
-    });
+    // Recalculate on finish so estimatedRefund + calculationResult are populated
+    // (the questionnaire writes taxpayer without a recalc) — keeps the dashboard,
+    // facts headline, and the calc waterfall consistent. Empty taxpayer patch =
+    // recompute from the values just written above.
+    updateTaxpayerAndRecalculate(
+      {},
+      {
+        hasForeignBroker: portfolioLocation === "foreign_broker",
+        brokerName:
+          portfolioLocation === "foreign_broker" ? selectedBroker : undefined,
+        employersCount: employers.length,
+      },
+    );
 
     // Spine fix (T0.3): /documents drives its doc-request cards off
     // onboarding.sources. Before the loop the questionnaire never set them, so a

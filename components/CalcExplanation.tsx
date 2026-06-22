@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useApp } from "@/lib/appContext";
-import type { CalculationResult } from "@/lib/calculateTax";
+import { calculateFullRefund, type CalculationResult } from "@/lib/calculateTax";
+import { currentTaxYear } from "@/lib/currentTaxYear";
 
 /**
  * CalcExplanation — Output 2. A transparent, line-by-line derivation of the tax
@@ -23,7 +25,20 @@ type Row = {
 
 export function CalcExplanation() {
   const { state } = useApp();
-  const r = state.financials.calculationResult as CalculationResult | undefined;
+  // Prefer the stored result; otherwise compute live from the canonical taxpayer
+  // (the questionnaire writes taxpayer without a recalc, so a questionnaire-only
+  // user would otherwise see nothing). Pure read — no state mutation.
+  const stored = state.financials.calculationResult as CalculationResult | undefined;
+  const year = state.financials.taxYears?.[0] ?? currentTaxYear();
+  const r = useMemo<CalculationResult | undefined>(() => {
+    if (stored) return stored;
+    try {
+      const computed = calculateFullRefund(state.taxpayer, year);
+      return computed.totalGrossIncome > 0 ? computed : undefined;
+    } catch {
+      return undefined;
+    }
+  }, [stored, state.taxpayer, year]);
 
   if (!r) {
     return (
