@@ -10,7 +10,9 @@
 
 - **All 6 done & LIVE-VERIFIED in a full E2E run:** 1.1 auto-logout (R3) · 1.2 gated flow (R0/R2) · 1.3 new-flow-stage-1 + docs-in-flow (R0/R1) · 1.4 stepper+back-to-sources+hub (R1) · 1.5 expenses red/parens — מס שנוכה (₪70,000) shown red live (R4) · 1.6 detailed filing explanation with § + capital-gains drill-down (R5).
 - **R6 E2E (live, desktop):** sources(salary)→documents→questionnaire(8 steps, started at 1)→summary→filing; gating + stepper correct; waterfall reconciles to ₪16,604; per-line § explanations present.
-- **Deferred (non-blocking):** R2 smart-questionnaire (skip doc-covered fields) — enhancement, not a glitch; foreign-credit §200-vs-engine-§67א naming reconcile; CG drill-down live-checked only via tests (no IBKR upload in-session).
+- **Questionnaire resume bug FIXED** (user clarified: empty flow jumped to advanced steps): `firstIncompleteStepSlug` resumes at the first incomplete step → empty data opens at step 1. "Smart questionnaire" was a misread — NOT needed.
+- **CG drill-down verified vs REAL 2025 IBKR statement** (account U14867394): profit ₪91,141 / loss ₪31,262 / div ₪963 / WHT ₪312 → net ₪59,879 → CG tax ₪14,899 (`lib/__tests__/ibkrRealData.test.ts`). Live on-screen render with this data still pending an IBKR upload.
+- **Deferred (non-blocking):** foreign-credit §200-vs-engine-§67א naming reconcile; 867 PDF cross-check not wired. See HANDOFF.md + DEFERRED_ACTIONS.md.
 - **Gate:** 589 pass · build ✓ · 0 lint errors. **8 commits on `loop/flow-rebuild`** (off main `6a6c748`); main untouched.
 
 ## (history below)
