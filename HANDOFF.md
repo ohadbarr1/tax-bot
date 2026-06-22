@@ -36,11 +36,16 @@ Key new files: `lib/flowStage.ts` (stage machine), `components/FlowChrome.tsx`
 
 ## Open / next
 
-- **NEXT UP — 3 new user requests (R7/R8/R9), specced in `LOOP2_STATE.md`:**
-  R7 delete-employers bug (phantom mined employers, no delete); R8 broker-tax as
-  a real per-trade step-by-step PAGE (needs IBKR parser to retain `trades[]`);
-  R9 filing copy fixes (135-vs-1301 via determineFormType; we generate a PDF, we
-  do NOT submit to the ITA). Start here.
+- **R7/R8/R9 — ✅ DONE & live-verified** on branch **`loop/r7-r9`** (commit
+  `441c1b6`, off main `7902d29`). 597 tests / build ✓ / 0 lint errors. Awaiting
+  human merge. Details in `LOOP2_STATE.md`. Summary: R7 employer-delete (mine
+  route forced every mined employer to "ראשי" → undeletable; fixed + delete-any
+  row w/ main-promotion); R8 new `/filing/capital-gains` per-trade page (parser
+  now retains `trades[]`); R9 filing copy (dynamic 135-vs-1301, no false "we
+  submit to ITA" copy).
+- **NEXT UP (R10?):** `POST /api/mine/document → 500` when a `.csv` is routed
+  through the generic doc-miner (two file inputs on /documents). Pre-existing;
+  the IBKR parse path is unaffected.
 
 
 - **"smart questionnaire" is NOT needed** — the user clarified it was the

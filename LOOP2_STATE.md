@@ -15,13 +15,17 @@
 - **Deferred (non-blocking):** foreign-credit §200-vs-engine-§67א naming reconcile; 867 PDF cross-check not wired. See HANDOFF.md + DEFERRED_ACTIONS.md.
 - **Gate:** 589 pass · build ✓ · 0 lint errors. **8 commits on `loop/flow-rebuild`** (off main `6a6c748`); main untouched.
 
-## NEW REQUESTS (2026-06-22, queued for next session — R7/R8/R9)
+## R7/R8/R9 — ✅ DONE & LIVE-VERIFIED (2026-06-22, branch `loop/r7-r9` off main `7902d29`)
 
-Captured before context reset; not yet implemented. Each: spec → test → **live-verify in preview** → commit. Branch `loop/flow-rebuild`.
+Commit `441c1b6`. Gate: 597 tests pass · build ✓ · 0 lint errors. All three driven live in preview.
 
-- **R7 · Delete employers (bug).** Screenshot showed mined "מעסיק 2/3" (broker names הפניקס/הייבריד — phantom employers from doc parsing, all tagged "ראשי") with no way to remove them. FIX: ensure Step4Employers has a working delete (trash) per employer row (context has `removeEmployer`; verify wired + shown for ALL rows incl. mined; keep ≥1). Investigate WHY non-employer entities became employers (likely 867/IBKR mining or `resolveMinedFields` employer-append). Live-verify: delete rows 2 & 3.
-- **R8 · Broker-tax = a real separate PAGE with step-by-step per-trade calc.** `CapitalGainsDetail` shows aggregate steps only. User wants a dedicated route (e.g. `/filing/capital-gains`) listing the TRADES, showing trade-by-trade how the tax is built (proceeds, basis, FX per-lot, realized P/L, loss offsets → 25%/30% + §204 credit). REQUIRES the IBKR parser to RETAIN per-trade rows (currently aggregates — `lib/ibkrParser.ts`; add `trades[]` to output + persist on capitalGains). Real fixture: `lib/__tests__/fixtures/ibkr_real_2025.csv`.
-- **R9 · Summary/filing copy fixes (data integrity).** (1) Form is **135 for salary-only; 1301 when non-salary income exists** — the filing card hardcodes "טופס 135"/"הורד את טופס 135"; use `determineFormType` (`lib/formTypeSelector.ts`). Check `components/FilingKit.tsx` + `app/(app)/filing/page.tsx`. (2) We **do NOT submit to ITA** — only generate the PDF. Remove submission copy: "נשלח את הטופס ישירות למחשב של מס הכנסה", "שולח ל-135 במס הכנסה", "החתימה וההגשה מבוצעים באתר רשות המסים", the "חתימה והגשה" step → reframe as PDF generation for self-filing.
+- **R7 · Delete employers (bug) — ✅.** Root cause: `app/api/mine/document/route.ts:146` stamps `isMainEmployer:true` on every emitted employer; `resolveMinedFields` appends each mis-classified doc (הפניקס/הייבריד) as a NEW row → multiple undeletable "ראשי". Fix: (a) `resolveMinedFields` forces `isMainEmployer=false` for appended rows (idx>0); (b) `removeEmployer` (questionnaire + DetailsForm) deletes ANY row, keeps ≥1, promotes first remaining to main when the main is removed; (c) `Step4Employers` shows trash on every row when >1. **Live:** 3 rows → trash on all incl. main; delete main → promotion (1 "ראשי" kept); delete to 1 → trash hidden.
+- **R8 · Broker-tax page — ✅.** New route `/filing/capital-gains` lists realized trades trade-by-trade (symbol, date, qty, proceeds, basis, realized P/L in $, per-date BoI FX, ILS P/L) + §92(א) loss-offset total + the aggregate `CapitalGainsDetail` build below. `ibkrParser` now retains `trades[]`+`baseCurrency`, threaded through `IbkrParseResponse` + parse route → persists on `financials.ibkrData.trades`. Filing page links to it when trades>0. **Live:** uploaded a CSV → real `/api/parse/ibkr` returned 4 trades → page rendered NVDA +₪26,463 / AAPL (₪9,490) / MSFT +₪4,928 / AMD (₪27), total ₪21,874 reconciling to aggregate net ₪21,873.
+- **R9 · Filing copy — ✅.** `app/(app)/filing/page.tsx` no longer hardcodes "טופס 135" — label via `determineFormType` (showed **טופס 1301** live for the broker case). Removed false-submission copy ("נשלח את הטופס ישירות למחשב של מס הכנסה", "שולח ל-135"); "חתימה והגשה" step reframed "הורדה והגשה עצמית"; header "אתה במרחק חתימה"→"הורדה". FilingKit.tsx + marketing pages were already correct.
+
+### Notes / deferred
+- `POST /api/mine/document → 500` observed when a `.csv` is also routed through the generic doc-miner (two file inputs on /documents). Pre-existing; IBKR `/api/parse/ibkr` path works. Worth a look (R10?).
+- Branch is `loop/r7-r9` (main already had the Loop-2 merge + the R7/R8/R9 queue commit `7902d29`); awaiting human merge.
 
 ## (history below)
 ## (prev) CHECKPOINT
