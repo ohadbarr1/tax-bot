@@ -67,14 +67,14 @@ export function CalcExplanation() {
 
   const rows: Row[] = [
     { label: "הכנסה ברוטו כוללת", value: r.totalGrossIncome, note: "סך ההכנסה החייבת מכל המקורות — משכורת, עסק והכנסות נוספות — לפני ניכויים. הבסיס לחישוב." },
-    { label: "ניכויים מההכנסה", value: -r.incomeDeductions, kind: "sub", note: "מוקטנים מההכנסה לפני המס: הפקדות לפנסיה (§47), מזונות ששולמו (§9א), ופטור נכות (§9(5)). מקטינים את ההכנסה החייבת.", hideIfZero: true },
+    { label: "ניכויים מההכנסה", value: -r.incomeDeductions, kind: "sub", note: "מוקטנים מההכנסה לפני המס: הפקדות לפנסיה (§47), מזונות ששולמו (§17(11)), ופטור נכות (§9(5)). מקטינים את ההכנסה החייבת.", hideIfZero: true },
     { label: "הכנסה חייבת", value: r.taxableIncome, kind: "subtotal", note: "ההכנסה שעליה מחושב המס לפי מדרגות." },
     { label: "מס לפי מדרגות", value: rawBracketTax, kind: "add", expense: true, note: "המס המצטבר לפי מדרגות המס השנתיות (10%–50%). ראו פירוט המדרגות למטה. סעיף 121." },
     { label: "הנחת עבודה במשמרות", value: -r.shiftWorkDiscount, kind: "sub", note: "הנחה של 15% על המס המיוחס לשעות משמרת מזכות. תקנה 5.", hideIfZero: true },
     { label: "נקודות זיכוי", value: -r.creditPointsValue, kind: "sub", note: `${r.creditPointsCount} נקודות זיכוי × הערך השנתי לנקודה. תושב, מין, ילדים, תואר, עולה, חייל משוחרר — כל אחת מקטינה את המס בסכום קבוע. סעיפים 34–40.`, hideIfZero: true },
     { label: "זיכויי מס (§46, §45א)", value: -r.deductionCredits, kind: "sub", note: "זיכוי של 35% על תרומות מוכרות (§46) ו-25% על פרמיות ביטוח חיים/סיעודי (§45א), בכפוף לתקרות.", hideIfZero: true },
     { label: "הנחת פריפריה (§11)", value: -r.peripheryDiscount, kind: "sub", note: "הנחה ביישוב מזכה — אחוז וקבוע לפי היישוב, על הכנסה מיגיעה אישית. סעיף 11.", hideIfZero: true },
-    { label: "זיכוי מס זר על שכר (§67א)", value: -r.foreignSalaryCredit, kind: "sub", note: "זיכוי על מס ששולם בחו״ל על שכר, עד גובה המס הישראלי המיוחס לאותה הכנסה. סעיף 67א.", hideIfZero: true },
+    { label: "זיכוי מס זר על שכר", value: -r.foreignSalaryCredit, kind: "sub", note: "זיכוי על מס ששולם בחו״ל על שכר, עד גובה המס הישראלי המיוחס לאותה הכנסה. זיכוי מס זר, סעיפים 200–204.", hideIfZero: true },
     { label: "מס בן/בת זוג (חישוב נפרד §66)", value: r.spouseSeparateTax, kind: "add", expense: true, note: "המס של בן/בת הזוג מחושב בנפרד על מדרגות משלו — לרוב מקטין את המס המשפחתי. סעיף 66.", hideIfZero: true },
     {
       label: "מס הכנסה לתשלום",
