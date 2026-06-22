@@ -1,0 +1,123 @@
+/**
+ * questionnaireValidation.ts — per-step gating for the onboarding flow (T1).
+ *
+ * Pure: given a step slug and the questionnaire state, return the list of
+ * blocking errors (Hebrew, user-facing). An empty array means the step is valid
+ * and the user may advance. The [step] page disables המשך / סיים while errors
+ * exist, so the questionnaire can never be finished with invalid/empty PII —
+ * the pre-loop bug where the buttons were always enabled.
+ */
+
+import { isValidTZ } from "./validateTZ";
+import type {
+  Address,
+  BankDetails,
+  Child,
+  Degree,
+  Employer,
+  PersonalDeduction,
+} from "@/types";
+
+export interface StepValidationInput {
+  firstName: string;
+  lastName: string;
+  idNumber: string;
+  address: Address;
+  bank: BankDetails;
+  maritalStatus: "single" | "married" | "divorced" | "widowed";
+  spouseFirstName: string;
+  spouseLastName: string;
+  spouseIdNumber: string;
+  children: Child[];
+  hasDegree: boolean;
+  degrees: Degree[];
+  investsCapital: boolean;
+  portfolioLocation: "bank" | "local_broker" | "foreign_broker" | null;
+  selectedBroker: string;
+  employers: Employer[];
+  hasOverlap: boolean;
+  deductions: PersonalDeduction[];
+  isOleh: boolean;
+  aliyahDate: string;
+  servedInArmy: boolean;
+  dischargeYear: number | undefined;
+  hasDisability: boolean;
+  disabilityPercent: number;
+}
+
+const isBlank = (v: string | undefined | null) => !v || v.trim() === "";
+const isBadNum = (n: number | undefined) =>
+  n !== undefined && (!Number.isFinite(n) || n < 0);
+
+export function validateStep(
+  slug: string,
+  d: StepValidationInput,
+): string[] {
+  const errors: string[] = [];
+
+  switch (slug) {
+    case "personal":
+      if (isBlank(d.firstName)) errors.push("יש להזין שם פרטי");
+      if (isBlank(d.lastName)) errors.push("יש להזין שם משפחה");
+      if (isBlank(d.idNumber)) errors.push("יש להזין תעודת זהות");
+      else if (!isValidTZ(d.idNumber)) errors.push("תעודת זהות אינה תקינה");
+      break;
+
+    case "family":
+      if (d.maritalStatus === "married") {
+        if (isBlank(d.spouseFirstName) || isBlank(d.spouseLastName))
+          errors.push("יש להזין את שם בן/בת הזוג");
+        if (isBlank(d.spouseIdNumber))
+          errors.push("יש להזין תעודת זהות של בן/בת הזוג");
+        else if (!isValidTZ(d.spouseIdNumber))
+          errors.push("תעודת הזהות של בן/בת הזוג אינה תקינה");
+      }
+      for (const c of d.children) {
+        if (isBlank(c.birthDate)) {
+          errors.push("יש להזין תאריך לידה לכל ילד");
+          break;
+        }
+      }
+      break;
+
+    case "education":
+      if (d.hasDegree && d.degrees.length === 0)
+        errors.push("יש להוסיף לפחות תואר אחד או לבטל את הסימון");
+      break;
+
+    case "capital":
+      if (d.investsCapital && !d.portfolioLocation)
+        errors.push("יש לבחור היכן מתנהל תיק ההשקעות");
+      if (d.investsCapital && d.portfolioLocation === "foreign_broker" && isBlank(d.selectedBroker))
+        errors.push("יש לבחור ברוקר זר");
+      break;
+
+    case "employers":
+      if (d.hasOverlap)
+        errors.push("קיימת חפיפה בין תקופות העסקה — יש לתקן את החודשים");
+      break;
+
+    case "deductions":
+      for (const ded of d.deductions) {
+        if (isBadNum(ded.amount)) {
+          errors.push("סכומי הניכויים חייבים להיות מספר חיובי");
+          break;
+        }
+      }
+      break;
+
+    case "life-events":
+      break;
+
+    case "credit-points":
+      if (d.hasDisability && (d.disabilityPercent <= 0 || d.disabilityPercent > 100))
+        errors.push("יש להזין אחוז נכות בין 1 ל-100");
+      if (d.isOleh && isBlank(d.aliyahDate))
+        errors.push("יש להזין תאריך עלייה");
+      if (d.servedInArmy && !d.dischargeYear)
+        errors.push("יש להזין שנת שחרור");
+      break;
+  }
+
+  return errors;
+}
