@@ -177,3 +177,26 @@ describe("parseIbkrCsv — empty / malformed CSVs", () => {
     expect(r.totalProfitUSD).toBe(1234.56);
   });
 });
+
+// ── T7.2: multi-currency (EUR/GBP) ──────────────────────────────────────────
+describe("parseIbkrCsv — non-USD base currency (T7.2)", () => {
+  const EUR_FIXTURE = {
+    currency: "EUR" as const,
+    base: "ILS",
+    source: "test",
+    annualMean: { "2024": 4.0 },
+    rates: { "2024-03-15": 4.0 },
+  };
+  beforeEach(() => __setFxDatasetForTesting("EUR", EUR_FIXTURE));
+  afterEach(() => __resetFxDatasetForTesting());
+
+  it("converts a EUR dividend at the EUR rate, not USD", () => {
+    const csv = [
+      "Dividends,Data,Currency,Date,Description,Amount",
+      "Dividends,Data,EUR,2024-03-15,ACME Cash Dividend,100.00",
+    ].join("\n");
+    const r = parseIbkrCsv({ csv });
+    expect(r.dividendsUSD).toBe(100); // raw amount (currency-agnostic field)
+    expect(r.dividendsILS).toBe(400); // 100 × EUR rate 4.0 (NOT a USD rate)
+  });
+});
