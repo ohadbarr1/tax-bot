@@ -1327,7 +1327,26 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     );
   }
 
-  // Step 5: Net tax owed (floored at 0).
+  // T5.2 — §66 separate calculation (חישוב נפרד) for a married couple.
+  // Each spouse's personal-exertion (יגיעה אישית) income is taxed on its OWN
+  // bracket schedule with its own credit points — the default election, and
+  // lower than combining the incomes into one schedule.
+  // SIMPLIFICATION (ASSUMPTION — see DEFERRED_ACTIONS): the spouse gets the base
+  // resident credit (2.25 pts); child/gender/degree points stay with the
+  // registered taxpayer (the engine assigns them there). Requires
+  // spouse.income (annual personal-exertion) in the model.
+  let spouseSeparateTax = 0;
+  let spouseTaxWithheld = 0;
+  if (taxpayer.maritalStatus === "married" && (taxpayer.spouse?.income ?? 0) > 0) {
+    const spouseIncome = taxpayer.spouse!.income!;
+    const spouseBracketTax = calculateTaxOnIncome(spouseIncome, year).tax;
+    const spouseCreditValue = Math.round(2.25 * loadYearData(year).credit_point_annual_value);
+    spouseSeparateTax = Math.max(0, spouseBracketTax - spouseCreditValue);
+    spouseTaxWithheld = taxpayer.spouse!.taxWithheld ?? 0;
+  }
+
+  // Step 5: Net tax owed (floored at 0) — household = registered taxpayer's
+  // tax + the spouse's separate-calc tax.
   const netTaxOwed = Math.max(
     0,
     calculatedTax
@@ -1335,7 +1354,7 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
       - deductionCredits
       - peripheryDiscount
       - foreignSalaryCredit
-  );
+  ) + spouseSeparateTax;
 
   // Step 6: Tax already paid via employer withholding.
   const employerTaxWithheld = taxpayer.employers.reduce(
@@ -1378,7 +1397,7 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
       overlapOverWithholding = Math.round(perMonthRefund * Math.min(overlapMonths, secondary.monthsWorked ?? 12));
     }
   }
-  const taxPaid = employerTaxWithheld + overlapOverWithholding;
+  const taxPaid = employerTaxWithheld + overlapOverWithholding + spouseTaxWithheld;
 
   // Step 7: Refund from employment income.
   const refundFromEmployment = taxPaid - netTaxOwed;

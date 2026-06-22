@@ -228,6 +228,11 @@ export interface TaxPayer {
     firstName?: string;
     lastName?: string;
     idNumber?: string;
+    /** T5.2 — spouse's annual personal-exertion (יגיעה אישית) income, for the
+     *  §66 separate calculation. */
+    income?: number;
+    /** T5.2 — income tax withheld from the spouse's salary (Form 106). */
+    taxWithheld?: number;
   };
   firstName?: string;
   lastName?: string;
