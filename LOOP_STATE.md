@@ -4,11 +4,13 @@
 
 ---
 
-## STATUS: ⏸️ MILESTONE REACHED — T3 + T4 complete (the two outputs). Paused for human review.
+## STATUS: 🚧 T6 in progress — awaiting CPA form-convention answers (T6.2/3/4).
 
-- **Completed this run:** T3 (Output 1 — data summary) + T4 (Output 2 — calc waterfall)
-- **Next track:** T5 (tax correctness) or T6 (form-fill fidelity / Hebrew RTL) — human's call
-- **Last measured gate:** 547 pass / 2 skip · build ✓ · lint 0err/45warn · BOTH outputs verified live in preview
+- **Current track:** T6 · Form-fill fidelity
+- **Done:** T6.1 (Hebrew rendering verified + mixed-digit fix), T6.6 (161/1214 already not reachable)
+- **Blocked on human (CPA):** T6.2 (135 main vs total), T6.3 (loss box sign), T6.4 (dividend codes 117/141/055) — ITA-form-convention questions; guessing risks making forms worse.
+- **KEY FINDING:** rendered the real stamping (poppler + macOS CoreGraphics) — pure-Hebrew names/cities render CORRECTLY. The audit's "all Hebrew reversed" (D7) is a FALSE ALARM. Only embedded multi-digit runs in mixed strings were reversed (fixed). Forms-fill complaint is the STRUCTURAL items (135 aggregate, codes), not Hebrew direction.
+- **Last measured gate:** 552 pass / build ✓ / lint 45
 - **Branch:** `loop/remediation`
 
 **Reviews (T3/T4):** product-lead PASS-w/-concerns, tax-pro FAIL → all fixed this iteration:
