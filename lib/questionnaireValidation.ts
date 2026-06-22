@@ -99,8 +99,8 @@ export function validateStep(
 
     case "deductions":
       for (const ded of d.deductions) {
-        if (isBadNum(ded.amount)) {
-          errors.push("סכומי הניכויים חייבים להיות מספר חיובי");
+        if (isBadNum(ded.amount) || !ded.amount || ded.amount <= 0) {
+          errors.push("יש להזין סכום חיובי לכל ניכוי (או להסירו)");
           break;
         }
       }

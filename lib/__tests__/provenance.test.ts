@@ -153,6 +153,47 @@ describe("override contract — manual wins over later mining", () => {
     expect(taxpayer.employers[0].name).toBe("מעסיק מהמסמך");
   });
 
+  it("preserveManual restores employer leaves by id after a reorder (not by index)", () => {
+    const prevTaxpayer = {
+      ...INITIAL_TAXPAYER,
+      employers: [
+        { id: "e0", name: "A", isMainEmployer: true, monthsWorked: 12, grossSalary: 50000 },
+        { id: "e1", name: "B", isMainEmployer: false, monthsWorked: 12 },
+      ],
+    };
+    const prov = markManualPaths({}, ["taxpayer.employers[0].grossSalary"], NOW);
+    // Doc merge reordered the array: e0 is now at index 1 with a doc value.
+    const nextTaxpayer = {
+      ...prevTaxpayer,
+      employers: [
+        { id: "e1", name: "B", isMainEmployer: false, monthsWorked: 12 },
+        { id: "e0", name: "A", isMainEmployer: true, monthsWorked: 12, grossSalary: 100000 },
+      ],
+    };
+    const { taxpayer } = preserveManual(prevTaxpayer, INITIAL_FINANCIALS, nextTaxpayer, INITIAL_FINANCIALS, prov);
+    expect(taxpayer.employers.find((e) => e.id === "e0")!.grossSalary).toBe(50000);
+  });
+
+  it("preserveManual does NOT restore a locked salary onto a different employer when the original was dropped", () => {
+    const prevTaxpayer = {
+      ...INITIAL_TAXPAYER,
+      employers: [
+        { id: "e0", name: "", isMainEmployer: true, monthsWorked: 12, grossSalary: 50000 },
+      ],
+    };
+    const prov = markManualPaths({}, ["taxpayer.employers[0].grossSalary"], NOW);
+    // The blank-name manual employer was dropped; a doc employer took index 0.
+    const nextTaxpayer = {
+      ...prevTaxpayer,
+      employers: [
+        { id: "docX", name: "מהמסמך", isMainEmployer: true, monthsWorked: 12, grossSalary: 90000 },
+      ],
+    };
+    const { taxpayer } = preserveManual(prevTaxpayer, INITIAL_FINANCIALS, nextTaxpayer, INITIAL_FINANCIALS, prov);
+    // The doc employer keeps its own salary — the orphaned lock is NOT smeared onto it.
+    expect(taxpayer.employers[0].grossSalary).toBe(90000);
+  });
+
   it("non-confirmed mined fields are still overwritten by a newer mine", () => {
     let s = resolveMinedFields(
       INITIAL_TAXPAYER,

@@ -83,6 +83,27 @@ export function preserveManual(
   let financials = nextFinancials;
   for (const [path, p] of Object.entries(provenance ?? {})) {
     if (!p.userConfirmed) continue;
+
+    // Employer leaves are keyed by ARRAY INDEX, but a document merge can drop or
+    // reorder rows (e.g. cleanExisting strips a blank-name manual employer),
+    // which would shift indices and restore a locked value onto the WRONG
+    // employer. Re-locate the employer by its stable `id` in the merged array.
+    const emp = path.match(/^taxpayer\.employers\[(\d+)\]\.(.+)$/);
+    if (emp) {
+      const prevIdx = Number(emp[1]);
+      const field = emp[2];
+      const prevEmp = prevTaxpayer.employers?.[prevIdx];
+      if (!prevEmp) continue;
+      const nextIdx = (taxpayer.employers ?? []).findIndex((e) => e.id === prevEmp.id);
+      if (nextIdx < 0) continue; // employer no longer present — don't corrupt a stranger
+      taxpayer = setPath(
+        taxpayer,
+        `employers[${nextIdx}].${field}`,
+        getPath(prevTaxpayer, `employers[${prevIdx}].${field}`),
+      );
+      continue;
+    }
+
     if (path.startsWith("taxpayer.")) {
       const leaf = path.slice("taxpayer.".length);
       taxpayer = setPath(taxpayer, leaf, getPath(prevTaxpayer, leaf));

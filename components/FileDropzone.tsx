@@ -189,6 +189,7 @@ export function FileDropzone() {
               },
             },
             { ibkrData: json.data },
+            { source: "document" },
           );
 
           const meta: VaultDocMeta = {
@@ -231,7 +232,7 @@ export function FileDropzone() {
               ? taxpayer.employers.map((e, i) => (i === existingIdx ? newEmployer : e))
               : [...taxpayer.employers, newEmployer];
 
-          updateTaxpayerAndRecalculate({ employers: updatedEmployers });
+          updateTaxpayerAndRecalculate({ employers: updatedEmployers }, undefined, { source: "document" });
 
           const meta: VaultDocMeta = {
             id,
