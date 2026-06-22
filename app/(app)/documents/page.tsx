@@ -46,7 +46,11 @@ function DocumentsPageInner() {
   // has nowhere to drop their first file. Once any document exists, the user
   // toggles freely between views.
   const initialViewMode: "grouped" | "flat" =
-    (state.documents?.length ?? 0) === 0 ? "flat" : "grouped";
+    (state.documents ?? []).filter(
+      (d) => (d.draftId ?? state.currentDraftId) === state.currentDraftId,
+    ).length === 0
+      ? "flat"
+      : "grouped";
   const [viewMode, setViewMode] = useState<"grouped" | "flat">(initialViewMode);
 
   // Session-only blob URLs — never persisted (blob URLs are tab-lifetime only).
@@ -135,7 +139,15 @@ function DocumentsPageInner() {
 
   const [activeCategory, setActiveCategory] = useState<"all" | VaultDocType>("all");
 
-  const docs: VaultDocMeta[] = state.documents ?? [];
+  // `docs` is the cross-draft vault (every draft's uploads) — used only by the
+  // grouped vault view below, which separates and labels each draft. Everything
+  // that describes the CURRENT process (header count, category tabs, flat list,
+  // empty-state) reads `currentDocs` so a NEW process starts clean instead of
+  // inheriting a prior draft's docs while its financials are still empty.
+  const allDocs: VaultDocMeta[] = state.documents ?? [];
+  const docs: VaultDocMeta[] = allDocs.filter(
+    (d) => (d.draftId ?? state.currentDraftId) === state.currentDraftId,
+  );
   const filtered = activeCategory === "all" ? docs : docs.filter((d) => d.type === activeCategory);
 
   // ── Parse a file and update state ─────────────────────────────────────────
@@ -512,7 +524,7 @@ function DocumentsPageInner() {
 
       {viewMode === "grouped" ? (
         <VaultGroupedView
-          docs={docs}
+          docs={allDocs}
           drafts={state.drafts ?? {}}
           currentDraftId={state.currentDraftId}
           onRemove={handleRemove}
