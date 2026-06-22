@@ -43,7 +43,8 @@ export function WelcomeWizard() {
     createDraft(currentTaxYear(), inferFilingType(sources), "refund");
     setIncomeSources(sources);
     markSourcesSelected();
-    router.push("/questionnaire");
+    // Stage ① → ②: documents come before the questionnaire (Loop 2 flow order).
+    router.push("/documents");
   };
 
   return (

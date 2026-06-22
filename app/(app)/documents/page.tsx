@@ -33,8 +33,12 @@ export default function DocumentsPage() {
 }
 
 function DocumentsPageInner() {
-  const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, linkDocumentToProcess, hydrated } = useApp();
+  const { state, addDocument, removeDocument, updateDocumentType, updateDocumentStatus, updateTaxpayerAndRecalculate, linkDocumentToProcess, markDocumentsConfirmed, hydrated } = useApp();
   const router = useRouter();
+  const continueToQuestionnaire = () => {
+    markDocumentsConfirmed();
+    router.push("/questionnaire");
+  };
   // Default to the flat list view when the vault is empty so the upload
   // dropzone is reachable on first visit. The grouped view (`VaultGroupedView`)
   // does not render the dropzone, so an empty-vault user landing on grouped
@@ -529,6 +533,17 @@ function DocumentsPageInner() {
           </p>
         </div>
       )}
+
+      {/* Stage ② → ③: continue to the questionnaire (docs are optional — the
+          questionnaire fills whatever the documents didn't cover). */}
+      <div className="flex justify-end mt-8 pt-5 border-t border-border">
+        <button
+          onClick={continueToQuestionnaire}
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-kc-ink text-white text-sm font-semibold hover:bg-slate-800 transition-all"
+        >
+          המשך לשאלון ←
+        </button>
+      </div>
     </div>
   );
 }

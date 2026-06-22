@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/appContext";
 import { buildSummary, sourceBadge } from "@/lib/summary";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -11,7 +12,12 @@ import { ArrowLeft, Pencil } from "lucide-react";
  * of truth; where a manual value overrode a mined document, that is shown.
  */
 export function SummaryView() {
-  const { state } = useApp();
+  const { state, markSummaryConfirmed } = useApp();
+  const router = useRouter();
+  const continueToFiling = () => {
+    markSummaryConfirmed();
+    router.push("/filing");
+  };
   const sections = buildSummary(state.taxpayer);
   const provenance = state.provenance ?? {};
 
@@ -115,8 +121,8 @@ export function SummaryView() {
           <Pencil size={15} /> ערוך פרטים
         </Link>
         <div style={{ flex: 1 }} />
-        <Link
-          href="/filing"
+        <button
+          onClick={continueToFiling}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -127,11 +133,12 @@ export function SummaryView() {
             borderRadius: 14,
             fontSize: 14,
             fontWeight: 700,
-            textDecoration: "none",
+            border: "none",
+            cursor: "pointer",
           }}
         >
           המשך להגשה ולחישוב <ArrowLeft size={16} />
-        </Link>
+        </button>
       </div>
     </div>
   );

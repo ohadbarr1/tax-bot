@@ -231,31 +231,6 @@ describe("QuestionnaireProvider — partial-draft persistence (user-flow-1.3)", 
     expect(secondCtx!.bank.bankName).toBe("לאומי");
   });
 
-  it("handleFinish sets income sources so /documents is not blank (T0.3 spine)", () => {
-    let captured: ReturnType<typeof useQuestionnaire> | null = null;
-    render(
-      <QuestionnaireProvider>
-        <ContextProbe onMount={(ctx) => (captured = ctx)} />
-      </QuestionnaireProvider>,
-    );
-
-    act(() => {
-      // A salaried filer who also invests through a foreign broker.
-      captured!.updateEmployer("emp-main", { name: "מעסיק א'", grossSalary: 90000 });
-      captured!.setInvestsCapital(true);
-      captured!.setPortfolioLocation("foreign_broker");
-    });
-
-    act(() => captured!.handleFinish());
-
-    expect(appStub.setIncomeSources).toHaveBeenCalled();
-    expect(appStub.markSourcesSelected).toHaveBeenCalled();
-    const sources = (appStub.setIncomeSources as ReturnType<typeof vi.fn>).mock
-      .calls.at(-1)![0] as string[];
-    expect(sources).toContain("salary");
-    expect(sources).toContain("investments");
-    expect(sources).toContain("foreign");
-  });
 
   it("handleFinish locks manually-entered values so docs can't overwrite them (T0.3/P0-1)", () => {
     let captured: ReturnType<typeof useQuestionnaire> | null = null;
@@ -302,20 +277,6 @@ describe("QuestionnaireProvider — partial-draft persistence (user-flow-1.3)", 
     expect(withSpouse?.spouse?.taxWithheld).toBe(22000);
   });
 
-  it("handleFinish never leaves /documents source-less (defaults to salary)", () => {
-    let captured: ReturnType<typeof useQuestionnaire> | null = null;
-    render(
-      <QuestionnaireProvider>
-        <ContextProbe onMount={(ctx) => (captured = ctx)} />
-      </QuestionnaireProvider>,
-    );
-    // No employer data, no capital, no welcome sources → must still select one.
-    act(() => captured!.handleFinish());
-    expect(appStub.markSourcesSelected).toHaveBeenCalled();
-    const sources = (appStub.setIncomeSources as ReturnType<typeof vi.fn>).mock
-      .calls.at(-1)![0] as string[];
-    expect(sources.length).toBeGreaterThan(0);
-  });
 
   it("mirrors questionnaire-only state slices to updateFinancials when relevant (Step 3)", async () => {
     let captured: ReturnType<typeof useQuestionnaire> | null = null;
