@@ -97,6 +97,10 @@ export function buildSummary(taxpayer: TaxPayer): SummarySection[] {
     const spouseName = [t.spouse?.firstName, t.spouse?.lastName].filter(Boolean).join(" ").trim();
     familyRows.push({ label: "בן/בת זוג", value: spouseName, path: "taxpayer.spouse.firstName" });
     familyRows.push({ label: "ת״ז בן/בת זוג", value: t.spouse?.idNumber || "", path: "taxpayer.spouse.idNumber" });
+    familyRows.push({ label: "לבן/בת הזוג הכנסה", value: t.spouseHasIncome ? "כן" : "לא", path: "taxpayer.spouseHasIncome" });
+  }
+  if (t.paysAlimony) {
+    familyRows.push({ label: "תשלום מזונות", value: "כן", path: "taxpayer.paysAlimony" });
   }
   (t.children ?? []).forEach((c, i) => {
     familyRows.push({
@@ -145,6 +149,12 @@ export function buildSummary(taxpayer: TaxPayer): SummarySection[] {
       ]),
     });
   }
+  if (t.controllingShareholder || (t.capitalGains?.dividends ?? 0) > 0) {
+    const capExtra: SummaryRow[] = [];
+    if (t.controllingShareholder) capExtra.push({ label: "בעל מניות מהותי", value: "כן", path: "taxpayer.controllingShareholder" });
+    if (t.dividendType) capExtra.push({ label: "סיווג דיבידנד", value: t.dividendType === "redemption_141" ? "פדיון (141)" : "רגיל (117)", path: "taxpayer.dividendType" });
+    if (capExtra.length) sections.push({ title: "מניות ודיבידנד", rows: capExtra });
+  }
 
   // Deductions
   if ((t.personalDeductions ?? []).length > 0) {
@@ -153,11 +163,21 @@ export function buildSummary(taxpayer: TaxPayer): SummarySection[] {
       rows: push(
         t.personalDeductions.map((dd, i) => ({
           label: DEDUCTION[dd.type] || dd.type,
-          value: ils(dd.amount),
+          value: ils(dd.amount) + (dd.providerName ? ` · ${dd.providerName}` : ""),
           path: `taxpayer.personalDeductions[${i}].amount`,
         })),
       ),
     });
+  }
+
+  // Life events
+  const le = t.lifeEvents;
+  if (le) {
+    const leRows: SummaryRow[] = [];
+    if (le.changedJobs) leRows.push({ label: "החלפת מקום עבודה", value: "כן", path: "taxpayer.lifeEvents.changedJobs" });
+    if (le.pulledSeverancePay) leRows.push({ label: "משיכת פיצויי פרישה", value: "כן", path: "taxpayer.lifeEvents.pulledSeverancePay" });
+    if (le.hasForm161) leRows.push({ label: "טופס 161", value: "קיים", path: "taxpayer.lifeEvents.hasForm161" });
+    if (leRows.length) sections.push({ title: "אירועי חיים", rows: leRows });
   }
 
   // Credit-point inputs
@@ -166,6 +186,7 @@ export function buildSummary(taxpayer: TaxPayer): SummarySection[] {
     { label: "שנת שחרור מצה״ל", value: t.dischargeYear ? String(t.dischargeYear) : "", path: "taxpayer.dischargeYear" },
     { label: "תאריך עלייה", value: t.aliyahDate || "", path: "taxpayer.aliyahDate" },
     { label: "יישוב", value: t.postcode || "", path: "taxpayer.postcode" },
+    { label: "חבר קיבוץ", value: t.kibbutzMember ? "כן" : "", path: "taxpayer.kibbutzMember" },
     { label: "אחוז נכות", value: t.disabilityPercent ? `${t.disabilityPercent}%` : "", path: "taxpayer.disabilityPercent" },
   ];
   sections.push({ title: "נקודות זיכוי", rows: push(cpRows) });

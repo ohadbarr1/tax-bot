@@ -48,21 +48,48 @@ export function CalcExplanation() {
     );
   }
 
+  // Derivations that mirror the engine exactly so the lines reconcile to netRefund:
+  //   calculatedTax is ALREADY net of shiftWorkDiscount → show raw bracket tax,
+  //   then subtract the shift-work discount as its own line.
+  //   netTaxOwed excludes surtax & CGT; total liability = netTaxOwed + CGT + surtax.
+  //   netRefund = taxPaid − totalLiability. taxPaid bundles the F-023 overlap
+  //   estimate → split it out and flag it as an estimate, not true withholding.
+  const rawBracketTax = r.calculatedTax + r.shiftWorkDiscount;
+  const totalLiability = r.netTaxOwed + r.capitalGainsTax + r.surtax;
+  const employerWithheld = r.taxPaid - r.multiEmployerOverlapRefund;
+  const creditsExceedTax =
+    rawBracketTax - r.shiftWorkDiscount - r.creditPointsValue - r.deductionCredits - r.peripheryDiscount - r.foreignSalaryCredit < 0;
+  const cgtNote = (state.taxpayer.capitalGains?.foreignTaxWithheld ?? 0) > 0 ? "לאחר זיכוי מס זר ששולם בחו״ל" : undefined;
+
   const rows: Row[] = [
     { label: "הכנסה ברוטו כוללת", value: r.totalGrossIncome },
     { label: "ניכויים מההכנסה", value: -r.incomeDeductions, kind: "sub", note: "פנסיה, מזונות, פטור נכות וכד׳", hideIfZero: true },
     { label: "הכנסה חייבת", value: r.taxableIncome, kind: "subtotal" },
-    { label: "מס לפי מדרגות", value: r.calculatedTax, kind: "add" },
+    { label: "מס לפי מדרגות", value: rawBracketTax, kind: "add" },
+    { label: "הנחת עבודה במשמרות", value: -r.shiftWorkDiscount, kind: "sub", hideIfZero: true },
     { label: "נקודות זיכוי", value: -r.creditPointsValue, kind: "sub", note: `${r.creditPointsCount} נק׳ × ערך שנתי`, hideIfZero: true },
-    { label: "זיכויי ניכויים", value: -r.deductionCredits, kind: "sub", note: "תרומות §46, ביטוח חיים §45א וכד׳", hideIfZero: true },
+    { label: "זיכויי מס (§46, §45א)", value: -r.deductionCredits, kind: "sub", note: "תרומות, ביטוח חיים וכד׳", hideIfZero: true },
     { label: "הנחת פריפריה (§11)", value: -r.peripheryDiscount, kind: "sub", hideIfZero: true },
     { label: "זיכוי מס זר על שכר (§67א)", value: -r.foreignSalaryCredit, kind: "sub", hideIfZero: true },
-    { label: "הנחת עבודה במשמרות", value: -r.shiftWorkDiscount, kind: "sub", hideIfZero: true },
+    {
+      label: "מס הכנסה לתשלום",
+      value: r.netTaxOwed,
+      kind: "subtotal",
+      note: creditsExceedTax ? "הזיכויים האישיים אינם מוחזרים — עודף הזיכוי לא נוצל" : undefined,
+    },
+    { label: "מס על רווחי הון", value: r.capitalGainsTax, kind: "add", note: cgtNote, hideIfZero: true },
     { label: "מס יסף (§121ב)", value: r.surtax, kind: "add", hideIfZero: true },
-    { label: "מס הכנסה לתשלום", value: r.netTaxOwed, kind: "subtotal" },
-    { label: "מס על רווחי הון", value: r.capitalGainsTax, kind: "add", hideIfZero: true },
-    { label: "מס שנוכה במקור", value: -r.taxPaid, kind: "sub", note: "סך הניכויים מהמשכורת ובמקור", hideIfZero: true },
+    { label: "סך חבות המס", value: totalLiability, kind: "subtotal" },
+    { label: "מס שנוכה במקור", value: -employerWithheld, kind: "sub", note: "ניכויים מהמשכורת ובמקור", hideIfZero: true },
   ];
+  if (r.multiEmployerOverlapRefund > 0) {
+    rows.push({
+      label: "החזר משוער מחפיפת מעסיקים (הערכה)",
+      value: -r.multiEmployerOverlapRefund,
+      kind: "sub",
+      note: "אומדן בלבד — אינו ניכוי במקור בפועל",
+    });
+  }
 
   const isRefund = r.netRefund >= 0;
   const finalRow: Row = {
@@ -74,7 +101,14 @@ export function CalcExplanation() {
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="px-5 py-4 border-b border-border bg-muted/40">
-        <h2 className="text-base font-bold text-foreground">איך חישבנו את הסכום</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-bold text-foreground">איך חישבנו את הסכום</h2>
+          {!stored && (
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+              תצוגה מקדימה — טרם נשמר
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground mt-0.5">
           כל שורה נגזרת מהנתונים שמסרת ומפקודת מס הכנסה.
         </p>
