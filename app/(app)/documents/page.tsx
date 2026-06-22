@@ -11,6 +11,7 @@ import { uploadUserDocument } from "@/lib/firebase/storage";
 import { AuthGate } from "@/components/auth/AuthGate";
 import { clientFetch } from "@/lib/api/clientFetch";
 import type { VaultDocMeta, VaultDocType, Form106ParseResponse, IbkrParseResponse, Form867InboundData } from "@/types";
+import { resolveBrokerCapitalGains } from "@/lib/capitalGainsFromDocs";
 
 const CATEGORIES: { id: "all" | VaultDocType; label: string }[] = [
   { id: "all",          label: "כל המסמכים" },
@@ -300,18 +301,24 @@ function DocumentsPageInner() {
           if (parts.length >= 2 && !state.taxpayer.lastName)  identityPatch.lastName  = parts.slice(1).join(" ");
         }
 
-        // Fall-back capital-gains primary source: only when no IBKR data
-        // is currently in state. Otherwise the 867 stays cross-check-only
-        // and we leave `capitalGains` driven by IBKR.
-        const hasIbkrSource = state.financials?.hasForeignBroker === true;
-        const capitalGainsPatch = hasIbkrSource
-          ? undefined
-          : {
-              totalRealizedProfit: Math.max(0, d.realizedGainsIls),
-              totalRealizedLoss: Math.max(0, d.realizedLossesIls),
-              foreignTaxWithheld: Math.max(0, d.foreignWithholdingIls),
-              dividends: Math.max(0, d.dividendsIls),
-            };
+        // Capital-gains source resolution:
+        //   • IBKR present → 867 stays cross-check only (a 867 there usually
+        //     certifies the SAME IBKR account; adding it double-counts).
+        //   • No IBKR → SUM across every Form-867 in this draft. A filer can
+        //     hold certificates from MULTIPLE brokers (e.g. הייבריד + Xnes);
+        //     each is a separate portfolio and must be added, not overwritten.
+        // Note: we detect IBKR by an actual parsed IBKR document — NOT by
+        // `hasForeignBroker`, which a prior 867 also sets (that flag is exactly
+        // what made the 2nd 867 look like an IBKR duplicate and get dropped).
+        const currentDraftDocs = (state.documents ?? []).filter(
+          (doc) => (doc.draftId ?? state.currentDraftId) === state.currentDraftId,
+        );
+        // Exclude this doc's own (stale) payload on a re-parse, fold in the
+        // freshly parsed `d`. IBKR present → 867 cross-check only (undefined);
+        // otherwise the SUM of every 867 broker in the draft.
+        const resolution = resolveBrokerCapitalGains(currentDraftDocs, docId, [d]);
+        const capitalGainsPatch =
+          resolution.kind === "sum" ? resolution.capitalGains : undefined;
 
         updateTaxpayerAndRecalculate(
           {
@@ -342,7 +349,7 @@ function DocumentsPageInner() {
       setParseResults((prev) => new Map(prev).set(docId, { summary: `שגיאה: ${message}`, raw: null }));
       updateDocumentStatus(docId, "failed", { miningError: message });
     }
-  }, [state.taxpayer.employers, state.taxpayer.capitalGains, state.currentDraftId, updateTaxpayerAndRecalculate, updateDocumentStatus]);
+  }, [state.taxpayer.employers, state.taxpayer.capitalGains, state.currentDraftId, state.documents, updateTaxpayerAndRecalculate, updateDocumentStatus]);
 
   const handleAdd = useCallback((meta: VaultDocMeta, objectUrl: string, file: File) => {
     addDocument(meta);
@@ -355,12 +362,30 @@ function DocumentsPageInner() {
   }, [addDocument, parseDocument]);
 
   const handleRemove = useCallback((id: string) => {
+    const removed = (state.documents ?? []).find((d) => d.id === id);
     removeDocument(id);
     revokeUrl(id);
     setSessionFiles((prev) => { const n = new Map(prev); n.delete(id); return n; });
     setParseStatuses((prev) => { const n = new Map(prev); n.delete(id); return n; });
     setParseResults((prev) => { const n = new Map(prev); n.delete(id); return n; });
-  }, [removeDocument, revokeUrl]);
+
+    // If a broker capital-gains doc was removed, recompute capitalGains from
+    // the REMAINING docs so its numbers don't linger in the calculation
+    // (symmetric with the multi-867 sum on upload). IBKR stays authoritative
+    // when still present; otherwise sum the remaining 867s, or clear when none.
+    const kind = removed?.parsedPayload?.kind;
+    if (kind !== "form867" && kind !== "ibkr") return;
+    const currentDraftDocs = (state.documents ?? []).filter(
+      (d) => (d.draftId ?? state.currentDraftId) === state.currentDraftId,
+    );
+    const resolution = resolveBrokerCapitalGains(currentDraftDocs, id);
+    if (resolution.kind === "ibkr") return; // IBKR still authoritative — nothing to do
+    if (resolution.kind === "none") {
+      updateTaxpayerAndRecalculate({ capitalGains: undefined }, { hasForeignBroker: false }, { source: "document" });
+    } else {
+      updateTaxpayerAndRecalculate({ capitalGains: resolution.capitalGains }, { hasForeignBroker: true }, { source: "document" });
+    }
+  }, [removeDocument, revokeUrl, state.documents, state.currentDraftId, updateTaxpayerAndRecalculate]);
 
   const handleTypeChange = useCallback((id: string, type: VaultDocType) => {
     updateDocumentType(id, type);
