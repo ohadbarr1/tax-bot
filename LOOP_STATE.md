@@ -4,7 +4,13 @@
 
 ---
 
-## STATUS: ⏸️ MILESTONE REACHED — T6 form-fill fidelity complete. Paused for human review.
+## STATUS: 🔵 RUNNING — T5 tax correctness. Next milestone = end of T5.
+
+- **Current track:** T5 · Tax correctness
+- **Units:** T5.1 surtax §121ב rebuild · T5.2 §66 married separate calc · T5.3 phantom-refund keep-but-fix · T5.4 CG 30% controlling shareholder · T5.5 track gate
+- **Each unit:** CPA golden test (worked example, expected numbers) + tax-pro sign-off.
+
+## (prev) MILESTONE — T6 form-fill fidelity complete.
 
 - **Completed this run:** T6.1 (Hebrew verified + mixed-digit fix), T6.2/3/4 (form conventions via tax skill, flagged ASSUMPTION), T6.6 (161/1214 already unreachable). T6.5 (eyeballed coords) deferred — render correctly, low value.
 - **Next track:** T5 (tax correctness — surtax §121ב, §66 separate calc, phantom-refund fix), T7 (input/parsing), or T8 (coverage lock).

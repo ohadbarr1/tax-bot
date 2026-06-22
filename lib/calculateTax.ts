@@ -96,6 +96,24 @@ export function loadYearData(year: number): YearTaxData {
 }
 
 /**
+ * מס יסף (surtax §121ב) annual threshold. Frozen at ₪721,560 for 2024–2027
+ * (Israeli-tax-returns skill, Step 4); earlier years used lower indexed values.
+ * Kept as a function so a future indexed table slots in without touching callers.
+ */
+export function surtaxThresholdForYear(year: number): number {
+  const TABLE: Record<number, number> = {
+    2020: 651_600,
+    2021: 647_640,
+    2022: 663_240,
+    2023: 698_280,
+    2024: 721_560,
+    2025: 721_560,
+    2026: 721_560,
+  };
+  return TABLE[year] ?? 721_560;
+}
+
+/**
  * Set of years the engine fully supports. Mirrors `SupportedTaxYear` in
  * `currentTaxYear.ts`. Kept as a runtime list so tests can iterate it.
  */
@@ -1361,27 +1379,40 @@ export function calculateFullRefund(taxpayer: TaxPayer, year: number): Calculati
     dividendsAmount = dividends;
     // F-016: סעיף 92 — קיזוז הפסד הון מועבר לפני חישוב המס.
     netGain = Math.max(0, totalRealizedProfit - totalRealizedLoss - carriedForwardLoss);
-    // Phase 2 §2.B — controlling-shareholder dividends are taxed at 30%
-    // (vs 25% for regular). Default to 25% unless the user flagged otherwise
-    // in the questionnaire.
+    // §91(ב) / §125ב — a בעל מניות מהותי (10%+ holder) is taxed at 30% on BOTH
+    // the capital GAIN and dividends from that holding (vs 25% for a regular
+    // individual). T5.4: the pre-fix code applied 30% only to dividends and left
+    // the gain at a flat 25%. (Israeli-tax-returns skill: "30% if the seller
+    // holds 10% or more of the company".)
+    const cgRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
     const dividendRate = taxpayer.controllingShareholder ? 0.30 : 0.25;
-    const grossCGTax = Math.round(netGain * 0.25 + dividends * dividendRate);
+    const grossCGTax = Math.round(netGain * cgRate + dividends * dividendRate);
     capitalGainsTax = Math.max(0, grossCGTax - foreignTaxWithheld);
   }
 
-  // Phase 2 §2.B — Mas Yesafim (surtax) per סעיף 121ב.
-  // 2026 thresholds (Israeli-tax-returns skill, Step 4):
-  //   • Active income (employment + business): 3% above ₪721,560
-  //   • Capital / passive income (dividend, interest, rent, capital gains):
-  //     5% above ₪721,560 (3% base + 2% additional surcharge)
-  // Both buckets share the SAME ₪721,560 threshold but compute independently.
-  const SURTAX_THRESHOLD = 721_560;
+  // T5.1 — Mas Yesafim (surtax) per סעיף 121ב, rebuilt.
+  //
+  // FIX: the threshold applies ONCE to TOTAL chargeable income (active +
+  // passive), not separately to each bucket. The pre-fix code gave each bucket
+  // its own full ₪721,560 exemption, so e.g. ₪500k salary + ₪400k gains paid
+  // ₪0 surtax (both under the threshold) when ~₪8.9k is due.
+  //   • 3% on ALL income above the threshold.
+  //   • +2% ADDITIONAL on the capital/passive slice above the threshold
+  //     (effective 2025; §121ב(ב) as amended). Passive is treated as the top
+  //     slice for the surcharge.
+  // Threshold is ₪721,560, frozen 2024–2027 (Israeli-tax-returns skill, Step 4).
+  const SURTAX_THRESHOLD = surtaxThresholdForYear(year);
   const activeIncomeForSurtax = Math.max(0, taxableIncome);
-  const passiveIncomeForSurtax = netGain + dividendsAmount;
-  const activeSurtaxBase  = Math.max(0, activeIncomeForSurtax  - SURTAX_THRESHOLD);
-  const passiveSurtaxBase = Math.max(0, passiveIncomeForSurtax - SURTAX_THRESHOLD);
-  const surtaxActive  = Math.round(activeSurtaxBase  * 0.03);
-  const surtaxPassive = Math.round(passiveSurtaxBase * 0.05);
+  const passiveIncomeForSurtax = Math.max(0, netGain + dividendsAmount);
+  const totalForSurtax = activeIncomeForSurtax + passiveIncomeForSurtax;
+  const aboveThreshold = Math.max(0, totalForSurtax - SURTAX_THRESHOLD);
+  // Portion of the above-threshold amount attributable to passive income
+  // (passive sits "on top"): it gets the extra 2%.
+  const passiveAbove = Math.min(passiveIncomeForSurtax, aboveThreshold);
+  const activeAbove = Math.max(0, aboveThreshold - passiveAbove);
+  const extraRate = year >= 2025 ? 0.02 : 0; // 2% capital surcharge from 2025
+  const surtaxActive  = Math.round(activeAbove * 0.03);
+  const surtaxPassive = Math.round(passiveAbove * (0.03 + extraRate));
   const surtaxTotal   = surtaxActive + surtaxPassive;
 
   // Step 9: Final net refund.
