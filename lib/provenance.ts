@@ -51,6 +51,49 @@ export function setPath<T>(root: T, path: string, value: unknown): T {
   return rec(root, 0) as T;
 }
 
+/** Read `root[path]` for a dot-path with numeric array indices. */
+export function getPath(root: unknown, path: string): unknown {
+  const segments = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
+  let cur: unknown = root;
+  for (const s of segments) {
+    if (cur == null || typeof cur !== "object") return undefined;
+    cur = (cur as Record<string, unknown>)[s];
+  }
+  return cur;
+}
+
+/**
+ * Restore every user-confirmed (manual) leaf value from the PREVIOUS state onto
+ * a freshly document-merged state. This is the enforcement point for document
+ * writes: no matter how coarse the incoming patch (whole `employers` array,
+ * whole `capitalGains` object), a locked field keeps the user's value.
+ * Pure.
+ */
+export function preserveManual(
+  prevTaxpayer: TaxPayer,
+  prevFinancials: FinancialData,
+  nextTaxpayer: TaxPayer,
+  nextFinancials: FinancialData,
+  provenance: Record<string, FieldProvenance>,
+): { taxpayer: TaxPayer; financials: FinancialData } {
+  let taxpayer = nextTaxpayer;
+  let financials = nextFinancials;
+  for (const [path, p] of Object.entries(provenance ?? {})) {
+    if (!p.userConfirmed) continue;
+    if (path.startsWith("taxpayer.")) {
+      const leaf = path.slice("taxpayer.".length);
+      taxpayer = setPath(taxpayer, leaf, getPath(prevTaxpayer, leaf));
+    } else if (path.startsWith("financials.")) {
+      const leaf = path.slice("financials.".length);
+      financials = setPath(financials, leaf, getPath(prevFinancials, leaf));
+    }
+  }
+  return { taxpayer, financials };
+}
+
 /** True if a provenance entry represents a manual override (user-confirmed). */
 export function isManual(entry?: FieldProvenance): boolean {
   return !!entry?.userConfirmed;

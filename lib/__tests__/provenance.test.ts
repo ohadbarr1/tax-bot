@@ -14,6 +14,8 @@ import {
   markManualPaths,
   makeManualEntry,
   isManual,
+  getPath,
+  preserveManual,
   MANUAL_DOC_ID,
 } from "../provenance";
 import { INITIAL_TAXPAYER, INITIAL_FINANCIALS } from "../initialState";
@@ -103,6 +105,52 @@ describe("override contract — manual wins over later mining", () => {
     // keeps doc lineage so the summary can show "manual — overrode טופס 106"
     expect(overridden.sourceDocId).toBe("doc-106");
     expect(overridden.sourceLabel).toBe("טופס 106");
+  });
+
+  it("getPath reads nested + array dot-paths", () => {
+    const obj = { employers: [{ grossSalary: 90000 }], bank: { account: "1" } };
+    expect(getPath(obj, "employers[0].grossSalary")).toBe(90000);
+    expect(getPath(obj, "bank.account")).toBe("1");
+    expect(getPath(obj, "employers[3].grossSalary")).toBeUndefined();
+  });
+
+  it("preserveManual: document write keeps locked leaves, overwrites unlocked (T2.1)", () => {
+    // Prev state: user typed salary 120000 (locked) at employer 0, name not locked.
+    const prevTaxpayer = {
+      ...INITIAL_TAXPAYER,
+      idNumber: "000000018",
+      employers: [
+        { id: "e0", name: "ידני", isMainEmployer: true, monthsWorked: 12, grossSalary: 120000 },
+      ],
+    };
+    const provenance = markManualPaths(
+      {},
+      ["taxpayer.employers[0].grossSalary", "taxpayer.idNumber"],
+      NOW,
+    );
+
+    // A Tofes-106 merge tries to set salary 100000 and the (unlocked) name.
+    const docMergedTaxpayer = {
+      ...prevTaxpayer,
+      idNumber: "999999999",
+      employers: [
+        { id: "e0", name: "מעסיק מהמסמך", isMainEmployer: true, monthsWorked: 12, grossSalary: 100000 },
+      ],
+    };
+
+    const { taxpayer } = preserveManual(
+      prevTaxpayer,
+      INITIAL_FINANCIALS,
+      docMergedTaxpayer,
+      INITIAL_FINANCIALS,
+      provenance,
+    );
+
+    // Locked wins:
+    expect(taxpayer.employers[0].grossSalary).toBe(120000);
+    expect(taxpayer.idNumber).toBe("000000018");
+    // Unlocked field from the doc survives:
+    expect(taxpayer.employers[0].name).toBe("מעסיק מהמסמך");
   });
 
   it("non-confirmed mined fields are still overwritten by a newer mine", () => {

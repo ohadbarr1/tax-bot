@@ -4,11 +4,11 @@
 
 ---
 
-## STATUS: ⏸️ MILESTONE REACHED — T0 Foundation complete (paused for human review)
+## STATUS: 🔵 RUNNING — T2.1 (carryover from T0), then T1. Next milestone = end of T1.
 
-- **Current track:** T0 · Foundation — DONE (with one documented carryover → T2.1)
-- **Next track:** T1 · Rock-solid onboarding (or T2.1 first — see below)
-- **Cycle step:** milestone stop
+- **Current track:** T2.1 → T1
+- **Current unit:** T2.1 — structured 106/IBKR/867 parsers must honor the override lock
+- **Cycle step:** 2 (Spec)
 - **Open blockers:** none (qa-lead FAIL on T0.5 resolved: cheap P0/P1 fixed; deep P0-2 reclassified as T2.1)
 - **Last measured gate:** 529 pass / 2 skip · build ✓ · lint 0err/45warn
 - **Branch:** `loop/remediation` (main reset clean to 8ccafd5)

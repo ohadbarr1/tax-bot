@@ -196,7 +196,7 @@ function DocumentsPageInner() {
               pensionDeduction: d.pensionDeduction,
             },
           ],
-        });
+        }, undefined, { source: "document" });
 
         const uploadResult = await uploadPromise;
         updateDocumentStatus(docId, "mined", {
@@ -234,7 +234,8 @@ function DocumentsPageInner() {
               dividends: d.dividendsILS,
             },
           },
-          { ibkrData: d, hasForeignBroker: true }
+          { ibkrData: d, hasForeignBroker: true },
+          { source: "document" }
         );
 
         const uploadResult = await uploadPromise;
@@ -317,6 +318,7 @@ function DocumentsPageInner() {
           // otherwise determineFormType will fall back to 135 even though
           // the user has foreign-broker income reported via the 867 service.
           capitalGainsPatch ? { hasForeignBroker: true } : undefined,
+          { source: "document" },
         );
 
         const uploadResult = await uploadPromise;

@@ -221,6 +221,7 @@ export function SourceDrivenDocCards() {
               },
             },
             { ibkrData: d, hasForeignBroker: true },
+            { source: "document" },
           );
           const uploadResult = await uploadPromise;
           updateDocumentStatus(docId, "mined", {

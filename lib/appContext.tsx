@@ -31,7 +31,7 @@ import { saveState, loadState, clearState } from "./db";
 import { deleteUserDocument } from "./firebase/storage";
 import { useAuth } from "./firebase/authContext";
 import { carryForwardFromPriorDraft } from "./yoyCarryover";
-import { resolveMinedFields, makeManualEntry, markManualPaths } from "./provenance";
+import { resolveMinedFields, makeManualEntry, markManualPaths, preserveManual } from "./provenance";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ interface AppContextValue {
    * so uploading a Form 106 or IBKR statement instantly re-renders the Dashboard.
    * Optional financialsPatch is merged atomically to avoid the double-setState race.
    */
-  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) => void;
+  updateTaxpayerAndRecalculate: (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>, opts?: { source?: "manual" | "document" }) => void;
   /** Whether the initial IndexedDB hydration is complete (avoids FOUC) */
   hydrated: boolean;
   // ── Multi-draft (P2) ──────────────────────────────────────────────────────
@@ -326,16 +326,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }));
 
-  const updateTaxpayerAndRecalculate = (patch: Partial<TaxPayer>, financialsPatch?: Partial<FinancialData>) =>
+  const updateTaxpayerAndRecalculate = (
+    patch: Partial<TaxPayer>,
+    financialsPatch?: Partial<FinancialData>,
+    opts?: { source?: "manual" | "document" },
+  ) =>
     setState((prev) => {
-      const newTaxpayer: TaxPayer = { ...prev.taxpayer, ...patch };
-      const year = prev.financials.taxYears[0] ?? currentTaxYear();
+      let newTaxpayer: TaxPayer = { ...prev.taxpayer, ...patch };
+      let newFinancialsBase: FinancialData = { ...prev.financials, ...financialsPatch };
+      // Document-sourced writes must never overwrite a user-locked value
+      // (manual = source of truth). Restore locked leaves after the merge.
+      if (opts?.source === "document") {
+        const preserved = preserveManual(
+          prev.taxpayer,
+          prev.financials,
+          newTaxpayer,
+          newFinancialsBase,
+          prev.provenance ?? {},
+        );
+        newTaxpayer = preserved.taxpayer;
+        newFinancialsBase = preserved.financials;
+      }
+      const year = newFinancialsBase.taxYears[0] ?? currentTaxYear();
       const result = calculateFullRefund(newTaxpayer, year);
       const insights = buildInsightsFromResult(result, newTaxpayer, year);
       const actionItems = buildActionItemsFromResult(result, newTaxpayer);
       const newFinancials: FinancialData = {
-        ...prev.financials,
-        ...financialsPatch,
+        ...newFinancialsBase,
         estimatedRefund: result.netRefund,
         insights,
         actionItems,
