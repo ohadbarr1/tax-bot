@@ -182,8 +182,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!u) {
         try {
           await signInAnonymously(auth);
+          setAuthError(null);
         } catch (err) {
+          const code = (err as { code?: string } | null)?.code;
           console.warn("[auth] anonymous sign-in failed:", err);
+          // Surface rate-limit so AuthGate can prompt Google sign-in instead of
+          // silently hanging. auth/too-many-requests = Firebase anon-auth quota hit.
+          if (code === "auth/too-many-requests") {
+            setAuthError("שירות ההתחברות האוטומטית מוגבל כרגע. נא להתחבר עם Google.");
+          }
         }
       }
     });

@@ -17,7 +17,7 @@ import { useAuth } from "@/lib/firebase/authContext";
  * every fresh visitor. We hold on the spinner for `GRACE_MS` after mount and
  * only fall through to the prompt if `user` is still null past that.
  */
-const GRACE_MS = 4000;
+const GRACE_MS = 1500;
 
 export function AuthGate({
   children,
