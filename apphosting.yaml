@@ -4,20 +4,23 @@
 # and PDF text extraction can spike RAM and wall-clock on cold starts.
 #
 # Phase 2 §2.G capacity tuning:
-#   • minInstances = 1 — keeps one warm pool member to absorb the cold-start
-#     hit on the first request after idle. Bump to ≥ 2 from Feb 1 → May 31
-#     (filing-season crunch) via a release-branch override.
+#   • minInstances = 0 — COST FIX: in beta, a warm always-on instance
+#     (2 vCPU / 2 GiB) ran 24/7 even with zero traffic and was ~the entire
+#     GCP bill (~12-18 ₪/day). Scaling to zero drops idle cost to ~0; the
+#     trade-off is a cold start (~few seconds) on the first request after
+#     idle, which is fine pre-launch. Bump back to ≥ 1 (≥ 2 from Feb 1 →
+#     May 31 filing crunch) before launch via a release-branch override.
 #   • maxInstances = 30 — UPGRADE_PLAN crunch ceiling.
 #   • concurrency  = 20 — Tesseract is CPU-bound; >20 in-flight per instance
 #     causes head-of-line blocking on the OCR queue. Plan §2.G value.
-#   • Splitting OCR/PDF into a separate Cloud Run service (UPGRADE_PLAN §2.G)
-#     is deferred — single-service is fine until concurrent OCR > 60.
+#   • cpu/memory kept at 2/2048 — now billed only while a request is actually
+#     in flight (we scale to zero), and OCR/PDF parsing needs the headroom.
 
 runConfig:
   cpu: 2
   memoryMiB: 2048
   concurrency: 20
-  minInstances: 1
+  minInstances: 0
   maxInstances: 30
   timeoutSeconds: 300
 
